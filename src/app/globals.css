@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 244, 247, 255;
+  --background-start-rgb: 7, 10, 15;
+  --background-end-rgb: 7, 10, 15;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: #070A0F;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Privacy Policy Styles */
+.prose .privacy-title {
+  font-size: 3rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 1rem !important;
+  line-height: 1.2 !important;
+}
+
+.prose .contact-info {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+  padding: 1.5rem !important;
+  border-radius: 0.75rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.prose .contact-info p {
+  margin: 0 !important;
+  color: #e2e8f0 !important;
+  line-height: 1.8 !important;
+}
+
+.prose .contact-info strong {
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}
+
+.prose .last-updated {
+  color: #94a3b8 !important;
+  font-style: italic !important;
+  margin-bottom: 2rem !important;
+  display: block !important;
+}
+
+.prose .contact-info a {
+  color: #60a5fa !important;
+  text-decoration: none !important;
+}
+
+.prose .contact-info a:hover {
+  text-decoration: underline !important;
+  color: #93c5fd !important;
+}
+
+.prose h3 {
+  color: #cbd5e1 !important;
+  margin-top: 2rem !important;
+}
+
+.prose ul {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.prose li {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}

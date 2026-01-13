@@ -1,0 +1,12 @@
+1:"$Sreact.fragment"
+2:I[3374,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],"Header"]
+3:I[77258,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],"Hero"]
+4:I[54268,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],"Principles"]
+5:I[38094,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],"AppsGrid"]
+6:I[61101,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],"Manifesto"]
+7:I[63446,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],"ContactSection"]
+8:I[22016,["/_next/static/chunks/12a04fbbdaa0e8db.js","/_next/static/chunks/222d494dbea38d3b.js"],""]
+9:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
+a:"$Sreact.suspense"
+0:{"buildId":"8eoiuhQSCk3bd_bJrvc37","rsc":["$","$1","c",{"children":[["$","main",null,{"className":"flex flex-col min-h-screen","children":[["$","$L2",null,{}],["$","$L3",null,{}],["$","$L4",null,{}],["$","$L5",null,{}],["$","$L6",null,{}],["$","$L7",null,{}],["$","footer",null,{"className":"bg-surface border-t border-border py-12","children":["$","div",null,{"className":"container mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-6","children":[["$","div",null,{"className":"text-center md:text-left","children":[["$","h3",null,{"className":"text-xl font-bold mb-2","children":"NorthByte Studio"}],["$","p",null,{"className":"text-sm text-muted","children":["© ",2026," NorthByte Studio. All rights reserved."]}]]}],["$","div",null,{"className":"flex bg-surface2/50 rounded-full px-6 py-2 gap-6","children":[["$","$L8",null,{"href":"/#contact","className":"text-sm text-secondary hover:text-accent transition-colors","children":"Contact"}],["$","$L8",null,{"href":"/privacy-policy","className":"text-sm text-secondary hover:text-accent transition-colors","children":"Privacy Policy"}],["$","$L8",null,{"href":"/terms-of-use","className":"text-sm text-secondary hover:text-accent transition-colors","children":"Terms of Use"}]]}]]}]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/12a04fbbdaa0e8db.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/222d494dbea38d3b.js","async":true}]],["$","$L9",null,{"children":["$","$a",null,{"name":"Next.MetadataOutlet","children":"$@b"}]}]]}],"loading":null,"isPartial":false}
+b:null

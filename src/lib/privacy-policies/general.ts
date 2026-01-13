@@ -1,0 +1,231 @@
+export const generalPrivacyPolicy = `
+<h1 class="privacy-title">Privacy Policy for NorthByte Studio Website</h1>
+<p class="last-updated">Last updated: January 13, 2026</p>
+
+<h2>1. Controller</h2>
+<p>
+    The controller responsible for data processing within the meaning of the General Data Protection Regulation (GDPR) is:
+</p>
+<div class="contact-info">
+    <p><strong>Leonardo Granetto</strong><br>
+    Biebricher Straße 7f<br>
+    55252 Mainz-Kastel<br>
+    Germany<br><br>
+    📧 <strong>Email:</strong> <a href="mailto:LeonardoGranetto@gmail.com">LeonardoGranetto@gmail.com</a></p>
+</div>
+
+<h2>2. Overview</h2>
+<p>
+    This Privacy Policy applies to the <strong>NorthByte Studio website</strong> (northbyte.studio).
+</p>
+<p>
+    We are committed to protecting your privacy and handling your personal data in accordance with applicable data protection laws, 
+    including the General Data Protection Regulation (GDPR).
+</p>
+
+<h2>3. Data We Collect</h2>
+
+<h3>3.1 Technical and Usage Data</h3>
+<p>
+    When you visit our website, we automatically collect certain technical information:
+</p>
+<ul>
+    <li>IP address (shortened or anonymized where possible)</li>
+    <li>Browser type and version</li>
+    <li>Operating system</li>
+    <li>Referrer URL (the page you came from)</li>
+    <li>Pages visited and time spent on pages</li>
+    <li>Date and time of access</li>
+</ul>
+<p>
+    <strong>Legal basis:</strong> Art. 6(1)(f) GDPR (Legitimate interest in ensuring website functionality and security)
+</p>
+
+<h3>3.2 Contact Form Data</h3>
+<p>
+    If you use our contact form, we collect:
+</p>
+<ul>
+    <li>Name</li>
+    <li>Email address</li>
+    <li>Message content</li>
+    <li>Selected app (if applicable)</li>
+</ul>
+<p>
+    This data is used solely to respond to your inquiry.
+</p>
+<p>
+    <strong>Legal basis:</strong> Art. 6(1)(b) GDPR (Processing necessary to respond to your request)
+</p>
+
+<h2>4. Tracking and Analytics</h2>
+<p>
+    We use tracking technologies to analyze website traffic, understand user behavior, and improve our services.
+</p>
+
+<h3>4.1 Google Analytics</h3>
+<p>
+    We use <strong>Google Analytics</strong>, a web analytics service provided by Google LLC.
+</p>
+<p>
+    Google Analytics uses cookies to analyze how users interact with our website. 
+    The information generated (including your IP address) is transmitted to and stored by Google on servers in the United States.
+</p>
+<p>
+    We use IP anonymization, so your IP address is shortened within the EU before transmission.
+</p>
+<p>
+    <strong>Legal basis:</strong> Art. 6(1)(f) GDPR (Legitimate interest in analyzing website usage)
+</p>
+<p>
+    For more information: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>
+</p>
+
+<h3>4.2 Meta Pixel (Facebook Pixel)</h3>
+<p>
+    We use the <strong>Meta Pixel</strong> (formerly Facebook Pixel) to measure the effectiveness of our advertising campaigns 
+    and to deliver personalized ads.
+</p>
+<p>
+    The Meta Pixel collects data about your visit, including pages viewed and actions taken. 
+    This data may be used by Meta to show you relevant ads on Facebook and Instagram.
+</p>
+<p>
+    <strong>Legal basis:</strong> Art. 6(1)(a) GDPR (Consent, where required) or Art. 6(1)(f) GDPR (Legitimate interest in marketing)
+</p>
+<p>
+    For more information: <a href="https://www.facebook.com/privacy/explanation" target="_blank" rel="noopener">Meta Privacy Policy</a>
+</p>
+
+<h3>4.3 TikTok Pixel</h3>
+<p>
+    We use the <strong>TikTok Pixel</strong> to measure advertising performance and optimize our campaigns on TikTok.
+</p>
+<p>
+    The TikTok Pixel tracks user interactions on our website and may be used to deliver personalized ads on TikTok.
+</p>
+<p>
+    <strong>Legal basis:</strong> Art. 6(1)(a) GDPR (Consent, where required) or Art. 6(1)(f) GDPR (Legitimate interest in marketing)
+</p>
+<p>
+    For more information: <a href="https://www.tiktok.com/legal/privacy-policy" target="_blank" rel="noopener">TikTok Privacy Policy</a>
+</p>
+
+<h3>4.4 Google Ads Conversion Tracking</h3>
+<p>
+    We use <strong>Google Ads Conversion Tracking</strong> to measure the effectiveness of our Google advertising campaigns.
+</p>
+<p>
+    When you click on a Google ad, a conversion tracking cookie is placed on your device. 
+    This allows us to track conversions and optimize our ad campaigns.
+</p>
+<p>
+    <strong>Legal basis:</strong> Art. 6(1)(f) GDPR (Legitimate interest in measuring advertising effectiveness)
+</p>
+
+<h2>5. Cookies</h2>
+<p>
+    Our website uses cookies to improve functionality and analyze usage.
+</p>
+<p>
+    <strong>What are cookies?</strong> Cookies are small text files stored on your device by your browser.
+</p>
+<p>
+    <strong>Types of cookies we use:</strong>
+</p>
+<ul>
+    <li><strong>Essential cookies:</strong> Required for website functionality</li>
+    <li><strong>Analytics cookies:</strong> Help us understand how visitors use our website</li>
+    <li><strong>Marketing cookies:</strong> Used to deliver personalized ads</li>
+</ul>
+<p>
+    You can control and delete cookies through your browser settings. 
+    However, disabling cookies may affect website functionality.
+</p>
+
+<h2>6. Data Sharing</h2>
+<p>
+    We share data with the following third parties:
+</p>
+<ul>
+    <li><strong>Google (Analytics, Ads):</strong> For analytics and advertising</li>
+    <li><strong>Meta (Facebook, Instagram):</strong> For advertising and analytics</li>
+    <li><strong>TikTok:</strong> For advertising and analytics</li>
+</ul>
+<p>
+    We do not sell your personal data to third parties.
+</p>
+
+<h2>7. International Data Transfers</h2>
+<p>
+    Some of our service providers (e.g., Google, Meta, TikTok) may transfer data to countries outside the European Economic Area (EEA), 
+    including the United States.
+</p>
+<p>
+    These transfers are based on:
+</p>
+<ul>
+    <li>Standard Contractual Clauses (SCCs) approved by the European Commission</li>
+    <li>Adequacy decisions by the European Commission</li>
+    <li>Your explicit consent</li>
+</ul>
+
+<h2>8. Data Retention</h2>
+<p>
+    We retain personal data only for as long as necessary:
+</p>
+<ul>
+    <li><strong>Contact form data:</strong> Deleted after your inquiry is resolved (typically 30-90 days)</li>
+    <li><strong>Analytics data:</strong> Retained for up to 26 months (Google Analytics default)</li>
+    <li><strong>Cookie data:</strong> Varies by cookie type (typically 30 days to 2 years)</li>
+</ul>
+
+<h2>9. Your Rights</h2>
+<p>
+    Under the GDPR, you have the right to:
+</p>
+<ul>
+    <li>Access your personal data (Art. 15 GDPR)</li>
+    <li>Rectify inaccurate data (Art. 16 GDPR)</li>
+    <li>Request deletion of your data (Art. 17 GDPR)</li>
+    <li>Restrict processing (Art. 18 GDPR)</li>
+    <li>Data portability (Art. 20 GDPR)</li>
+    <li>Object to processing (Art. 21 GDPR)</li>
+    <li>Withdraw consent at any time (Art. 7(3) GDPR)</li>
+</ul>
+<p>
+    To exercise your rights, contact us at:
+</p>
+<p>
+    📧 <a href="mailto:LeonardoGranetto@gmail.com">LeonardoGranetto@gmail.com</a>
+</p>
+
+<h2>10. Opt-Out Options</h2>
+<p>
+    You can opt out of tracking and advertising:
+</p>
+<ul>
+    <li><strong>Google Analytics:</strong> <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out Browser Add-on</a></li>
+    <li><strong>Meta Ads:</strong> Adjust your <a href="https://www.facebook.com/settings?tab=ads" target="_blank" rel="noopener">Facebook Ad Preferences</a></li>
+    <li><strong>TikTok Ads:</strong> Adjust your <a href="https://www.tiktok.com/setting/privacy-and-safety" target="_blank" rel="noopener">TikTok Privacy Settings</a></li>
+    <li><strong>Browser settings:</strong> Disable cookies in your browser settings</li>
+</ul>
+
+<h2>11. Changes to This Privacy Policy</h2>
+<p>
+    We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements.
+</p>
+<p>
+    The latest version will always be available on this page.
+</p>
+
+<h2>12. Contact</h2>
+<p>
+    If you have any questions about this Privacy Policy, please contact:
+</p>
+<div class="contact-info">
+    <p>
+        📧 <strong>Email:</strong> <a href="mailto:LeonardoGranetto@gmail.com">LeonardoGranetto@gmail.com</a>
+    </p>
+</div>
+`;

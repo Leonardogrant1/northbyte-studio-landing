@@ -1,0 +1,206 @@
+[00:00:00.515] Server  LOG     ✓ Ready in 374ms
+[00:00:01.005] Server  WARN    ⚠ Cross origin request detected from 192.168.68.101 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+[00:00:01.370] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:02.723] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:05.103] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:07.341] Browser WARN    Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[02:41:16.415] Server  LOG     ✓ Compiled in 118ms
+[02:41:18.450] Server  LOG     ✓ Compiled in 182ms
+[02:41:18.555] Browser ERROR   ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+[02:44:54.051] Server  ERROR   ⨯ ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+
+
+[02:44:54.176] Browser ERROR   ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+[02:44:54.578] Browser ERROR   ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+[02:44:54.578] Browser ERROR   ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+[02:44:54.720] Browser ERROR   uncaughtError: Error: ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+
+
+[02:44:54.870] Browser ERROR   ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+[02:44:54.870] Browser ERROR   ./src/components/sections/AppsGrid.tsx:67:23
+Parsing ecmascript source code failed
+  65 |                                 </div>
+  66 |                         </motion.div>
+> 67 |                     ))}
+     |                       ^
+  68 |                 </div>
+  69 |             </div>
+  70 |         </section>
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+Import trace:
+  Server Component:
+    ./src/components/sections/AppsGrid.tsx
+    ./src/app/page.tsx
+[02:45:51.784] Server  LOG     ✓ Compiled in 43ms
+[02:45:52.124] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[02:45:54.293] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[02:45:54.295] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[02:45:54.417] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[02:45:54.417] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[07:25:49.596] Server  LOG     ✓ Compiled in 511ms
+[08:09:28.552] Server  LOG     ✓ Compiled in 211ms
+[08:09:28.555] Server  WARN    ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[08:09:28.822] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:09:28.823] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:09:28.885] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:09:29.173] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:09:29.173] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:09:49.042] Server  LOG     ✓ Compiled in 63ms
+[08:09:51.029] Server  LOG     ✓ Compiled in 47ms
+[08:11:45.123] Server  LOG       Reload env: .env
+[08:11:45.296] Server  LOG     ✓ Compiled in 113ms
+[08:11:45.305] Server  WARN    ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[08:11:45.506] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:11:45.509] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:11:45.550] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:11:46.170] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:11:46.170] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:11:50.617] Server  LOG       Reload env: .env
+[08:11:50.645] Server  LOG     ✓ Compiled in 0ms
+[08:11:50.700] Server  WARN    ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[08:11:50.861] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:11:50.863] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:11:50.913] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:11:51.168] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:11:51.168] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:11:57.409] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:11:57.412] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:11:59.348] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:11:59.351] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:11:59.365] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:11:59.482] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:11:59.482] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:12:32.625] Server  ERROR   Error sending email: Error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 4fb4d7f45d1cf-6507bf667fcsm20373140a12.29 - gsmtp
+[08:12:32.731] Browser ERROR   Error submitting form: {}
+[08:14:00.983] Server  LOG       Reload env: .env
+[08:14:01.184] Server  WARN    ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[08:14:01.416] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:14:01.419] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:14:01.431] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:14:01.556] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:14:01.556] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:25:31.363] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:25:31.374] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/memolib.png" "received" null
+[08:37:16.185] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:37:16.223] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:37:16.412] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:37:16.413] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:37:16.413] Browser WARN    Image with src "/thumbnails/memolib.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[08:37:23.502] Server  ERROR   ⨯ "The requested resource isn't a valid image for" "/thumbnails/keevio.png" "received" null
+[08:46:52.371] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[08:46:52.577] Browser WARN    Image with src "/thumbnails/memolib.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:46:52.577] Browser WARN    Image with src "/thumbnails/keevio.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[08:46:52.577] Browser WARN    Image with src "/thumbnails/memolib.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[08:46:52.761] Browser WARN    Image with src "/thumbnails/keevio.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
