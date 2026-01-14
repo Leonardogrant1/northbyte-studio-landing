@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
+import { AdminFloatingButtons } from "@/components/layout/AdminFloatingButtons";
+import { ConvexClientProvider } from "@/lib/convex/client";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap' });
 
@@ -22,11 +26,17 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="dark scroll-smooth">
-            <link rel="icon" href="/favicon.svg" sizes="any" />
-            <body className={`${inter.variable} font-sans bg-background text-primary antialiased selection:bg-accent selection:text-surface`}>
-                {children}
-            </body>
-        </html>
+        <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
+            <ConvexClientProvider>
+
+                <html lang="en" className="dark scroll-smooth">
+                    <link rel="icon" href="/favicon.svg" sizes="any" />
+                    <body className={`${inter.variable} font-sans bg-background text-primary antialiased selection:bg-accent selection:text-surface`}>
+                        {children}
+                        <AdminFloatingButtons />
+                    </body>
+                </html>
+            </ConvexClientProvider>
+        </ClerkProvider>
     );
 }
