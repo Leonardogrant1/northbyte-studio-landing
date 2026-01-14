@@ -23,6 +23,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className="dark scroll-smooth">
+            <link rel="icon" href="/favicon.svg" sizes="any" />
             <body className={`${inter.variable} font-sans bg-background text-primary antialiased selection:bg-accent selection:text-surface`}>
                 {children}
             </body>
