@@ -1,24 +1,35 @@
+"use client";
+
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { apps } from "@/lib/apps";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { keevioTermsOfUse } from "@/lib/privacy-policies/keevio-terms";
 import { memolibTermsOfUse } from "@/lib/privacy-policies/memolib-terms";
 import { generalTermsOfUse } from "@/lib/privacy-policies/general-terms";
+import { useEffect, useState } from "react";
 
-export function generateStaticParams() {
-    return apps.map((app) => ({
-        app: app.slug,
-    }));
+interface PageProps {
+    params: Promise<{ app: string }>;
 }
 
-export default async function TermsDetail({ params }: { params: Promise<{ app: string }> }) {
-    const { app } = await params;
-    const appData = apps.find(a => a.slug === app);
-    const isGeneral = app === "general";
-    const title = isGeneral ? "NorthByte Studio Website" : appData?.name || app;
-    const isKeevio = app === "keevio";
-    const isMemoLib = app === "memolib";
+export default function TermsDetail({ params }: PageProps) {
+    const [appSlug, setAppSlug] = useState<string | null>(null);
+    
+    useEffect(() => {
+        params.then((p) => setAppSlug(p.app));
+    }, [params]);
+
+    const appData = useQuery(
+        api.apps.queries.getBySlug,
+        appSlug && appSlug !== "general" ? { slug: appSlug } : "skip"
+    );
+
+    const isGeneral = appSlug === "general";
+    const title = isGeneral ? "NorthByte Studio Website" : appData?.name || appSlug;
+    const isKeevio = appSlug === "keevio";
+    const isMemoLib = appSlug === "memolib";
 
     return (
         <div className="flex flex-col min-h-screen">

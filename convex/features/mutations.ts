@@ -1,5 +1,6 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { api } from "../_generated/api";
 
 // Create a new feature
 export const create = mutation({
@@ -31,12 +32,29 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const { featureId, ...updates } = args;
 
+        // Get current feature to check if status is changing to "completed"
+        const currentFeature = await ctx.db.get(featureId);
+        if (!currentFeature) throw new Error("Feature not found");
+
+        const oldStatus = currentFeature.status;
+        const newStatus = args.status;
+
         // Filter out undefined values
         const filteredUpdates = Object.fromEntries(
             Object.entries(updates).filter(([_, value]) => value !== undefined)
         );
 
         await ctx.db.patch(featureId, filteredUpdates);
+
+        // Notify subscribers if status changed to "completed"
+        if (newStatus && newStatus === "completed" && oldStatus !== "completed") {
+            // Schedule notification (don't await to avoid blocking)
+            ctx.scheduler.runAfter(0, api.features.actions.notifySubscribers, {
+                featureId: featureId,
+                newStatus: newStatus,
+            });
+        }
+
         return featureId;
     },
 });

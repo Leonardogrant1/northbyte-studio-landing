@@ -1,5 +1,6 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../_generated/server.js";
 import { v } from "convex/values";
+import { api } from "../_generated/api.js";
 
 // Create a new bug
 export const create = mutation({
@@ -31,12 +32,29 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const { bugId, ...updates } = args;
 
+        // Get current bug to check if status is changing to "resolved"
+        const currentBug = await ctx.db.get(bugId);
+        if (!currentBug) throw new Error("Bug not found");
+
+        const oldStatus = currentBug.status;
+        const newStatus = args.status;
+
         // Filter out undefined values
         const filteredUpdates = Object.fromEntries(
             Object.entries(updates).filter(([_, value]) => value !== undefined)
         );
 
         await ctx.db.patch(bugId, filteredUpdates);
+
+        // Notify subscribers if status changed to "resolved"
+        if (newStatus && newStatus === "resolved" && oldStatus !== "resolved") {
+            // Schedule notification (don't await to avoid blocking)
+            ctx.scheduler.runAfter(0, api.bugs.actions.notifySubscribers, {
+                bugId: bugId,
+                newStatus: newStatus,
+            });
+        }
+
         return bugId;
     },
 });

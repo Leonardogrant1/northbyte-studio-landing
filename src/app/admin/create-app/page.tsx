@@ -1,22 +1,133 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useState, useRef } from "react";
+import { useMutation, useAction } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 export default function CreateAppPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
         name: "",
+        domain: "",
         tagline: "",
         description: "",
         status: "live",
+        slug: "",
     });
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+    const [logoDragOver, setLogoDragOver] = useState(false);
+    const [thumbnailDragOver, setThumbnailDragOver] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
     const createApp = useMutation(api.apps.mutations.create);
+    const uploadFiles = useAction(api.storage.actions.uploadFiles);
+
+    const processLogoFile = (file: File) => {
+        if (file && file.type.startsWith("image/")) {
+            setLogoFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const processThumbnailFile = (file: File) => {
+        if (file && file.type.startsWith("image/")) {
+            setThumbnailFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setThumbnailPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            processLogoFile(file);
+        }
+    };
+
+    const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            processThumbnailFile(file);
+        }
+    };
+
+    const handleLogoDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLogoDragOver(true);
+    };
+
+    const handleLogoDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLogoDragOver(false);
+    };
+
+    const handleLogoDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLogoDragOver(false);
+
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            processLogoFile(file);
+        }
+    };
+
+    const handleThumbnailDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setThumbnailDragOver(true);
+    };
+
+    const handleThumbnailDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setThumbnailDragOver(false);
+    };
+
+    const handleThumbnailDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setThumbnailDragOver(false);
+
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            processThumbnailFile(file);
+        }
+    };
+
+    const removeLogo = () => {
+        setLogoFile(null);
+        setLogoPreview(null);
+        if (logoInputRef.current) {
+            logoInputRef.current.value = "";
+        }
+    };
+
+    const removeThumbnail = () => {
+        setThumbnailFile(null);
+        setThumbnailPreview(null);
+        if (thumbnailInputRef.current) {
+            thumbnailInputRef.current.value = "";
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,6 +136,10 @@ export default function CreateAppPage() {
         // Validation
         if (!formData.name.trim()) {
             setError("App name is required");
+            return;
+        }
+        if (!formData.domain.trim()) {
+            setError("Domain is required");
             return;
         }
         if (!formData.tagline.trim()) {
@@ -39,11 +154,50 @@ export default function CreateAppPage() {
         setIsSubmitting(true);
 
         try {
+            let logoStorageId: Id<"_storage"> | undefined;
+            let thumbnailStorageId: Id<"_storage"> | undefined;
+
+            // Upload images if provided
+            const filesToUpload: Array<{ data: string; mimeType: string }> = [];
+            if (logoFile) {
+                const logoData = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(logoFile);
+                });
+                filesToUpload.push({ data: logoData, mimeType: logoFile.type });
+            }
+            if (thumbnailFile) {
+                const thumbnailData = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(thumbnailFile);
+                });
+                filesToUpload.push({ data: thumbnailData, mimeType: thumbnailFile.type });
+            }
+
+            // Upload files if any
+            if (filesToUpload.length > 0) {
+                const storageIds = await uploadFiles({ files: filesToUpload });
+                if (logoFile && storageIds[0]) {
+                    logoStorageId = storageIds[0];
+                }
+                if (thumbnailFile) {
+                    thumbnailStorageId = logoFile ? storageIds[1] : storageIds[0];
+                }
+            }
+
             const appId = await createApp({
                 name: formData.name.trim(),
+                domain: formData.domain.trim(),
                 tagline: formData.tagline.trim(),
                 description: formData.description.trim(),
                 status: formData.status,
+                slug: formData.slug.trim() || undefined,
+                logoStorageId,
+                thumbnailStorageId,
             });
 
             // Save as selected app
@@ -52,7 +206,7 @@ export default function CreateAppPage() {
             // Redirect to app-specific dashboard
             router.push(`/admin/${appId}`);
         } catch (err) {
-            setError("Failed to create app. Please try again.");
+            setError(err instanceof Error ? err.message : "Failed to create app. Please try again.");
             console.error(err);
             setIsSubmitting(false);
         }
@@ -87,6 +241,126 @@ export default function CreateAppPage() {
                     )}
 
                     <div className="space-y-6">
+                        {/* Logo Upload */}
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-2">
+                                Logo
+                            </label>
+                            <div className="space-y-3">
+                                {logoPreview ? (
+                                    <div className="relative aspect-square max-w-32">
+                                        <img
+                                            src={logoPreview}
+                                            alt="Logo preview"
+                                            className="w-full h-full object-cover rounded-xl border border-border"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeLogo}
+                                            disabled={isSubmitting}
+                                            className="absolute top-2 right-2 p-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                                            aria-label="Remove logo"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label
+                                        htmlFor="logo"
+                                        onDragOver={handleLogoDragOver}
+                                        onDragLeave={handleLogoDragLeave}
+                                        onDrop={handleLogoDrop}
+                                        className={`flex flex-col items-center justify-center w-full max-w-32 aspect-square border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                            logoDragOver
+                                                ? "border-accent bg-accent/10"
+                                                : "border-border hover:border-accent/50 bg-surface2"
+                                        }`}
+                                    >
+                                        <div className="flex flex-col items-center justify-center p-3">
+                                            <svg className="w-6 h-6 mb-1 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p className="mb-1 text-xs text-secondary text-center">
+                                                <span className="font-semibold">Upload</span>
+                                            </p>
+                                            <p className="text-[10px] text-muted text-center">PNG, JPG</p>
+                                        </div>
+                                        <input
+                                            ref={logoInputRef}
+                                            id="logo"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleLogoChange}
+                                            disabled={isSubmitting}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Thumbnail Upload */}
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-2">
+                                Thumbnail
+                            </label>
+                            <div className="space-y-3">
+                                {thumbnailPreview ? (
+                                    <div className="relative aspect-[4/2]">
+                                        <img
+                                            src={thumbnailPreview}
+                                            alt="Thumbnail preview"
+                                            className="w-full h-full object-cover rounded-xl border border-border"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeThumbnail}
+                                            disabled={isSubmitting}
+                                            className="absolute top-2 right-2 p-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                                            aria-label="Remove thumbnail"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label
+                                        htmlFor="thumbnail"
+                                        onDragOver={handleThumbnailDragOver}
+                                        onDragLeave={handleThumbnailDragLeave}
+                                        onDrop={handleThumbnailDrop}
+                                        className={`flex flex-col items-center justify-center w-full aspect-[4/2] border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                                            thumbnailDragOver
+                                                ? "border-accent bg-accent/10"
+                                                : "border-border hover:border-accent/50 bg-surface2"
+                                        }`}
+                                    >
+                                        <div className="flex flex-col items-center justify-center p-4">
+                                            <svg className="w-8 h-8 mb-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p className="mb-2 text-sm text-secondary text-center">
+                                                <span className="font-semibold">Click to upload</span> thumbnail
+                                            </p>
+                                            <p className="text-xs text-muted text-center">PNG, JPG, GIF or WEBP</p>
+                                        </div>
+                                        <input
+                                            ref={thumbnailInputRef}
+                                            id="thumbnail"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleThumbnailChange}
+                                            disabled={isSubmitting}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-secondary mb-2">
                                 App Name *
@@ -100,6 +374,37 @@ export default function CreateAppPage() {
                                 className="w-full px-4 py-3 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all disabled:opacity-50"
                                 placeholder="My Awesome App"
                             />
+                        </div>
+
+                        <div>
+                            <label htmlFor="domain" className="block text-sm font-medium text-secondary mb-2">
+                                Domain *
+                            </label>
+                            <input
+                                type="text"
+                                id="domain"
+                                value={formData.domain}
+                                onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                                disabled={isSubmitting}
+                                className="w-full px-4 py-3 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all disabled:opacity-50"
+                                placeholder="myapp.com"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="slug" className="block text-sm font-medium text-secondary mb-2">
+                                Slug
+                            </label>
+                            <input
+                                type="text"
+                                id="slug"
+                                value={formData.slug}
+                                onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') })}
+                                disabled={isSubmitting}
+                                className="w-full px-4 py-3 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all disabled:opacity-50"
+                                placeholder="my-app-slug"
+                            />
+                            <p className="mt-1 text-xs text-muted">URL-friendly identifier (lowercase, hyphens only). Must be unique.</p>
                         </div>
 
                         <div>

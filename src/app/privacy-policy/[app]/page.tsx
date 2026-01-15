@@ -1,32 +1,35 @@
+"use client";
+
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { apps } from "@/lib/apps";
-import { notFound } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { keevioPrivacyPolicy } from "@/lib/privacy-policies/keevio";
 import { memolibPrivacyPolicy } from "@/lib/privacy-policies/memolib";
 import { generalPrivacyPolicy } from "@/lib/privacy-policies/general";
+import { useEffect, useState } from "react";
 
-// Allow static params generation for known apps to improve performance
-export function generateStaticParams() {
-    return apps.map((app) => ({
-        app: app.slug,
-    }));
+interface PageProps {
+    params: Promise<{ app: string }>;
 }
 
-export default async function PrivacyPolicyDetail({ params }: { params: Promise<{ app: string }> }) {
-    const { app } = await params;
-    const appData = apps.find(a => a.slug === app);
-    const isGeneral = app === "general";
+export default function PrivacyPolicyDetail({ params }: PageProps) {
+    const [appSlug, setAppSlug] = useState<string | null>(null);
+    
+    useEffect(() => {
+        params.then((p) => setAppSlug(p.app));
+    }, [params]);
 
-    if (!appData && !isGeneral) {
-        // In a real app we might handle 404 better or allow generic slugs
-        // For now, if it's not known, we assume generic or 404
-    }
+    const appData = useQuery(
+        api.apps.queries.getBySlug,
+        appSlug && appSlug !== "general" ? { slug: appSlug } : "skip"
+    );
 
-    const title = isGeneral ? "NorthByte Studio Website" : appData?.name || app;
-    const isKeevio = app === "keevio";
-    const isMemoLib = app === "memolib";
+    const isGeneral = appSlug === "general";
+    const title = isGeneral ? "NorthByte Studio Website" : appData?.name || appSlug;
+    const isKeevio = appSlug === "keevio";
+    const isMemoLib = appSlug === "memolib";
 
     return (
         <div className="flex flex-col min-h-screen">

@@ -13,11 +13,14 @@ export default defineSchema({
     // Apps - applications that can have bugs and features
     apps: defineTable({
         name: v.string(),
+        domain: v.optional(v.string()), 
         tagline: v.string(),
+        logoStorageId: v.optional(v.id("_storage")),
+        thumbnailStorageId: v.optional(v.id("_storage")),
+        slug: v.string(),
         description: v.string(),
         status: v.string(),
     }),
-
     // Bugs - bug reports for apps
     bugs: defineTable({
         appId: v.id("apps"),
