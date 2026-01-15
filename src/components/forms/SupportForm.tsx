@@ -42,7 +42,7 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
 
             setSubmitted(true);
         } catch (err) {
-            setError("Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.");
+            setError("Message could not be sent. Please try again.");
             console.error("Error submitting form:", err);
         } finally {
             setLoading(false);
@@ -56,13 +56,13 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center p-12 bg-surface2 rounded-3xl border border-accent/20"
             >
-                <h3 className="text-2xl font-bold mb-4 text-accent">Nachricht gesendet!</h3>
-                <p className="text-secondary">Wir melden uns schnellstmöglich bei Ihnen.</p>
+                <h3 className="text-2xl font-bold mb-4 text-accent">Message sent!</h3>
+                <p className="text-secondary">We'll get back to you as soon as possible.</p>
                 <button
                     onClick={() => setSubmitted(false)}
                     className="mt-6 text-sm underline hover:text-accent transition-colors"
                 >
-                    Weitere Nachricht senden
+                    Send another message
                 </button>
             </motion.div>
         );
@@ -88,7 +88,7 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
                         required
                         disabled={loading}
                         className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
-                        placeholder="Max Mustermann"
+                        placeholder="John Doe"
                     />
                 </div>
                 <div className="space-y-2">
@@ -102,7 +102,7 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
                         required
                         disabled={loading}
                         className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
-                        placeholder="max@beispiel.de"
+                        placeholder="john@example.com"
                     />
                 </div>
             </div>
@@ -110,14 +110,14 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
             {appName && (
                 <div className="p-4 bg-surface2 border border-border rounded-xl">
                     <p className="text-sm text-secondary">
-                        Support für: <span className="font-semibold text-primary">{appName}</span>
+                        Support for: <span className="font-semibold text-primary">{appName}</span>
                     </p>
                 </div>
             )}
 
             <div className="space-y-2">
                 <label htmlFor="message" className="text-sm font-medium text-secondary">
-                    Nachricht
+                    Message
                 </label>
                 <textarea
                     id="message"
@@ -126,7 +126,7 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
                     required
                     disabled={loading}
                     className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all resize-none disabled:opacity-50"
-                    placeholder="Beschreiben Sie Ihr Anliegen..."
+                    placeholder="Describe your issue or question..."
                 />
             </div>
 
@@ -135,7 +135,7 @@ export function SupportForm({ appSlug, appName }: SupportFormProps) {
                 disabled={loading}
                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {loading ? "Wird gesendet..." : "Nachricht senden"}
+                {loading ? "Sending..." : "Send Message"}
             </button>
         </form>
     );

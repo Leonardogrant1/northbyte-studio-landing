@@ -30,7 +30,7 @@ export default function SupportOverviewPage() {
                                 {content.description}
                             </p>
                             <div className="text-accent font-medium flex items-center gap-2">
-                                Support kontaktieren
+                                Contact Support
                                 <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </div>
                         </Link>
@@ -39,14 +39,13 @@ export default function SupportOverviewPage() {
 
                 {/* General Contact Info */}
                 <div className="bg-surface2 rounded-2xl p-8 border border-border text-center">
-                    <h3 className="text-xl font-bold mb-3">Allgemeine Anfragen</h3>
+                    <h3 className="text-xl font-bold mb-3">General Inquiries</h3>
                     <p className="text-secondary mb-4">
-                        Für allgemeine Fragen oder wenn Sie nicht sicher sind, welche App Sie betrifft,
-                        können Sie uns auch über unser{" "}
+                        For general questions or if you're not sure which app applies to you,
+                        you can also reach us through our{" "}
                         <Link href="/contact" className="text-accent hover:underline">
-                            Kontaktformular
-                        </Link>{" "}
-                        erreichen.
+                            contact form
+                        </Link>.
                     </p>
                 </div>
             </div>

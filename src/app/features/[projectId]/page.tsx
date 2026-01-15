@@ -44,7 +44,20 @@ function SubscribeButton({
     
     if (subscribed) {
         return (
-            <span className="px-4 py-2 text-sm font-medium rounded-xl border border-accent bg-accent/10 text-accent">
+            <span className="px-3 py-1.5 text-xs font-medium rounded-lg border border-accent bg-accent/10 text-accent flex items-center gap-1.5">
+                <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                </svg>
                 Subscribed
             </span>
         );
@@ -53,8 +66,21 @@ function SubscribeButton({
     return (
         <button
             onClick={onSubscribe}
-            className="px-4 py-2 text-sm font-medium rounded-xl border border-border bg-surface hover:bg-surface2 hover:border-accent transition-all"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface2 hover:border-accent transition-all flex items-center gap-1.5"
         >
+            <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+            </svg>
             Subscribe
         </button>
     );
@@ -73,6 +99,7 @@ export default function FeaturesPage({ params }: PageProps) {
     const [newFeatureDescription, setNewFeatureDescription] = useState("");
     const [newFeatureEmail, setNewFeatureEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<"all" | "planned" | "in-development" | "completed">("all");
     
     // Subscribe dialog state
     const [showSubscribeDialog, setShowSubscribeDialog] = useState(false);
@@ -129,10 +156,16 @@ export default function FeaturesPage({ params }: PageProps) {
         : null;
 
     // Get features for the app
-    const features = useQuery(
+    const allFeatures = useQuery(
         api.features.queries.getByApp,
         app ? { appId: app._id } : "skip"
     );
+
+    // Filter features based on active filter
+    const features = allFeatures?.filter((feature) => {
+        if (activeFilter === "all") return true;
+        return feature.status === activeFilter;
+    });
 
     const upvoteMutation = useMutation(api.features.mutations.upvote);
     const createFeatureMutation = useMutation(api.features.mutations.create);
@@ -356,26 +389,112 @@ export default function FeaturesPage({ params }: PageProps) {
         return null;
     }
 
+    // Helper function to format relative time
+    const formatRelativeTime = (timestamp: number): string => {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (seconds < 60) return "Created just now";
+        if (minutes < 60) return `Last activity ${minutes}m ago`;
+        if (hours < 24) return `Last activity ${hours}h ago`;
+        if (days < 7) return `Last activity ${days}d ago`;
+        return `Created ${new Date(timestamp).toLocaleDateString()}`;
+    };
+
+    // Helper function to get status label
+    const getStatusLabel = (status: string): string => {
+        switch (status) {
+            case "planned":
+                return "Planned";
+            case "in-development":
+                return "In Development";
+            case "completed":
+                return "Completed";
+            default:
+                return status;
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-background">
             <Header />
             <main className="flex-1 container mx-auto px-4 md:px-6 pt-32 pb-20 max-w-4xl">
-                <div className="mb-8">
+                {/* Header Section */}
+                <div className="mb-8 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
                         Feature Requests for {app.name}
                     </h1>
-                    <p className="text-secondary text-lg">
-                        {app.tagline}
+                    <p className="text-secondary text-lg max-w-2xl mx-auto">
+                        {app.tagline} Help us improve your experience by reporting issues or requesting features.
                     </p>
                 </div>
 
-                {/* Add Feature Button */}
-                <div className="mb-8">
+                {/* Tab Navigation */}
+                <div className="mb-8 flex items-center justify-between gap-4 border-b border-border">
+                    <div className="flex gap-2">
+                    <button
+                        onClick={() => setActiveFilter("all")}
+                        className={`px-4 py-2 font-medium transition-colors ${
+                            activeFilter === "all"
+                                ? "text-primary border-b-2 border-primary"
+                                : "text-secondary hover:text-primary"
+                        }`}
+                    >
+                        All Requests
+                    </button>
+                    <button
+                        onClick={() => setActiveFilter("planned")}
+                        className={`px-4 py-2 font-medium transition-colors ${
+                            activeFilter === "planned"
+                                ? "text-primary border-b-2 border-primary"
+                                : "text-secondary hover:text-primary"
+                        }`}
+                    >
+                        Planned
+                    </button>
+                    <button
+                        onClick={() => setActiveFilter("in-development")}
+                        className={`px-4 py-2 font-medium transition-colors ${
+                            activeFilter === "in-development"
+                                ? "text-primary border-b-2 border-primary"
+                                : "text-secondary hover:text-primary"
+                        }`}
+                    >
+                        In Development
+                    </button>
+                    <button
+                        onClick={() => setActiveFilter("completed")}
+                        className={`px-4 py-2 font-medium transition-colors ${
+                            activeFilter === "completed"
+                                ? "text-primary border-b-2 border-primary"
+                                : "text-secondary hover:text-primary"
+                        }`}
+                    >
+                        Completed
+                    </button>
+                    </div>
                     <button
                         onClick={() => setShowDialog(true)}
-                        className="px-6 py-3 bg-accent text-background font-semibold rounded-xl hover:bg-accent/90 transition-all shadow-lg"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-background rounded-lg hover:bg-white transition-all"
                     >
-                        + Create New Feature Request
+                        <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                            />
+                        </svg>
+                        Create Feature
                     </button>
                 </div>
 
@@ -511,8 +630,8 @@ export default function FeaturesPage({ params }: PageProps) {
                             <p className="text-secondary">Loading features...</p>
                         </div>
                     ) : features.length === 0 ? (
-                        <div className="bg-surface2/50 backdrop-blur-xl border border-border rounded-3xl p-12 text-center">
-                            <p className="text-secondary text-lg">
+                        <div className="text-center py-8">
+                            <p className="text-secondary text-sm">
                                 No feature requests yet. Be the first!
                             </p>
                         </div>
@@ -523,23 +642,22 @@ export default function FeaturesPage({ params }: PageProps) {
                             return (
                                 <div
                                     key={feature._id}
-                                    className="bg-surface2/50 backdrop-blur-xl border border-border rounded-3xl p-6 hover:border-accent/50 transition-all"
+                                    className="bg-surface border border-border rounded-2xl p-4 hover:border-accent transition-all"
                                 >
-                                    <div className="flex items-start gap-4">
+                                    <div className="flex items-start gap-3">
+                                        {/* Left: Upvote Section */}
                                         <button
                                             onClick={() => handleUpvote(feature._id)}
                                             disabled={isUpvoted}
-                                            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all group min-w-[60px] ${
+                                            className={`flex flex-col items-center gap-0.5 min-w-[40px] ${
                                                 isUpvoted
-                                                    ? "bg-accent/20 border-accent cursor-not-allowed"
-                                                    : "bg-surface border border-border hover:border-accent hover:bg-surface"
-                                            }`}
+                                                    ? "cursor-not-allowed opacity-60"
+                                                    : "hover:opacity-80"
+                                            } transition-opacity`}
                                         >
                                             <svg
-                                                className={`w-5 h-5 transition-colors ${
-                                                    isUpvoted
-                                                        ? "text-accent"
-                                                        : "text-secondary group-hover:text-accent"
+                                                className={`w-4 h-4 ${
+                                                    isUpvoted ? "text-accent" : "text-secondary"
                                                 }`}
                                                 fill="none"
                                                 stroke="currentColor"
@@ -558,17 +676,15 @@ export default function FeaturesPage({ params }: PageProps) {
                                                 {feature.upvotes}
                                             </span>
                                         </button>
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold mb-2">
-                                            {feature.title}
-                                        </h3>
-                                        <p className="text-secondary mb-3">
-                                            {feature.description}
-                                        </p>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
+
+                                        {/* Right: Feature Details */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                                                <h3 className="text-lg font-bold text-primary">
+                                                    {feature.title}
+                                                </h3>
                                                 <span
-                                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                    className={`px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap ${
                                                         feature.status === "planned"
                                                             ? "bg-blue-500/10 text-blue-400"
                                                             : feature.status === "in-development"
@@ -576,21 +692,25 @@ export default function FeaturesPage({ params }: PageProps) {
                                                             : "bg-green-500/10 text-green-400"
                                                     }`}
                                                 >
-                                                    {feature.status === "planned"
-                                                        ? "Planned"
-                                                        : feature.status === "in-development"
-                                                        ? "In Development"
-                                                        : "Completed"}
+                                                    <span className="w-1 h-1 rounded-full bg-current"></span>
+                                                    {getStatusLabel(feature.status)}
                                                 </span>
                                             </div>
-                                            <SubscribeButton
-                                                featureId={feature._id}
-                                                onSubscribe={() => handleOpenSubscribeDialog(feature._id)}
-                                            />
+                                            <p className="text-sm text-secondary mb-3">
+                                                {feature.description}
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-secondary">
+                                                    {formatRelativeTime(feature._creationTime)}
+                                                </span>
+                                                <SubscribeButton
+                                                    featureId={feature._id}
+                                                    onSubscribe={() => handleOpenSubscribeDialog(feature._id)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                             );
                         })
                     )}
