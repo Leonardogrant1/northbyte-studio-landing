@@ -13,7 +13,7 @@ export default async function AdminPage() {
     return (
         <div className="min-h-screen bg-background p-8">
             <div className="max-w-6xl mx-auto">
-                <AdminHeader showAppSelector={false} />
+                <AdminHeader />
 
                 <div className="mt-8">
                     <h2 className="text-2xl font-bold mb-6">Select an App</h2>

@@ -195,7 +195,7 @@ export default function CreateAppPage() {
                 tagline: formData.tagline.trim(),
                 description: formData.description.trim(),
                 status: formData.status,
-                slug: formData.slug.trim() || undefined,
+                slug: formData.slug.trim(),
                 logoStorageId,
                 thumbnailStorageId,
             });
