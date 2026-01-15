@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { apps } from "@/lib/apps";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function TermsOverview() {
+    const apps = useQuery(api.apps.queries.getAllForPublic) || [];
+
     return (
         <div className="flex flex-col min-h-screen">
             <Header />
@@ -19,7 +24,7 @@ export default function TermsOverview() {
                         <p className="text-sm text-secondary">Terms for northbytestudio.com</p>
                     </Link>
                     {apps.map(app => (
-                        <Link key={app.slug} href={`/terms-of-use/${app.slug}`} className="block p-6 bg-surface border border-border rounded-xl hover:border-accent hover:bg-surface2 transition-all">
+                        <Link key={app._id} href={`/terms-of-use/${app.slug}`} className="block p-6 bg-surface border border-border rounded-xl hover:border-accent hover:bg-surface2 transition-all">
                             <h2 className="text-xl font-bold mb-2">{app.name}</h2>
                             <p className="text-sm text-secondary">Terms for {app.name}</p>
                         </Link>
