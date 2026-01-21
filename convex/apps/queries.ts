@@ -80,3 +80,33 @@ export const getBySlug = query({
         ) || null;
     },
 });
+
+// Get app by slug with URLs for public display
+export const getBySlugForPublic = query({
+    args: { slug: v.string() },
+    handler: async (ctx, args) => {
+        const allApps = await ctx.db.query("apps").collect();
+        const app = allApps.find(
+            (app) => app.slug === args.slug
+        );
+        
+        if (!app) {
+            return null;
+        }
+        
+        return {
+            _id: app._id,
+            name: app.name,
+            slug: app.slug,
+            tagline: app.tagline,
+            description: app.description,
+            status: app.status,
+            logoUrl: app.logoStorageId
+                ? await ctx.storage.getUrl(app.logoStorageId)
+                : null,
+            thumbnailUrl: app.thumbnailStorageId
+                ? await ctx.storage.getUrl(app.thumbnailStorageId)
+                : null,
+        };
+    },
+});
