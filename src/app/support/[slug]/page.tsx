@@ -69,8 +69,8 @@ export default function SupportPage({ params }: PageProps) {
 
                 {/* Support Form Section */}
                 <div className="bg-surface rounded-3xl p-8 md:p-12 border border-border">
-                    <h2 className="text-2xl font-bold mb-2">{contactPrompt}</h2>
-                    <p className="text-secondary mb-8">
+                    <h2 className="text-2xl font-bold mb-2 text-center max-w-xl mx-auto">{contactPrompt}</h2>
+                    <p className="text-secondary mb-8 text-center">
                         Fill out the form and we'll get back to you as soon as possible.
                     </p>
 
