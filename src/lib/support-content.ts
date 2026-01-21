@@ -11,15 +11,15 @@ export const supportContent: SupportContent[] = [
         slug: "keevio",
         appName: "Keevio",
         title: "Keevio Support",
-        description: "Benötigen Sie Hilfe mit Keevio? Wir sind hier, um Ihnen zu helfen. Ob Sie Fragen zur Nutzung haben, technische Probleme melden möchten oder Feedback geben wollen – kontaktieren Sie uns gerne.",
-        contactPrompt: "Beschreiben Sie Ihr Anliegen und wir melden uns schnellstmöglich bei Ihnen."
+        description: "Need help with Keevio? We're here to help. Whether you have questions about usage, want to report technical issues, or provide feedback – feel free to contact us.",
+        contactPrompt: "Describe your request and we'll get back to you as soon as possible."
     },
     {
         slug: "memolib",
         appName: "MemoLib",
         title: "MemoLib Support",
-        description: "Haben Sie Fragen zu MemoLib? Unser Support-Team steht Ihnen zur Verfügung. Egal ob es um die Erstellung von Audio-Playlists, technische Schwierigkeiten oder Feature-Anfragen geht – wir helfen Ihnen gerne weiter.",
-        contactPrompt: "Teilen Sie uns mit, wie wir Ihnen helfen können."
+        description: "Have questions about MemoLib? Our support team is here for you. Whether it's about creating audio playlists, technical difficulties, or feature requests – we're happy to help.",
+        contactPrompt: "Let us know how we can help you."
     }
 ];
 
@@ -27,8 +27,8 @@ export const generalSupport: SupportContent = {
     slug: "general",
     appName: "NorthByte Studio",
     title: "Support",
-    description: "Willkommen beim NorthByte Studio Support. Wählen Sie eine unserer Apps aus oder kontaktieren Sie uns für allgemeine Anfragen. Wir freuen uns, von Ihnen zu hören!",
-    contactPrompt: "Wie können wir Ihnen helfen?"
+    description: "Welcome to NorthByte Studio Support. Select one of our apps or contact us for general inquiries. We'd love to hear from you!",
+    contactPrompt: "How can we help you?"
 };
 
 export function getSupportContentBySlug(slug: string): SupportContent | undefined {

@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -44,7 +44,20 @@ function SubscribeButton({
     
     if (subscribed) {
         return (
-            <span className="px-4 py-2 text-sm font-medium rounded-xl border border-accent bg-accent/10 text-accent">
+            <span className="px-3 py-1.5 text-xs font-medium rounded-lg border border-accent bg-accent/10 text-accent flex items-center gap-1.5">
+                <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                </svg>
                 Subscribed
             </span>
         );
@@ -53,8 +66,21 @@ function SubscribeButton({
     return (
         <button
             onClick={onSubscribe}
-            className="px-4 py-2 text-sm font-medium rounded-xl border border-border bg-surface hover:bg-surface2 hover:border-accent transition-all"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface2 hover:border-accent transition-all flex items-center gap-1.5"
         >
+            <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+            </svg>
             Subscribe
         </button>
     );
@@ -73,6 +99,9 @@ export default function BugsPage({ params }: PageProps) {
     const [newBugDescription, setNewBugDescription] = useState("");
     const [newBugEmail, setNewBugEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<"all" | "in-progress" | "open" | "resolved">("all");
+    const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+    const filterDropdownRef = useRef<HTMLDivElement>(null);
     
     // Subscribe dialog state
     const [showSubscribeDialog, setShowSubscribeDialog] = useState(false);
@@ -84,6 +113,22 @@ export default function BugsPage({ params }: PageProps) {
     useEffect(() => {
         params.then((p) => setProjectId(p.projectId));
     }, [params]);
+
+    // Close filter dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+                setIsFilterDropdownOpen(false);
+            }
+        }
+
+        if (isFilterDropdownOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isFilterDropdownOpen]);
 
     // Close dialog on ESC key
     useEffect(() => {
@@ -129,10 +174,16 @@ export default function BugsPage({ params }: PageProps) {
         : null;
 
     // Get bugs for the app
-    const bugs = useQuery(
+    const allBugs = useQuery(
         api.bugs.queries.getByApp,
         app ? { appId: app._id } : "skip"
     );
+
+    // Filter bugs based on active filter
+    const bugs = allBugs?.filter((bug) => {
+        if (activeFilter === "all") return true;
+        return bug.status === activeFilter;
+    });
 
     const upvoteMutation = useMutation(api.bugs.mutations.upvote);
     const createBugMutation = useMutation(api.bugs.mutations.create);
@@ -356,26 +407,188 @@ export default function BugsPage({ params }: PageProps) {
         return null;
     }
 
+    // Helper function to format relative time
+    const formatRelativeTime = (timestamp: number): string => {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (seconds < 60) return "Created just now";
+        if (minutes < 60) return `Last activity ${minutes}m ago`;
+        if (hours < 24) return `Last activity ${hours}h ago`;
+        if (days < 7) return `Last activity ${days}d ago`;
+        return `Created ${new Date(timestamp).toLocaleDateString()}`;
+    };
+
+    // Helper function to get status label
+    const getStatusLabel = (status: string): string => {
+        switch (status) {
+            case "open":
+                return "Open";
+            case "in-progress":
+                return "In Progress";
+            case "resolved":
+                return "Resolved";
+            default:
+                return status;
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-background">
             <Header />
             <main className="flex-1 container mx-auto px-4 md:px-6 pt-32 pb-20 max-w-4xl">
-                <div className="mb-8">
+                {/* Header Section */}
+                <div className="mb-8 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
                         Bug Reports for {app.name}
                     </h1>
-                    <p className="text-secondary text-lg">
-                        {app.tagline}
+                    <p className="text-secondary text-lg max-w-2xl mx-auto">
+                        {app.tagline} Help us improve your experience by reporting issues or requesting features.
                     </p>
                 </div>
 
-                {/* Add Bug Button */}
-                <div className="mb-8">
+                {/* Tab Navigation */}
+                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border pb-4">
+                    {/* Mobile: Custom Dropdown */}
+                    <div className="md:hidden relative" ref={filterDropdownRef}>
+                        <button
+                            onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                            className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-primary focus:outline-none focus:border-accent flex items-center justify-between"
+                        >
+                            <span>
+                                {activeFilter === "all" ? "All Reports" :
+                                 activeFilter === "in-progress" ? "In Progress" :
+                                 activeFilter === "open" ? "Planned" : "Closed"}
+                            </span>
+                            <svg
+                                className={`w-4 h-4 transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        {isFilterDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-full bg-surface border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("all");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "all" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    All Reports
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("in-progress");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "in-progress" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    In Progress
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("open");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "open" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    Planned
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("resolved");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "resolved" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    Closed
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop: Tabs */}
+                    <div className="hidden md:flex gap-2">
+                        <button
+                            onClick={() => setActiveFilter("all")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "all"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            All Reports
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("in-progress")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "in-progress"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            In Progress
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("open")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "open"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            Planned
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("resolved")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "resolved"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            Closed
+                        </button>
+                    </div>
                     <button
                         onClick={() => setShowDialog(true)}
-                        className="px-6 py-3 bg-accent text-background font-semibold rounded-xl hover:bg-accent/90 transition-all shadow-lg"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-background rounded-lg hover:bg-white transition-all w-full md:w-auto justify-center"
                     >
-                        + Report New Bug
+                        <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                            />
+                        </svg>
+                        Report New Bug
                     </button>
                 </div>
 
@@ -511,8 +724,8 @@ export default function BugsPage({ params }: PageProps) {
                             <p className="text-secondary">Loading bugs...</p>
                         </div>
                     ) : bugs.length === 0 ? (
-                        <div className="bg-surface2/50 backdrop-blur-xl border border-border rounded-3xl p-12 text-center">
-                            <p className="text-secondary text-lg">
+                        <div className="text-center py-8">
+                            <p className="text-secondary text-sm">
                                 No bugs reported yet. Be the first!
                             </p>
                         </div>
@@ -523,23 +736,22 @@ export default function BugsPage({ params }: PageProps) {
                             return (
                                 <div
                                     key={bug._id}
-                                    className="bg-surface2/50 backdrop-blur-xl border border-border rounded-3xl p-6 hover:border-accent/50 transition-all"
+                                    className="bg-surface border border-border rounded-2xl p-4 hover:border-accent transition-all"
                                 >
-                                    <div className="flex items-start gap-4">
+                                    <div className="flex items-start gap-3">
+                                        {/* Left: Upvote Section */}
                                         <button
                                             onClick={() => handleUpvote(bug._id)}
                                             disabled={isUpvoted}
-                                            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all group min-w-[60px] ${
+                                            className={`flex flex-col items-center gap-0.5 min-w-[40px] ${
                                                 isUpvoted
-                                                    ? "bg-accent/20 border-accent cursor-not-allowed"
-                                                    : "bg-surface border border-border hover:border-accent hover:bg-surface"
-                                            }`}
+                                                    ? "cursor-not-allowed opacity-60"
+                                                    : "hover:opacity-80"
+                                            } transition-opacity`}
                                         >
                                             <svg
-                                                className={`w-5 h-5 transition-colors ${
-                                                    isUpvoted
-                                                        ? "text-accent"
-                                                        : "text-secondary group-hover:text-accent"
+                                                className={`w-4 h-4 ${
+                                                    isUpvoted ? "text-accent" : "text-secondary"
                                                 }`}
                                                 fill="none"
                                                 stroke="currentColor"
@@ -552,46 +764,49 @@ export default function BugsPage({ params }: PageProps) {
                                                     d="M5 15l7-7 7 7"
                                                 />
                                             </svg>
-                                            <span className={`text-lg font-bold ${
-                                                isUpvoted ? "text-accent" : "text-primary"
+                                            <span className={`text-base font-bold px-2 py-1 rounded border ${
+                                                isUpvoted 
+                                                    ? "text-accent border-accent bg-accent/10" 
+                                                    : "text-primary border-border bg-surface2"
                                             }`}>
                                                 {bug.upvotes}
                                             </span>
                                         </button>
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold mb-2">
-                                            {bug.title}
-                                        </h3>
-                                        <p className="text-secondary mb-3">
-                                            {bug.description}
-                                        </p>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
+
+                                        {/* Right: Bug Details */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                                                <h3 className="text-lg font-bold text-primary">
+                                                    {bug.title}
+                                                </h3>
                                                 <span
-                                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                    className={`px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 whitespace-nowrap ${
                                                         bug.status === "open"
                                                             ? "bg-red-500/10 text-red-400"
-                                                            : bug.status ===
-                                                              "in-progress"
+                                                            : bug.status === "in-progress"
                                                             ? "bg-yellow-500/10 text-yellow-400"
                                                             : "bg-green-500/10 text-green-400"
                                                     }`}
                                                 >
-                                                    {bug.status === "open"
-                                                        ? "Open"
-                                                        : bug.status === "in-progress"
-                                                        ? "In Progress"
-                                                        : "Resolved"}
+                                                    <span className="w-1 h-1 rounded-full bg-current"></span>
+                                                    {getStatusLabel(bug.status)}
                                                 </span>
                                             </div>
-                                            <SubscribeButton
-                                                bugId={bug._id}
-                                                onSubscribe={() => handleOpenSubscribeDialog(bug._id)}
-                                            />
+                                            <p className="text-sm text-secondary mb-3">
+                                                {bug.description}
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-secondary">
+                                                    {formatRelativeTime(bug._creationTime)}
+                                                </span>
+                                                <SubscribeButton
+                                                    bugId={bug._id}
+                                                    onSubscribe={() => handleOpenSubscribeDialog(bug._id)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                             );
                         })
                     )}

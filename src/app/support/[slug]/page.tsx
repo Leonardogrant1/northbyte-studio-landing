@@ -35,7 +35,7 @@ export default async function SupportPage({ params }: { params: Promise<{ slug: 
                 <div className="bg-surface rounded-3xl p-8 md:p-12 border border-border">
                     <h2 className="text-2xl font-bold mb-2">{content.contactPrompt}</h2>
                     <p className="text-secondary mb-8">
-                        Füllen Sie das Formular aus und wir melden uns schnellstmöglich bei Ihnen.
+                        Fill out the form and we'll get back to you as soon as possible.
                     </p>
 
                     <Suspense fallback={<div className="h-[400px] bg-surface2 animate-pulse rounded-3xl" />}>
@@ -49,7 +49,7 @@ export default async function SupportPage({ params }: { params: Promise<{ slug: 
                         href="/support"
                         className="text-secondary hover:text-accent transition-colors underline"
                     >
-                        ← Zurück zur Support-Übersicht
+                        ← Back to Support Overview
                     </a>
                 </div>
             </div>
