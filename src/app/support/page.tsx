@@ -1,33 +1,51 @@
+"use client";
+
 import Link from "next/link";
-import { supportContent, generalSupport } from "@/lib/support-content";
+import Image from "next/image";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function SupportOverviewPage() {
+    const apps = useQuery(api.apps.queries.getAllForPublic) || [];
+
     return (
         <main className="min-h-screen bg-background">
             <div className="container mx-auto px-4 md:px-6 py-24 max-w-5xl">
                 {/* Header */}
                 <div className="text-center mb-16">
                     <h1 className="text-5xl md:text-6xl font-bold mb-6">
-                        {generalSupport.title}
+                        Support
                     </h1>
                     <p className="text-xl text-secondary max-w-2xl mx-auto">
-                        {generalSupport.description}
+                        Welcome to NorthByte Studio Support. Select one of our apps or contact us for general inquiries. We'd love to hear from you!
                     </p>
                 </div>
 
                 {/* Support Options Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    {supportContent.map((content) => (
+                    {apps.map((app) => (
                         <Link
-                            key={content.slug}
-                            href={`/support/${content.slug}`}
+                            key={app._id}
+                            href={`/support/${app.slug}`}
                             className="group bg-surface border border-border rounded-2xl p-8 hover:border-accent transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
-                            <h2 className="text-2xl font-bold mb-3 group-hover:text-accent transition-colors">
-                                {content.appName}
-                            </h2>
+                            <div className="flex items-center gap-3 mb-3">
+                                {app.logoUrl && (
+                                    <div className="relative w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-surface2 border border-border flex items-center justify-center">
+                                        <Image
+                                            src={app.logoUrl}
+                                            alt={`${app.name} logo`}
+                                            fill
+                                            className="object-contain p-1"
+                                        />
+                                    </div>
+                                )}
+                                <h2 className="text-2xl font-bold group-hover:text-accent transition-colors">
+                                    {app.name}
+                                </h2>
+                            </div>
                             <p className="text-secondary mb-4">
-                                {content.description}
+                                {app.description || `Need help with ${app.name}? We're here to help.`}
                             </p>
                             <div className="text-accent font-medium flex items-center gap-2">
                                 Contact Support
