@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -100,6 +100,8 @@ export default function FeaturesPage({ params }: PageProps) {
     const [newFeatureEmail, setNewFeatureEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeFilter, setActiveFilter] = useState<"all" | "planned" | "in-development" | "completed">("all");
+    const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+    const filterDropdownRef = useRef<HTMLDivElement>(null);
     
     // Subscribe dialog state
     const [showSubscribeDialog, setShowSubscribeDialog] = useState(false);
@@ -111,6 +113,22 @@ export default function FeaturesPage({ params }: PageProps) {
     useEffect(() => {
         params.then((p) => setProjectId(p.projectId));
     }, [params]);
+
+    // Close filter dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+                setIsFilterDropdownOpen(false);
+            }
+        }
+
+        if (isFilterDropdownOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isFilterDropdownOpen]);
 
     // Close dialog on ESC key
     useEffect(() => {
@@ -434,52 +452,128 @@ export default function FeaturesPage({ params }: PageProps) {
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="mb-8 flex items-center justify-between gap-4 border-b border-border">
-                    <div className="flex gap-2">
-                    <button
-                        onClick={() => setActiveFilter("all")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "all"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        All Requests
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter("planned")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "planned"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        Planned
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter("in-development")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "in-development"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        In Development
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter("completed")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "completed"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        Completed
-                    </button>
+                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border pb-4">
+                    {/* Mobile: Custom Dropdown */}
+                    <div className="md:hidden relative" ref={filterDropdownRef}>
+                        <button
+                            onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                            className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-primary focus:outline-none focus:border-accent flex items-center justify-between"
+                        >
+                            <span>
+                                {activeFilter === "all" ? "All Requests" :
+                                 activeFilter === "planned" ? "Planned" :
+                                 activeFilter === "in-development" ? "In Development" : "Completed"}
+                            </span>
+                            <svg
+                                className={`w-4 h-4 transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        {isFilterDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-full bg-surface border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("all");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "all" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    All Requests
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("planned");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "planned" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    Planned
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("in-development");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "in-development" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    In Development
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("completed");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "completed" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    Completed
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop: Tabs */}
+                    <div className="hidden md:flex gap-2">
+                        <button
+                            onClick={() => setActiveFilter("all")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "all"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            All Requests
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("planned")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "planned"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            Planned
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("in-development")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "in-development"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            In Development
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("completed")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "completed"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            Completed
+                        </button>
                     </div>
                     <button
                         onClick={() => setShowDialog(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-background rounded-lg hover:bg-white transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-background rounded-lg hover:bg-white transition-all w-full md:w-auto justify-center"
                     >
                         <svg
                             className="w-4 h-4"
@@ -670,8 +764,10 @@ export default function FeaturesPage({ params }: PageProps) {
                                                     d="M5 15l7-7 7 7"
                                                 />
                                             </svg>
-                                            <span className={`text-lg font-bold ${
-                                                isUpvoted ? "text-accent" : "text-primary"
+                                            <span className={`text-base font-bold px-2 py-1 rounded border ${
+                                                isUpvoted 
+                                                    ? "text-accent border-accent bg-accent/10" 
+                                                    : "text-primary border-border bg-surface2"
                                             }`}>
                                                 {feature.upvotes}
                                             </span>

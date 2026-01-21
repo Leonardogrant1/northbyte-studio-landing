@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -100,6 +100,8 @@ export default function BugsPage({ params }: PageProps) {
     const [newBugEmail, setNewBugEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeFilter, setActiveFilter] = useState<"all" | "in-progress" | "open" | "resolved">("all");
+    const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+    const filterDropdownRef = useRef<HTMLDivElement>(null);
     
     // Subscribe dialog state
     const [showSubscribeDialog, setShowSubscribeDialog] = useState(false);
@@ -111,6 +113,22 @@ export default function BugsPage({ params }: PageProps) {
     useEffect(() => {
         params.then((p) => setProjectId(p.projectId));
     }, [params]);
+
+    // Close filter dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+                setIsFilterDropdownOpen(false);
+            }
+        }
+
+        if (isFilterDropdownOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isFilterDropdownOpen]);
 
     // Close dialog on ESC key
     useEffect(() => {
@@ -434,52 +452,128 @@ export default function BugsPage({ params }: PageProps) {
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="mb-8 flex items-center justify-between gap-4 border-b border-border">
-                    <div className="flex gap-2">
-                    <button
-                        onClick={() => setActiveFilter("all")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "all"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        All Reports
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter("in-progress")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "in-progress"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        In Progress
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter("open")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "open"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        Planned
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter("resolved")}
-                        className={`px-4 py-2 font-medium transition-colors ${
-                            activeFilter === "resolved"
-                                ? "text-primary border-b-2 border-primary"
-                                : "text-secondary hover:text-primary"
-                        }`}
-                    >
-                        Closed
-                    </button>
+                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border pb-4">
+                    {/* Mobile: Custom Dropdown */}
+                    <div className="md:hidden relative" ref={filterDropdownRef}>
+                        <button
+                            onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                            className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-primary focus:outline-none focus:border-accent flex items-center justify-between"
+                        >
+                            <span>
+                                {activeFilter === "all" ? "All Reports" :
+                                 activeFilter === "in-progress" ? "In Progress" :
+                                 activeFilter === "open" ? "Planned" : "Closed"}
+                            </span>
+                            <svg
+                                className={`w-4 h-4 transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        {isFilterDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-full bg-surface border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("all");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "all" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    All Reports
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("in-progress");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "in-progress" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    In Progress
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("open");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "open" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    Planned
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveFilter("resolved");
+                                        setIsFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-surface2 transition-colors ${
+                                        activeFilter === "resolved" ? "bg-accent/10" : ""
+                                    }`}
+                                >
+                                    Closed
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop: Tabs */}
+                    <div className="hidden md:flex gap-2">
+                        <button
+                            onClick={() => setActiveFilter("all")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "all"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            All Reports
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("in-progress")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "in-progress"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            In Progress
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("open")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "open"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            Planned
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter("resolved")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeFilter === "resolved"
+                                    ? "text-primary border-b-2 border-primary"
+                                    : "text-secondary hover:text-primary"
+                            }`}
+                        >
+                            Closed
+                        </button>
                     </div>
                     <button
                         onClick={() => setShowDialog(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-background rounded-lg hover:bg-white transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-background rounded-lg hover:bg-white transition-all w-full md:w-auto justify-center"
                     >
                         <svg
                             className="w-4 h-4"
@@ -670,8 +764,10 @@ export default function BugsPage({ params }: PageProps) {
                                                     d="M5 15l7-7 7 7"
                                                 />
                                             </svg>
-                                            <span className={`text-lg font-bold ${
-                                                isUpvoted ? "text-accent" : "text-primary"
+                                            <span className={`text-base font-bold px-2 py-1 rounded border ${
+                                                isUpvoted 
+                                                    ? "text-accent border-accent bg-accent/10" 
+                                                    : "text-primary border-border bg-surface2"
                                             }`}>
                                                 {bug.upvotes}
                                             </span>
