@@ -39,7 +39,7 @@ export default function SupportPage({ params }: PageProps) {
     }
 
     const title = `${appData.name} Support`;
-    const description = appData.description || `Need help with ${appData.name}? We're here to help. Whether you have questions about usage, want to report technical issues, or provide feedback – feel free to contact us.`;
+    const description = `Need help with ${appData.name}? We're here to help. Whether you have questions about usage, want to report technical issues, or provide feedback – feel free to contact us.`;
     const contactPrompt = `Describe your request and we'll get back to you as soon as possible.`;
 
     return (
