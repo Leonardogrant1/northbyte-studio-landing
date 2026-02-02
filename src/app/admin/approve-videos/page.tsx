@@ -16,6 +16,7 @@ export default function ApproveVideosPage() {
     const [isChecking, setIsChecking] = useState(true);
     const [selectedContent, setSelectedContent] = useState<Content | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
     const assetDropperRef = useRef<AssetDropperRef>(null);
 
     // Fetch contents with React Query
@@ -29,45 +30,76 @@ export default function ApproveVideosPage() {
         },
     });
 
-    // Approve video mutation
+    // Approve video mutation with R2 direct upload
     const approveVideoMutation = useMutation({
         mutationFn: async ({ file, contentId }: { file: File; contentId: string }) => {
-            // Upload to n8n
-            const endpoint = "https://n8n-video-merger-38873740272.europe-west3.run.app/videos/store";
-            const formData = new FormData();
-            formData.append("video", file);
+            setUploadProgress(0);
 
-            const response = await fetch(endpoint, {
+            // Step 1: Request presigned URL from backend
+            const presignedResponse = await fetch("/api/r2/presigned-url", {
                 method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to upload video");
-            }
-
-            const data = (await response.json()) as {
-                success: boolean;
-                download_url: string;
-            };
-
-            // Update Airtable
-            const updateResponse = await fetch("/api/airtable/update-content", {
-                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    id: contentId,
-                    mediaUrl: data.download_url,
-                    status: "Ready For Scheduling",
+                    fileName: file.name,
+                    fileType: file.type,
                 }),
             });
 
-            if (!updateResponse.ok) {
-                throw new Error("Failed to update Airtable");
+            if (!presignedResponse.ok) {
+                throw new Error("Failed to get presigned URL");
             }
 
+            const { uploadUrl, key, downloadUrl } = await presignedResponse.json();
+
+
+            // Step 2: Upload file directly to R2 using XMLHttpRequest for progress tracking
+            await new Promise<void>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.addEventListener("progress", (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        setUploadProgress(percentComplete);
+                    }
+                });
+
+                xhr.addEventListener("load", () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve();
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                });
+
+                xhr.addEventListener("error", () => {
+                    reject(new Error("Network error during upload"));
+                });
+
+                xhr.open("PUT", uploadUrl);
+                xhr.setRequestHeader("Content-Type", file.type);
+                xhr.send(file);
+            });
+
+            // Step 3: Approve video and update Airtable
+            const approveResponse = await fetch("/api/approve-video", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    key,
+                    downloadUrl,
+                    contentId,
+                }),
+            });
+
+            if (!approveResponse.ok) {
+                throw new Error("Failed to approve video");
+            }
+
+            const data = await approveResponse.json();
             return data;
         },
         onSuccess: () => {
@@ -77,10 +109,12 @@ export default function ApproveVideosPage() {
             assetDropperRef.current?.clearSelection();
             setSelectedFile(null);
             setSelectedContent(null);
+            setUploadProgress(0);
             console.log("Video approved and Airtable updated successfully");
         },
         onError: (error) => {
             console.error("Failed to approve video:", error);
+            setUploadProgress(0);
         },
     });
 
@@ -207,10 +241,20 @@ export default function ApproveVideosPage() {
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {approveVideoMutation.isPending ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                        Approving...
-                                    </>
+                                    <div className="flex flex-col items-center gap-2 w-full">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            {uploadProgress > 0 ? `Uploading... ${uploadProgress}%` : "Preparing..."}
+                                        </div>
+                                        {uploadProgress > 0 && (
+                                            <div className="w-full bg-green-800 rounded-full h-2">
+                                                <div
+                                                    className="bg-white h-2 rounded-full transition-all duration-300"
+                                                    style={{ width: `${uploadProgress}%` }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
                                     <>
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

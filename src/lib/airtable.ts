@@ -82,30 +82,17 @@ export async function fetchContentById(id: string): Promise<Content | null> {
 }
 
 /**
- * Update a content record with media URL and status
+ * Update a content record with any fields
  */
 export async function updateContent(
     id: string,
-    updates: {
-        mediaUrl?: string;
-        status?: string;
-    }
+    updates: Record<string, string>
 ): Promise<boolean> {
     try {
         const base = getAirtableBase();
         const tableName = process.env.AIRTABLE_TABLE_NAME || "Contents";
 
-        const updateFields: Record<string, string> = {};
-
-        if (updates.mediaUrl) {
-            updateFields["Media"] = updates.mediaUrl.includes("http") ? updates.mediaUrl : `https://${updates.mediaUrl}`;
-        }
-
-        if (updates.status) {
-            updateFields["Status"] = updates.status;
-        }
-
-        await base(tableName).update(id, updateFields);
+        await base(tableName).update(id, updates);
 
         return true;
     } catch (error) {
