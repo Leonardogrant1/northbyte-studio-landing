@@ -12,6 +12,7 @@ export const create = mutation({
         amount_usd: v.number(),
         tax_amount: v.optional(v.number()),
         date: v.string(),
+        urls: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
         return await ctx.db.insert("expenses", {
@@ -24,6 +25,7 @@ export const create = mutation({
             amount_usd: args.amount_usd,
             tax_amount: args.tax_amount,
             date: args.date,
+            urls: args.urls,
         });
     },
 });
