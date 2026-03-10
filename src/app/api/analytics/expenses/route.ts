@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/../convex/_generated/api";
+import { isAdmin } from "@/lib/auth";
+import { getRangeDates, Range } from "../apps/[appId]/helpers/dates";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export interface ExpenseItem {
+    _id: string;
+    description: string;
+    vendorName: string;
+    categoryName: string;
+    amount_usd: number;
+    original_amount: number;
+    original_currency: string;
+    date: string;
+}
+
+export interface ExpensesResult {
+    totalUsd: number;
+    expenses: ExpenseItem[];
+}
+
+export async function GET(request: NextRequest) {
+    if (!(await isAdmin())) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const sp = request.nextUrl.searchParams;
+    const range = (sp.get("range") ?? "7d") as Range;
+    const fromParam = sp.get("from") ?? undefined;
+    const toParam = sp.get("to") ?? undefined;
+    const { startDate, endDate } = getRangeDates(range, fromParam, toParam);
+
+    const expenses = await convex.query(api.expenses.queries.getByDateRange, {
+        startDate,
+        endDate,
+    });
+
+    const totalUsd = expenses.reduce((sum, e) => sum + e.amount_usd, 0);
+
+    return NextResponse.json({
+        totalUsd,
+        expenses: expenses.map((e) => ({
+            _id: e._id,
+            description: e.description,
+            vendorName: e.vendorName,
+            categoryName: e.categoryName,
+            amount_usd: e.amount_usd,
+            original_amount: e.original_amount,
+            original_currency: e.original_currency,
+            date: e.date,
+        })),
+    } satisfies ExpensesResult);
+}
