@@ -19,6 +19,8 @@ export interface ExpenseItem {
 
 export interface ExpensesResult {
     totalUsd: number;
+    total: number;
+    currency: string;
     expenses: ExpenseItem[];
 }
 
@@ -31,6 +33,7 @@ export async function GET(request: NextRequest) {
     const range = (sp.get("range") ?? "7d") as Range;
     const fromParam = sp.get("from") ?? undefined;
     const toParam = sp.get("to") ?? undefined;
+    const currency = sp.get("currency") ?? "USD";
     const { startDate, endDate } = getRangeDates(range, fromParam, toParam);
 
     const expenses = await convex.query(api.expenses.queries.getByDateRange, {
@@ -40,8 +43,17 @@ export async function GET(request: NextRequest) {
 
     const totalUsd = expenses.reduce((sum, e) => sum + e.amount_usd, 0);
 
+    let total = totalUsd;
+    if (currency !== "USD") {
+        const fx = await fetch(`https://api.frankfurter.app/latest?from=USD&to=${currency}`);
+        const fxData = await fx.json() as { rates: Record<string, number> };
+        total = Math.round(totalUsd * (fxData.rates[currency] ?? 1) * 100) / 100;
+    }
+
     return NextResponse.json({
         totalUsd,
+        total,
+        currency,
         expenses: expenses.map((e) => ({
             _id: e._id,
             description: e.description,

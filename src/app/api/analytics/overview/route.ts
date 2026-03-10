@@ -28,14 +28,12 @@ export async function GET(request: NextRequest) {
     const apps = await convex.query(api.apps.queries.getAll);
     const { startDate, endDate } = getRangeDates(range, fromParam, toParam);
 
-    const revenueId = currency === "USD" ? "revenue" : `revenue_${currency.toLowerCase()}`;
-
     const results = await Promise.all(
         apps.map(async (app) => {
             if (!app.revenueCatProjectId || !app.revenueCatApiKeyEncrypted) return null;
 
             const rcKey = decrypt(app.revenueCatApiKeyEncrypted);
-            const params = `?start_time=${startDate}&end_time=${endDate}&period=day&currency=${currency}&realtime=false`;
+            const params = `?start_time=${startDate}&end_time=${endDate}&period=day&currency=USD&realtime=false`;
 
             const data = await rcFetch(
                 `/projects/${app.revenueCatProjectId}/metrics/overview${params}`,
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
             if (!data?.metrics) return null;
 
             const metric = (data.metrics as { id: string; value: number }[]).find(
-                (m) => m.id === revenueId
+                (m) => m.id === "revenue"
             );
 
             return metric?.value ?? 0;
@@ -53,7 +51,14 @@ export async function GET(request: NextRequest) {
     );
 
     const validResults = results.filter((r): r is number => r !== null);
-    const totalRevenue = validResults.reduce((sum, r) => sum + r, 0);
+    const totalRevenueUsd = validResults.reduce((sum, r) => sum + r, 0);
+
+    let totalRevenue = totalRevenueUsd;
+    if (currency !== "USD") {
+        const fx = await fetch(`https://api.frankfurter.app/latest?from=USD&to=${currency}`);
+        const fxData = await fx.json() as { rates: Record<string, number> };
+        totalRevenue = Math.round(totalRevenueUsd * (fxData.rates[currency] ?? 1) * 100) / 100;
+    }
 
     return NextResponse.json({
         currency,

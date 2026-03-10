@@ -21,7 +21,6 @@ export async function DELETE(request: NextRequest) {
             id: id as Id<"expenses">
         });
 
-        console.log("adoijwd");
 
         return NextResponse.json(
             { success: true, message: "Expense deleted successfully" },

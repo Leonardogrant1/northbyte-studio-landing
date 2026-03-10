@@ -14,9 +14,10 @@ export interface MetricCardProps {
     badge?: string | null;
     subtitle: string;
     sparklineColor?: string;
+    valueColor?: string;
 }
 
-export function MetricCard({ label, value, sparkline, badge, subtitle, sparklineColor }: MetricCardProps) {
+export function MetricCard({ label, value, sparkline, badge, subtitle, sparklineColor, valueColor }: MetricCardProps) {
     return (
         <div className="bg-surface2/50 backdrop-blur-xl border border-border rounded-3xl p-6 flex flex-col gap-3 min-w-0">
             <div className="flex items-start justify-between gap-2">
@@ -24,7 +25,7 @@ export function MetricCard({ label, value, sparkline, badge, subtitle, sparkline
                 <SparklineChart data={sparkline} color={sparklineColor} />
             </div>
             <div>
-                <div className="text-3xl font-bold tracking-tight">{value}</div>
+                <div className={`text-3xl font-bold tracking-tight ${valueColor ?? ""}`}>{value}</div>
                 {badge && (
                     <span className={`text-xs font-semibold mt-1 inline-block ${BADGE_COLORS[badge] ?? "text-secondary"}`}>
                         {badge}

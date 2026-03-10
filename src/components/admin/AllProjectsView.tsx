@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MetricCard } from "./MetricCard";
 import { OverviewResult } from "@/app/api/analytics/overview/route";
 import { ExpensesResult, ExpenseItem } from "@/app/api/analytics/expenses/route";
+import { ProfitResult } from "@/app/api/analytics/profit/route";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,8 +18,10 @@ interface Props {
 export function AllProjectsView({ range, currency, customFrom, customTo }: Props) {
     const [data, setData] = useState<OverviewResult | null>(null);
     const [expensesData, setExpensesData] = useState<ExpensesResult | null>(null);
+    const [profitData, setProfitData] = useState<ProfitResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [expensesLoading, setExpensesLoading] = useState(true);
+    const [profitLoading, setProfitLoading] = useState(true);
 
     useEffect(() => {
         setLoading(true);
@@ -34,7 +37,7 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
 
     useEffect(() => {
         setExpensesLoading(true);
-        const params = new URLSearchParams({ range });
+        const params = new URLSearchParams({ range, currency });
         if (customFrom) params.set("from", customFrom);
         if (customTo) params.set("to", customTo);
 
@@ -43,6 +46,18 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
             .then((d) => { setExpensesData(d); setExpensesLoading(false); })
             .catch(() => setExpensesLoading(false));
     }, [range, customFrom, customTo]);
+
+    useEffect(() => {
+        setProfitLoading(true);
+        const params = new URLSearchParams({ range, currency });
+        if (customFrom) params.set("from", customFrom);
+        if (customTo) params.set("to", customTo);
+
+        fetch(`/api/analytics/profit?${params}`)
+            .then((r) => r.json())
+            .then((d) => { setProfitData(d); setProfitLoading(false); })
+            .catch(() => setProfitLoading(false));
+    }, [range, currency, customFrom, customTo]);
 
     const handleDeleteExpense = async (id: string) => {
         if (!confirm("Are you sure you want to delete this expense?")) return;
@@ -78,6 +93,7 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
         ? [...expensesData.expenses].sort((a, b) => b.date.localeCompare(a.date))
         : [];
 
+
     return (
         <div className="flex flex-col gap-8">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -90,10 +106,18 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
                 />
                 <MetricCard
                     label="Total Expenses"
-                    value={expensesLoading ? "—" : formatUsd(expensesData?.totalUsd ?? 0)}
+                    value={expensesLoading ? "—" : formatRevenue(expensesData?.total ?? 0)}
                     sparkline={[0]}
                     subtitle={expensesLoading ? "Loading…" : `${sortedExpenses.length} expense${sortedExpenses.length !== 1 ? "s" : ""} in period`}
                     sparklineColor="#FF6B6B"
+                />
+                <MetricCard
+                    label="Profit"
+                    value={profitLoading ? "—" : formatRevenue(profitData?.profit ?? 0)}
+                    sparkline={[0]}
+                    subtitle={profitLoading ? "Loading…" : ((profitData?.profit ?? 0) >= 0 ? "Revenue minus expenses" : "Net loss")}
+                    sparklineColor={profitLoading || (profitData?.profit ?? 0) >= 0 ? "#4ADE80" : "#FF6B6B"}
+                    valueColor={profitLoading ? undefined : (profitData?.profit ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"}
                 />
             </div>
 
