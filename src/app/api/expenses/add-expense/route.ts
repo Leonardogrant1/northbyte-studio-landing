@@ -15,6 +15,7 @@ type RequestBody = {
     amount_usd: number;
     tax_amount?: number;
     date: string;
+    urls?: string[];
 }
 
 export async function POST(request: NextRequest) {
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
             amount_usd,
             tax_amount,
             date,
+            urls,
         } = body;
 
         if (
@@ -58,6 +60,7 @@ export async function POST(request: NextRequest) {
             amount_usd: Number(amount_usd),
             tax_amount: tax_amount !== undefined ? Number(tax_amount) : undefined,
             date,
+            urls,
         });
 
         return NextResponse.json(

@@ -80,6 +80,7 @@ export default defineSchema({
         amount_usd: v.number(),
         tax_amount: v.optional(v.number()),
         date: v.string(),
+        urls: v.optional(v.array(v.string())),
     }).index("by_source", ["source_id"])
         .index("by_category", ["category_id"]),
 });
