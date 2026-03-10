@@ -82,5 +82,6 @@ export default defineSchema({
         date: v.string(),
         urls: v.optional(v.array(v.string())),
     }).index("by_vendor", ["vendor_id"])
-        .index("by_category", ["category_id"]),
+        .index("by_category", ["category_id"])
+        .index("by_vendor_invoice", ["vendor_id", "vendor_invoice_id"]),
 });
