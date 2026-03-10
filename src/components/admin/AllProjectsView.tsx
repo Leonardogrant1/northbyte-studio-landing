@@ -45,7 +45,7 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
             .then((r) => r.json())
             .then((d) => { setExpensesData(d); setExpensesLoading(false); })
             .catch(() => setExpensesLoading(false));
-    }, [range, customFrom, customTo]);
+    }, [range, currency, customFrom, customTo]);
 
     useEffect(() => {
         setProfitLoading(true);
