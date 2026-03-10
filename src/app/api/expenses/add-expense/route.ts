@@ -5,6 +5,13 @@ import { Id } from "@/../convex/_generated/dataModel";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+async function toUsd(amount: number, currency: string): Promise<number> {
+    if (currency === "USD") return amount;
+    const res = await fetch(`https://api.frankfurter.app/latest?from=${currency}&to=USD`);
+    const data = await res.json() as { rates: { USD: number } };
+    return Math.round(amount * data.rates.USD * 100) / 100;
+}
+
 type RequestBody = {
     description: string;
     vendor_invoice_id?: string;
@@ -13,7 +20,6 @@ type RequestBody = {
     category_id: Id<"categories">;
     original_amount: number;
     original_currency: string;
-    amount_usd: number;
     tax_amount?: number;
     date: string;
     urls?: string[];
@@ -30,7 +36,6 @@ export async function POST(request: NextRequest) {
             category_id,
             original_amount,
             original_currency,
-            amount_usd,
             tax_amount,
             date,
             urls,
@@ -43,7 +48,6 @@ export async function POST(request: NextRequest) {
             !category_id ||
             original_amount === undefined ||
             !original_currency ||
-            amount_usd === undefined ||
             !date
         ) {
             return NextResponse.json(
@@ -51,6 +55,8 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const amount_usd = await toUsd(Number(original_amount), original_currency);
 
         const expenseId = await convex.mutation(api.expenses.mutations.create, {
             description,
@@ -60,7 +66,7 @@ export async function POST(request: NextRequest) {
             category_id: category_id as Id<"categories">,
             original_amount: Number(original_amount),
             original_currency,
-            amount_usd: Number(amount_usd),
+            amount_usd,
             tax_amount: tax_amount !== undefined ? Number(tax_amount) : undefined,
             date,
             urls,

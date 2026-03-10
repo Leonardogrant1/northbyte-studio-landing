@@ -7,6 +7,8 @@ export async function rcFetch(path: string, apiKey: string, revalidate = 300) {
     const hit = rcCache.get(path);
     if (hit && hit.expires > now) return hit.data;
 
+    console.log("Fetching from RevenueCat:", path);
+
     const res = await fetch(`${RC_BASE}${path}`, {
         headers: { Authorization: `Bearer ${apiKey}` },
     });
