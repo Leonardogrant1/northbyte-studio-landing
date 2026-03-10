@@ -7,7 +7,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
-            .query("sources")
+            .query("vendors")
             .withIndex("by_name", (q) => q.eq("name", args.name))
             .first();
 
@@ -15,7 +15,7 @@ export const create = mutation({
             return existing._id;
         }
 
-        return await ctx.db.insert("sources", {
+        return await ctx.db.insert("vendors", {
             name: args.name,
         });
     },

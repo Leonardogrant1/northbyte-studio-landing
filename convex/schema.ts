@@ -62,7 +62,7 @@ export default defineSchema({
         .index("by_email_feature", ["email", "featureId"]),
 
 
-    sources: defineTable({
+    vendors: defineTable({
         name: v.string(),        // "tiktok", "google_cloud"
     }).index("by_name", ["name"]),
 
@@ -72,8 +72,8 @@ export default defineSchema({
 
     expenses: defineTable({
         description: v.string(),
-        source_invoice_id: v.string(),
-        source_id: v.id("sources"),
+        vendor_invoice_id: v.string(),
+        vendor_id: v.id("vendors"),
         category_id: v.id("categories"),
         original_amount: v.number(),
         original_currency: v.string(),
@@ -81,6 +81,6 @@ export default defineSchema({
         tax_amount: v.optional(v.number()),
         date: v.string(),
         urls: v.optional(v.array(v.string())),
-    }).index("by_source", ["source_id"])
+    }).index("by_vendor", ["vendor_id"])
         .index("by_category", ["category_id"]),
 });
