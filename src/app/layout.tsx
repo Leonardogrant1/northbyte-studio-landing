@@ -6,6 +6,7 @@ import { AdminFloatingButtons } from "@/components/layout/AdminFloatingButtons";
 import { ConvexClientProvider } from "@/lib/convex/client";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Providers } from "@/components/Providers";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap' });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
                             {children}
                         </Providers>
                         <AdminFloatingButtons />
+                        <Toaster position="bottom-right" theme="dark" />
                     </body>
                 </html>
             </ConvexClientProvider>

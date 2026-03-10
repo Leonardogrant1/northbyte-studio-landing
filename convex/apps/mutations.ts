@@ -51,6 +51,12 @@ export const update = mutation({
         slug: v.optional(v.string()),
         logoStorageId: v.optional(v.id("_storage")),
         thumbnailStorageId: v.optional(v.id("_storage")),
+        revenueCatProjectId:       v.optional(v.string()),
+        revenueCatApiKeyEncrypted: v.optional(v.string()),
+        postHogProjectId:          v.optional(v.string()),
+        postHogApiKeyEncrypted:    v.optional(v.string()),
+        postHogInstallEvent:       v.optional(v.string()),
+        postHogTrialEvent:         v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         // Validate slug uniqueness if provided and changed

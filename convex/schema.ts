@@ -13,13 +13,19 @@ export default defineSchema({
     // Apps - applications that can have bugs and features
     apps: defineTable({
         name: v.string(),
-        domain: v.optional(v.string()), 
+        domain: v.optional(v.string()),
         tagline: v.string(),
         logoStorageId: v.optional(v.id("_storage")),
         thumbnailStorageId: v.optional(v.id("_storage")),
         slug: v.string(),
         description: v.string(),
         status: v.string(),
+        revenueCatProjectId: v.optional(v.string()),
+        revenueCatApiKeyEncrypted: v.optional(v.string()),
+        postHogProjectId: v.optional(v.string()),
+        postHogApiKeyEncrypted: v.optional(v.string()),
+        postHogInstallEvent: v.optional(v.string()),
+        postHogTrialEvent: v.optional(v.string()),
     }),
     // Bugs - bug reports for apps
     bugs: defineTable({
@@ -54,4 +60,26 @@ export default defineSchema({
     })
         .index("by_feature", ["featureId"])
         .index("by_email_feature", ["email", "featureId"]),
+
+
+    sources: defineTable({
+        name: v.string(),        // "tiktok", "google_cloud"
+    }).index("by_name", ["name"]),
+
+    categories: defineTable({
+        name: v.string(),        // "advertising", "infrastructure"
+    }).index("by_name", ["name"]),
+
+    expenses: defineTable({
+        description: v.string(),
+        source_invoice_id: v.string(),
+        source_id: v.id("sources"),
+        category_id: v.id("categories"),
+        original_amount: v.number(),
+        original_currency: v.string(),
+        amount_usd: v.number(),
+        tax_amount: v.optional(v.number()),
+        date: v.string(),
+    }).index("by_source", ["source_id"])
+        .index("by_category", ["category_id"]),
 });

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminLoginRoute = createRouteMatcher(["/admin/login"]);
 const isAdminSignupRoute = createRouteMatcher(["/admin/signup"]);
+const isExpenseRoute = createRouteMatcher(["/api/expenses(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
     // Protect all admin routes
@@ -23,6 +24,22 @@ export default clerkMiddleware(async (auth, req) => {
             return NextResponse.redirect(adminUrl);
         }
 
+    }
+
+    // Protect Expense API Routes
+    if (isExpenseRoute(req)) {
+        // Require Pre-Shared Secret API Key from n8n
+        const authHeader = req.headers.get("authorization");
+        const isValidKey = authHeader === `Bearer ${process.env.N8N_API_KEY}`;
+
+        if (!isValidKey) {
+            return new NextResponse(
+                JSON.stringify({ error: "Unauthorized access: Invalid API Key" }),
+                { status: 401, headers: { "Content-Type": "application/json" } }
+            );
+        }
+
+        return NextResponse.next();
     }
 });
 
