@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { MetricCard } from "./MetricCard";
 import { OverviewResult } from "@/app/api/analytics/overview/route";
 import { ExpensesResult, ExpenseItem } from "@/app/api/analytics/expenses/route";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
     range: string;
@@ -41,6 +43,30 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
             .then((d) => { setExpensesData(d); setExpensesLoading(false); })
             .catch(() => setExpensesLoading(false));
     }, [range, customFrom, customTo]);
+
+    const handleDeleteExpense = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this expense?")) return;
+
+        try {
+            const res = await fetch(`/api/expenses/delete-expense?id=${id}`, {
+                method: "DELETE",
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                toast.success("Expense deleted successfully");
+                setExpensesData(prev => prev ? {
+                    ...prev,
+                    expenses: prev.expenses.filter(e => e._id !== id)
+                } : null);
+            } else {
+                toast.error(result.error || "Failed to delete expense");
+            }
+        } catch (error) {
+            toast.error("Failed to delete expense");
+            console.error("Delete error:", error);
+        }
+    };
 
     const formatRevenue = (value: number) =>
         `${currency === "USD" ? "$" : ""}${value.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${currency !== "USD" ? currency : ""}`.trim();
@@ -89,6 +115,7 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
                                     <th className="text-left px-6 py-3 font-medium">Category</th>
                                     <th className="text-right px-6 py-3 font-medium">Amount (USD)</th>
                                     <th className="text-right px-6 py-3 font-medium">Original</th>
+                                    <th className="text-center px-6 py-3 font-medium w-16"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -106,6 +133,15 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
                                             {expense.original_currency === "USD"
                                                 ? "—"
                                                 : `${expense.original_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${expense.original_currency}`}
+                                        </td>
+                                        <td className="px-6 py-3 text-center">
+                                            <button 
+                                                onClick={() => handleDeleteExpense(expense._id)}
+                                                className="text-secondary hover:text-red-500 transition-colors"
+                                                title="Delete expense"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
