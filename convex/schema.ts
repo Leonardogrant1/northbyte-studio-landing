@@ -13,13 +13,19 @@ export default defineSchema({
     // Apps - applications that can have bugs and features
     apps: defineTable({
         name: v.string(),
-        domain: v.optional(v.string()), 
+        domain: v.optional(v.string()),
         tagline: v.string(),
         logoStorageId: v.optional(v.id("_storage")),
         thumbnailStorageId: v.optional(v.id("_storage")),
         slug: v.string(),
         description: v.string(),
         status: v.string(),
+        revenueCatProjectId:       v.optional(v.string()),
+        revenueCatApiKeyEncrypted: v.optional(v.string()),
+        postHogProjectId:          v.optional(v.string()),
+        postHogApiKeyEncrypted:    v.optional(v.string()),
+        postHogInstallEvent:       v.optional(v.string()),
+        postHogTrialEvent:         v.optional(v.string()),
     }),
     // Bugs - bug reports for apps
     bugs: defineTable({
