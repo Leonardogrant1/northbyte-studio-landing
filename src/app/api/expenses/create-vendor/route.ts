@@ -16,14 +16,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const sourceId = await convex.mutation(api.sources.mutations.create, { name });
+        const vendorId = await convex.mutation(api.vendors.mutations.create, { name });
 
         return NextResponse.json(
-            { success: true, sourceId, message: "Source created successfully" },
+            { success: true, vendorId, message: "Vendor created successfully" },
             { status: 200 }
         );
     } catch (error) {
-        console.error("Error creating source:", error);
+        console.error("Error creating vendor:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

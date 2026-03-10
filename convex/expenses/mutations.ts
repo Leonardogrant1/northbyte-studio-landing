@@ -4,8 +4,8 @@ import { v } from "convex/values";
 export const create = mutation({
     args: {
         description: v.string(),
-        source_invoice_id: v.string(),
-        source_id: v.id("sources"),
+        vendor_invoice_id: v.string(),
+        vendor_id: v.id("vendors"),
         category_id: v.id("categories"),
         original_amount: v.number(),
         original_currency: v.string(),
@@ -17,8 +17,8 @@ export const create = mutation({
     handler: async (ctx, args) => {
         return await ctx.db.insert("expenses", {
             description: args.description,
-            source_invoice_id: args.source_invoice_id,
-            source_id: args.source_id,
+            vendor_invoice_id: args.vendor_invoice_id,
+            vendor_id: args.vendor_id,
             category_id: args.category_id,
             original_amount: args.original_amount,
             original_currency: args.original_currency,

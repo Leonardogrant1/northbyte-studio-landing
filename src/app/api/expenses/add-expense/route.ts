@@ -7,8 +7,8 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 type RequestBody = {
     description: string;
-    source_invoice_id: string;
-    source_id: Id<"sources">;
+    vendor_invoice_id: string;
+    vendor_id: Id<"vendors">;
     category_id: Id<"categories">;
     original_amount: number;
     original_currency: string;
@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
         const body = await request.json() as RequestBody;
         const {
             description,
-            source_invoice_id,
-            source_id,
+            vendor_invoice_id,
+            vendor_id,
             category_id,
             original_amount,
             original_currency,
@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
 
         if (
             !description ||
-            !source_invoice_id ||
-            !source_id ||
+            !vendor_invoice_id ||
+            !vendor_id ||
             !category_id ||
             original_amount === undefined ||
             !original_currency ||
@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
 
         const expenseId = await convex.mutation(api.expenses.mutations.create, {
             description,
-            source_invoice_id,
-            source_id: source_id as Id<"sources">,
+            vendor_invoice_id,
+            vendor_id: vendor_id as Id<"vendors">,
             category_id: category_id as Id<"categories">,
             original_amount: Number(original_amount),
             original_currency,

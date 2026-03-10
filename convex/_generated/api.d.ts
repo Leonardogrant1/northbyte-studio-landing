@@ -21,14 +21,14 @@ import type * as features_actions from "../features/actions.js";
 import type * as features_mutations from "../features/mutations.js";
 import type * as features_queries from "../features/queries.js";
 import type * as http from "../http.js";
-import type * as sources_mutations from "../sources/mutations.js";
-import type * as sources_queries from "../sources/queries.js";
 import type * as storage_actions from "../storage/actions.js";
 import type * as storage_mutations from "../storage/mutations.js";
 import type * as storage_queries from "../storage/queries.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 import type * as users_webhooks from "../users/webhooks.js";
+import type * as vendors_mutations from "../vendors/mutations.js";
+import type * as vendors_queries from "../vendors/queries.js";
 
 import type {
   ApiFromModules,
@@ -50,14 +50,14 @@ declare const fullApi: ApiFromModules<{
   "features/mutations": typeof features_mutations;
   "features/queries": typeof features_queries;
   http: typeof http;
-  "sources/mutations": typeof sources_mutations;
-  "sources/queries": typeof sources_queries;
   "storage/actions": typeof storage_actions;
   "storage/mutations": typeof storage_mutations;
   "storage/queries": typeof storage_queries;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
   "users/webhooks": typeof users_webhooks;
+  "vendors/mutations": typeof vendors_mutations;
+  "vendors/queries": typeof vendors_queries;
 }>;
 
 /**
