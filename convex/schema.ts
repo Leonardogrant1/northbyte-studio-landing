@@ -72,7 +72,8 @@ export default defineSchema({
 
     expenses: defineTable({
         description: v.string(),
-        vendor_invoice_id: v.string(),
+        vendor_invoice_id: v.optional(v.string()),
+        vendor_receipt_id: v.optional(v.string()),
         vendor_id: v.id("vendors"),
         category_id: v.id("categories"),
         original_amount: v.number(),
@@ -82,5 +83,7 @@ export default defineSchema({
         date: v.string(),
         urls: v.optional(v.array(v.string())),
     }).index("by_vendor", ["vendor_id"])
-        .index("by_category", ["category_id"]),
+        .index("by_category", ["category_id"])
+        .index("by_vendor_invoice", ["vendor_id", "vendor_invoice_id"])
+        .index("by_vendor_receipt", ["vendor_id", "vendor_receipt_id"]),
 });
