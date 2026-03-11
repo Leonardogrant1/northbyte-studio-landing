@@ -27,22 +27,19 @@ export async function GET(request: NextRequest) {
     const { startDate, endDate } = getRangeDates(range, fromParam, toParam);
 
     const apps = await convex.query(api.apps.queries.getAll);
+    const proceedsSelector = `&selectors=${encodeURIComponent(JSON.stringify({ revenue_type: "proceeds" }))}`;
 
     const [revenueResults, expenses] = await Promise.all([
         Promise.all(
             apps.map(async (app) => {
                 if (!app.revenueCatProjectId || !app.revenueCatApiKeyEncrypted) return null;
                 const rcKey = decrypt(app.revenueCatApiKeyEncrypted);
-                const params = `?start_time=${startDate}&end_time=${endDate}&period=day&currency=USD&realtime=false`;
+                const params = `?start_time=${startDate}&end_time=${endDate}&period=day&currency=USD&realtime=false${proceedsSelector}`;
                 const data = await rcFetch(
-                    `/projects/${app.revenueCatProjectId}/metrics/overview${params}`,
+                    `/projects/${app.revenueCatProjectId}/charts/revenue${params}`,
                     rcKey
                 ).catch(() => null);
-                if (!data?.metrics) return null;
-                const metric = (data.metrics as { id: string; value: number }[]).find(
-                    (m) => m.id === "revenue"
-                );
-                return metric?.value ?? 0;
+                return data?.summary?.total?.Proceeds ?? null;
             })
         ),
         convex.query(api.expenses.queries.getByDateRange, { startDate, endDate }),

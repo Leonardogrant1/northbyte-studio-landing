@@ -101,6 +101,8 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
                     label="Total Revenue"
                     value={loading ? "—" : formatRevenue(data?.totalRevenue ?? 0)}
                     sparkline={[0]}
+                    secondaryLabel="Proceeds"
+                    secondaryValue={loading ? undefined : formatRevenue(data?.totalProceeds ?? 0)}
                     subtitle={loading ? "Loading…" : `across ${data?.appCount ?? 0} app${data?.appCount !== 1 ? "s" : ""}`}
                     sparklineColor="#5EE7FF"
                 />
