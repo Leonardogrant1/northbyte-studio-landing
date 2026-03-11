@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { Id } from "@/../convex/_generated/dataModel";
-import type { AnalyticsResult } from "@/app/api/analytics/apps/[appId]/route";
+import type { AnalyticsResult, RevenueType } from "@/app/api/analytics/apps/[appId]/route";
 import { MetricCard } from "./MetricCard";
 import { Preset } from "./TimeframeSelector";
 
@@ -39,13 +39,14 @@ export function SingleProjectView({ appId, range, customFrom, customTo, currency
     const [data, setData] = useState<AnalyticsResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [revenueType, setRevenueType] = useState<RevenueType>("gross");
 
     useEffect(() => {
         setLoading(true);
         setError(null);
         setData(null);
 
-        const params = new URLSearchParams({ range, currency });
+        const params = new URLSearchParams({ range, currency, revenueType });
         if (range === "custom") {
             if (customFrom) params.set("from", customFrom);
             if (customTo) params.set("to", customTo);
@@ -66,7 +67,7 @@ export function SingleProjectView({ appId, range, customFrom, customTo, currency
             })
             .catch(() => setError("Failed to load analytics"))
             .finally(() => setLoading(false));
-    }, [appId, range, customFrom, customTo, currency]);
+    }, [appId, range, customFrom, customTo, currency, revenueType]);
 
     if (loading) {
         return (
@@ -104,6 +105,23 @@ export function SingleProjectView({ appId, range, customFrom, customTo, currency
     const { revenue, ltv, rpi, downloadToTrial, trialToPaid } = data;
     const fmt = (v: number) => formatMoney(v, data.currency);
     return (
+        <div className="flex flex-col gap-4">
+            {/* Revenue type toggle */}
+            <div className="flex items-center gap-1 self-start bg-surface2/50 border border-border rounded-xl p-1">
+                {(["gross", "proceeds"] as RevenueType[]).map((type) => (
+                    <button
+                        key={type}
+                        onClick={() => setRevenueType(type)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                            revenueType === type
+                                ? "bg-accent/10 text-accent border border-accent/30"
+                                : "text-secondary hover:text-primary"
+                        }`}
+                    >
+                        {type === "gross" ? "Gross Revenue" : "Proceeds"}
+                    </button>
+                ))}
+            </div>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <MetricCard
                 label="Total Revenue"
@@ -145,6 +163,7 @@ export function SingleProjectView({ appId, range, customFrom, customTo, currency
                 subtitle={trialToPaid.subtitle}
                 sparklineColor="#FF6B6B"
             />
+        </div>
         </div>
     );
 }

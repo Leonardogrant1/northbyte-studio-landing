@@ -13,8 +13,11 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type RevenueType = "gross" | "proceeds";
+
 export interface AnalyticsResult {
     currency: string;
+    revenueType: RevenueType;
     revenue: { value: number; sparkline: number[]; subtitle: string };
     ltv: { value: number; sparkline: number[]; badge: string | null; subtitle: string };
     rpi: { value: number; sparkline: number[]; badge: string | null; subtitle: string };
@@ -39,6 +42,7 @@ export async function GET(
     const fromParam = sp.get("from") ?? undefined;
     const toParam = sp.get("to") ?? undefined;
     const currency = sp.get("currency") ?? "USD";
+    const revenueType = (sp.get("revenueType") ?? "gross") as RevenueType;
 
     const app = await convex.query(api.apps.queries.getById, {
         appId: appId as Id<"apps">,
@@ -63,11 +67,14 @@ export async function GET(
 
     const { startDate, endDate } = getRangeDates(range, fromParam, toParam);
     const rcKey = decrypt(rcKeyEnc!);
+    const proceedsSelector = revenueType === "proceeds"
+        ? `&selectors=${encodeURIComponent(JSON.stringify({ revenue_type: "proceeds" }))}`
+        : "";
     const chartParams = `?start_date=${startDate}&end_date=${endDate}&period=day&currency=${currency}`;
 
     // ── RevenueCat ──────────────────────────────────────────────────────────
     const [revData, subData, convData, trialsData] = await Promise.all([
-        rcFetch(`/projects/${rcProjectId}/charts/revenue${chartParams}&realtime=false`, rcKey).catch(() => null),
+        rcFetch(`/projects/${rcProjectId}/charts/revenue${chartParams}&realtime=false${proceedsSelector}`, rcKey).catch(() => null),
         rcFetch(`/projects/${rcProjectId}/charts/actives${chartParams}&realtime=false`, rcKey).catch(() => null),
         rcFetch(`/projects/${rcProjectId}/charts/trial_conversion_rate${chartParams}&realtime=true`, rcKey, 60).catch(() => null),
         rcFetch(`/projects/${rcProjectId}/charts/trials_new${chartParams}&realtime=false`, rcKey).catch(() => null),
@@ -77,7 +84,9 @@ export async function GET(
     let totalRevenue = 0;
     let revenueSparkline: number[] = [];
     if (revData?.summary) {
-        totalRevenue = revData.summary.total?.Revenue ?? revData.summary.total_revenue ?? 0;
+        totalRevenue = revenueType === "proceeds"
+            ? (revData.summary.total?.Proceeds ?? 0)
+            : (revData.summary.total?.Revenue ?? revData.summary.total_revenue ?? 0);
         revenueSparkline = (revData.values ?? []).map((row: number[]) => row[1] ?? 0);
     }
 
@@ -159,6 +168,7 @@ export async function GET(
 
     const result: AnalyticsResult = {
         currency,
+        revenueType,
         revenue: {
             value: totalRevenue,
             sparkline: revenueSparkline.length ? revenueSparkline : [0],
