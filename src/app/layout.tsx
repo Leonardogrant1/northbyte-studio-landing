@@ -4,7 +4,6 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AdminFloatingButtons } from "@/components/layout/AdminFloatingButtons";
 import { ConvexClientProvider } from "@/lib/convex/client";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Providers } from "@/components/Providers";
 import { Toaster } from "sonner";
 
@@ -29,19 +28,18 @@ export default function RootLayout({
 }>) {
     return (
         <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
-            <ConvexClientProvider>
-
-                <html lang="en" className="dark scroll-smooth">
-                    <link rel="icon" href="/favicon.svg" sizes="any" />
-                    <body className={`${inter.variable} font-sans bg-background text-primary antialiased selection:bg-accent selection:text-surface`}>
+            <html lang="en" className="dark scroll-smooth">
+                <link rel="icon" href="/favicon.svg" sizes="any" />
+                <body className={`${inter.variable} font-sans bg-background text-primary antialiased selection:bg-accent selection:text-surface`}>
+                    <ConvexClientProvider>
                         <Providers>
                             {children}
                         </Providers>
                         <AdminFloatingButtons />
                         <Toaster position="bottom-right" theme="dark" />
-                    </body>
-                </html>
-            </ConvexClientProvider>
+                    </ConvexClientProvider>
+                </body>
+            </html>
         </ClerkProvider>
     );
 }
