@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { isNorthByteEmail } from "@/lib/auth-utils";
 
 export default function AdminSignUpPage() {
-    const { isLoaded, signUp, setActive } = useSignUp();
+    const { signUp, fetchStatus } = useSignUp();
     const router = useRouter();
 
     const [email, setEmail] = useState("");
@@ -20,55 +20,49 @@ export default function AdminSignUpPage() {
     const [verificationCode, setVerificationCode] = useState("");
     const [pendingVerification, setPendingVerification] = useState(false);
 
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!isLoaded) return;
-
+        if (fetchStatus === "fetching") return;
         setError("");
 
-        // Validate email domain
         if (!isNorthByteEmail(email)) {
             setError("Nur @northbyte.studio E-Mail-Adressen sind erlaubt.");
             return;
         }
-
-        // Validate password match
         if (password !== confirmPassword) {
             setError("Passwörter stimmen nicht überein.");
             return;
         }
-
-        // Validate password strength
         if (password.length < 8) {
             setError("Passwort muss mindestens 8 Zeichen lang sein.");
             return;
         }
 
         setLoading(true);
-
         try {
-            await signUp.create({
+            const { error } = await signUp.password({
                 emailAddress: email,
                 password,
                 firstName,
                 lastName,
             });
 
-            // Send email verification code
-            await signUp.prepareEmailAddressVerification({
-                strategy: "email_code",
-            });
+            if (error) {
+                setError(error.message);
+                return;
+            }
+
+            // Email Code schicken
+            const { error: sendError } = await signUp.verifications.sendEmailCode();
+            if (sendError) {
+                setError(sendError.message);
+                return;
+            }
 
             setPendingVerification(true);
-        } catch (err: unknown) {
-            console.error("Sign up error:", err);
-            if (err && typeof err === "object" && "errors" in err) {
-                const clerkError = err as { errors: Array<{ message: string }> };
-                setError(clerkError.errors[0]?.message || "Registrierung fehlgeschlagen.");
-            } else {
-                setError("Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.");
-            }
+        } catch (err) {
+            setError("Registrierung fehlgeschlagen.");
         } finally {
             setLoading(false);
         }
@@ -76,31 +70,27 @@ export default function AdminSignUpPage() {
 
     const handleVerification = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!isLoaded) return;
-
+        if (fetchStatus === "fetching") return;
         setError("");
         setLoading(true);
 
         try {
-            const completeSignUp = await signUp.attemptEmailAddressVerification({
+            const { error } = await signUp.verifications.verifyEmailCode({
                 code: verificationCode,
             });
 
-            if (completeSignUp.status === "complete") {
-                await setActive({ session: completeSignUp.createdSessionId });
+            if (error) {
+                setError(error.message);
+                return;
+            }
+
+            // Nur finalize wenn status complete
+            if (signUp.status === "complete") {
+                await signUp.finalize();
                 router.push("/admin");
-            } else {
-                setError("Verifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.");
             }
-        } catch (err: unknown) {
-            console.error("Verification error:", err);
-            if (err && typeof err === "object" && "errors" in err) {
-                const clerkError = err as { errors: Array<{ message: string }> };
-                setError(clerkError.errors[0]?.message || "Verifizierung fehlgeschlagen.");
-            } else {
-                setError("Verifizierung fehlgeschlagen. Bitte überprüfen Sie den Code.");
-            }
+        } catch (err) {
+            setError("Verifizierung fehlgeschlagen.");
         } finally {
             setLoading(false);
         }
@@ -221,7 +211,7 @@ export default function AdminSignUpPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || !isLoaded}
+                                disabled={loading || fetchStatus == "fetching"}
                                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Wird registriert..." : "Registrieren"}
@@ -268,7 +258,7 @@ export default function AdminSignUpPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || !isLoaded}
+                                disabled={loading || fetchStatus == "fetching"}
                                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Wird verifiziert..." : "Verifizieren"}

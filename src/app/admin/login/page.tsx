@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { isNorthByteEmail } from "@/lib/auth-utils";
 
 export default function AdminLoginPage() {
-    const { isLoaded, signIn, setActive } = useSignIn();
+    const { signIn, fetchStatus } = useSignIn();
     const router = useRouter();
 
     const [email, setEmail] = useState("");
@@ -17,54 +17,51 @@ export default function AdminLoginPage() {
     const [loading, setLoading] = useState(false);
     const [needs2FA, setNeeds2FA] = useState(false);
 
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!isLoaded) return;
-
+        if (fetchStatus === "fetching") return;
         setError("");
+
+        if (!needs2FA && !isNorthByteEmail(email)) {
+            setError("Nur @northbyte.studio E-Mail-Adressen sind erlaubt.");
+            return;
+        }
+
         setLoading(true);
 
         try {
-            // If we need 2FA, verify the code
             if (needs2FA) {
-                const result = await signIn.attemptSecondFactor({
-                    strategy: "totp",
-                    code,
-                });
+                const { error } = await signIn.mfa.verifyTOTP({ code });
 
-                if (result.status === "complete") {
-                    await setActive({ session: result.createdSessionId });
-                    router.push("/admin");
-                } else {
-                    setError("2FA-Code ungültig. Bitte versuchen Sie es erneut.");
-                }
-            } else {
-                // Initial login with email and password
-                // Validate email domain
-                if (!isNorthByteEmail(email)) {
-                    setError("Nur @northbyte.studio E-Mail-Adressen sind erlaubt.");
-                    setLoading(false);
+                if (error) {
+                    setError(error.message);
                     return;
                 }
 
-                const result = await signIn.create({
+                if (signIn.status === "complete") {
+                    await signIn.finalize();
+                    router.push("/admin");
+                }
+            } else {
+                const { error } = await signIn.password({
                     identifier: email,
                     password,
                 });
 
-                if (result.status === "complete") {
-                    await setActive({ session: result.createdSessionId });
+                if (error) {
+                    setError(error.message);
+                    return;
+                }
+
+                if (signIn.status === "complete") {
+                    await signIn.finalize();
                     router.push("/admin");
-                } else if (result.status === "needs_second_factor") {
-                    // User has 2FA enabled, show the code input
+                } else if (signIn.status === "needs_second_factor") {
                     setNeeds2FA(true);
-                } else {
-                    setError("Login fehlgeschlagen. Bitte versuchen Sie es erneut.");
                 }
             }
         } catch (err: unknown) {
-            console.error("Login error:", err);
             if (err && typeof err === "object" && "errors" in err) {
                 const clerkError = err as { errors: Array<{ message: string }> };
                 setError(clerkError.errors[0]?.message || "Login fehlgeschlagen.");
@@ -173,7 +170,7 @@ export default function AdminLoginPage() {
 
                         <button
                             type="submit"
-                            disabled={loading || !isLoaded}
+                            disabled={loading || (fetchStatus == "fetching")}
                             className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (needs2FA ? "Wird verifiziert..." : "Wird angemeldet...") : (needs2FA ? "Code verifizieren" : "Anmelden")}
