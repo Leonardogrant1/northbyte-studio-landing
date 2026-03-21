@@ -204,7 +204,7 @@ export default function CreateAppPage() {
             localStorage.setItem("selectedAppId", appId);
 
             // Redirect to app-specific dashboard
-            router.push(`/admin/${appId}`);
+            router.push(`/admin/apps?app=${appId}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to create app. Please try again.");
             console.error(err);
@@ -272,11 +272,10 @@ export default function CreateAppPage() {
                                         onDragOver={handleLogoDragOver}
                                         onDragLeave={handleLogoDragLeave}
                                         onDrop={handleLogoDrop}
-                                        className={`flex flex-col items-center justify-center w-full max-w-32 aspect-square border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                            logoDragOver
+                                        className={`flex flex-col items-center justify-center w-full max-w-32 aspect-square border-2 border-dashed rounded-xl cursor-pointer transition-colors ${logoDragOver
                                                 ? "border-accent bg-accent/10"
                                                 : "border-border hover:border-accent/50 bg-surface2"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex flex-col items-center justify-center p-3">
                                             <svg className="w-6 h-6 mb-1 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,11 +331,10 @@ export default function CreateAppPage() {
                                         onDragOver={handleThumbnailDragOver}
                                         onDragLeave={handleThumbnailDragLeave}
                                         onDrop={handleThumbnailDrop}
-                                        className={`flex flex-col items-center justify-center w-full aspect-[4/2] border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                                            thumbnailDragOver
+                                        className={`flex flex-col items-center justify-center w-full aspect-[4/2] border-2 border-dashed rounded-xl cursor-pointer transition-colors ${thumbnailDragOver
                                                 ? "border-accent bg-accent/10"
                                                 : "border-border hover:border-accent/50 bg-surface2"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex flex-col items-center justify-center p-4">
                                             <svg className="w-8 h-8 mb-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">

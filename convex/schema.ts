@@ -26,6 +26,8 @@ export default defineSchema({
         postHogApiKeyEncrypted: v.optional(v.string()),
         postHogInstallEvent: v.optional(v.string()),
         postHogTrialEvent: v.optional(v.string()),
+        termsOfUse: v.optional(v.string()),
+        privacyPolicy: v.optional(v.string()),
     }),
     // Bugs - bug reports for apps
     bugs: defineTable({

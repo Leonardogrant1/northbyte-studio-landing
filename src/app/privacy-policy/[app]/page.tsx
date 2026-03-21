@@ -1,30 +1,24 @@
-"use client";
-
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { useQuery } from "convex/react";
+import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../../convex/_generated/api";
 import { keevioPrivacyPolicy } from "@/lib/privacy-policies/keevio";
 import { memolibPrivacyPolicy } from "@/lib/privacy-policies/memolib";
 import { generalPrivacyPolicy } from "@/lib/privacy-policies/general";
-import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 
 interface PageProps {
     params: Promise<{ app: string }>;
 }
 
-export default function PrivacyPolicyDetail({ params }: PageProps) {
-    const [appSlug, setAppSlug] = useState<string | null>(null);
-    
-    useEffect(() => {
-        params.then((p) => setAppSlug(p.app));
-    }, [params]);
+const articleClass = "prose prose-invert prose-lg max-w-3xl prose-headings:text-primary prose-p:text-secondary prose-strong:text-primary prose-a:text-accent prose-hr:border-border prose-li:text-secondary";
 
-    const appData = useQuery(
-        api.apps.queries.getBySlug,
-        appSlug && appSlug !== "general" ? { slug: appSlug } : "skip"
-    );
+export default async function PrivacyPolicyDetail({ params }: PageProps) {
+    const { app: appSlug } = await params;
+
+    const appData = await fetchQuery(api.apps.queries.getBySlug, { slug: appSlug }).catch(() => null);
 
     const isGeneral = appSlug === "general";
     const title = isGeneral ? "NorthByte Studio Website" : appData?.name || appSlug;
@@ -39,23 +33,29 @@ export default function PrivacyPolicyDetail({ params }: PageProps) {
                     <Link href="/privacy-policy" className="text-sm text-accent hover:underline">← Back to Overview</Link>
                 </div>
 
-                {isKeevio ? (
+                {appData?.privacyPolicy ? (
+                    <article className={articleClass}>
+                        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                            {appData.privacyPolicy}
+                        </ReactMarkdown>
+                    </article>
+                ) : isKeevio ? (
                     <article
-                        className="prose prose-invert prose-lg max-w-3xl"
+                        className={articleClass}
                         dangerouslySetInnerHTML={{ __html: keevioPrivacyPolicy }}
                     />
                 ) : isMemoLib ? (
                     <article
-                        className="prose prose-invert prose-lg max-w-3xl"
+                        className={articleClass}
                         dangerouslySetInnerHTML={{ __html: memolibPrivacyPolicy }}
                     />
                 ) : isGeneral ? (
                     <article
-                        className="prose prose-invert prose-lg max-w-3xl"
+                        className={articleClass}
                         dangerouslySetInnerHTML={{ __html: generalPrivacyPolicy }}
                     />
                 ) : (
-                    <article className="prose prose-invert prose-lg max-w-3xl">
+                    <article className={articleClass}>
                         <h1>Privacy Policy for {title}</h1>
                         <p className="lead">Last updated: {new Date().toLocaleDateString()}</p>
 

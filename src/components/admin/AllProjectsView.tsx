@@ -28,7 +28,7 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
         const params = new URLSearchParams({ range, currency });
         if (customFrom) params.set("from", customFrom);
         if (customTo) params.set("to", customTo);
-
+        console.log(`/api/analytics/overview?${params}`)
         fetch(`/api/analytics/overview?${params}`)
             .then((r) => r.json())
             .then((d) => { setData(d); setLoading(false); })
@@ -161,7 +161,7 @@ export function AllProjectsView({ range, currency, customFrom, customTo }: Props
                                                 : `${expense.original_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${expense.original_currency}`}
                                         </td>
                                         <td className="px-6 py-3 text-center">
-                                            <button 
+                                            <button
                                                 onClick={() => handleDeleteExpense(expense._id)}
                                                 className="text-secondary hover:text-red-500 transition-colors"
                                                 title="Delete expense"
