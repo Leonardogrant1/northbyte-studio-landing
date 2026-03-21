@@ -12,6 +12,8 @@ export const create = mutation({
         slug: v.string(),
         logoStorageId: v.optional(v.id("_storage")),
         thumbnailStorageId: v.optional(v.id("_storage")),
+        termsOfUse: v.optional(v.string()),
+        privacyPolicy: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         // Validate slug uniqueness if provided
@@ -20,7 +22,7 @@ export const create = mutation({
                 .query("apps")
                 .filter((q) => q.eq(q.field("slug"), args.slug))
                 .first();
-            
+
             if (existingApp) {
                 throw new Error(`Slug "${args.slug}" is already taken`);
             }
@@ -35,6 +37,8 @@ export const create = mutation({
             slug: args.slug,
             logoStorageId: args.logoStorageId,
             thumbnailStorageId: args.thumbnailStorageId,
+            ...(args.termsOfUse ? { termsOfUse: args.termsOfUse } : {}),
+            ...(args.privacyPolicy ? { privacyPolicy: args.privacyPolicy } : {}),
         });
     },
 });
@@ -57,6 +61,8 @@ export const update = mutation({
         postHogApiKeyEncrypted:    v.optional(v.string()),
         postHogInstallEvent:       v.optional(v.string()),
         postHogTrialEvent:         v.optional(v.string()),
+        termsOfUse:                v.optional(v.string()),
+        privacyPolicy:             v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         // Validate slug uniqueness if provided and changed
@@ -65,7 +71,7 @@ export const update = mutation({
                 .query("apps")
                 .filter((q) => q.eq(q.field("slug"), args.slug))
                 .first();
-            
+
             if (existingApp && existingApp._id !== args.appId) {
                 throw new Error(`Slug "${args.slug}" is already taken`);
             }
@@ -73,12 +79,19 @@ export const update = mutation({
 
         const { appId, ...updates } = args;
 
-        // Filter out undefined values
-        const filteredUpdates = Object.fromEntries(
-            Object.entries(updates).filter(([_, value]) => value !== undefined)
-        );
+        // Build patch: skip undefined, convert "" to undefined for legal text fields (removes the field from the document)
+        const patchData: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(updates)) {
+            if (value === undefined) continue;
+            if ((key === "termsOfUse" || key === "privacyPolicy") && value === "") {
+                patchData[key] = undefined;
+            } else {
+                patchData[key] = value;
+            }
+        }
 
-        await ctx.db.patch(appId, filteredUpdates);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await ctx.db.patch(appId, patchData as any);
         return appId;
     },
 });

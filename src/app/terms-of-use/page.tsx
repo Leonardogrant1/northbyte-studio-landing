@@ -1,13 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { useQuery } from "convex/react";
+import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../convex/_generated/api";
 
-export default function TermsOverview() {
-    const apps = useQuery(api.apps.queries.getAllForPublic) || [];
+export default async function TermsOverview() {
+    const apps = await fetchQuery(api.apps.queries.getAllForPublic);
 
     return (
         <div className="flex flex-col min-h-screen">

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
             apps.map(async (app) => {
                 if (!app.revenueCatProjectId || !app.revenueCatApiKeyEncrypted) return null;
                 const rcKey = decrypt(app.revenueCatApiKeyEncrypted);
-                const params = `?start_time=${startDate}&end_time=${endDate}&period=day&currency=USD&realtime=false${proceedsSelector}`;
+                const params = `?start_date=${startDate}&end_date=${endDate}&period=day&currency=USD&realtime=false${proceedsSelector}`;
                 const data = await rcFetch(
                     `/projects/${app.revenueCatProjectId}/charts/revenue${params}`,
                     rcKey

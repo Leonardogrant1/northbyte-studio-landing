@@ -205,6 +205,8 @@ function AppSettingsForm({ appId }: { appId: Id<"apps"> }) {
         description: "",
         status: "live",
         slug: "",
+        termsOfUse: "",
+        privacyPolicy: "",
     });
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -237,6 +239,8 @@ function AppSettingsForm({ appId }: { appId: Id<"apps"> }) {
                 description: app.description || "",
                 status: app.status || "live",
                 slug: app.slug || "",
+                termsOfUse: app.termsOfUse || "",
+                privacyPolicy: app.privacyPolicy || "",
             });
             if (logoUrl && !logoPreview) setLogoPreview(logoUrl);
             if (thumbnailUrl && !thumbnailPreview) setThumbnailPreview(thumbnailUrl);
@@ -311,6 +315,8 @@ function AppSettingsForm({ appId }: { appId: Id<"apps"> }) {
                 slug: formData.slug.trim() || undefined,
                 logoStorageId: logoFile ? logoStorageId : app?.logoStorageId,
                 thumbnailStorageId: thumbnailFile ? thumbnailStorageId : app?.thumbnailStorageId,
+                termsOfUse: formData.termsOfUse,
+                privacyPolicy: formData.privacyPolicy,
             });
 
             router.refresh();
@@ -430,6 +436,38 @@ function AppSettingsForm({ appId }: { appId: Id<"apps"> }) {
                             <option value="coming soon">Coming Soon</option>
                             <option value="archived">Archived</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label htmlFor="termsOfUse" className="block text-sm font-medium text-secondary mb-2">
+                            Terms of Use <span className="text-muted font-normal">(Markdown)</span>
+                        </label>
+                        <textarea
+                            id="termsOfUse"
+                            value={formData.termsOfUse}
+                            onChange={(e) => setFormData({ ...formData, termsOfUse: e.target.value })}
+                            disabled={isSubmitting}
+                            rows={15}
+                            placeholder="Enter Markdown content..."
+                            className="w-full px-4 py-3 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all resize-y font-mono text-sm disabled:opacity-50"
+                        />
+                        <p className="mt-1 text-xs text-muted">Leave empty to use the default boilerplate. Markdown only — not HTML.</p>
+                    </div>
+
+                    <div>
+                        <label htmlFor="privacyPolicy" className="block text-sm font-medium text-secondary mb-2">
+                            Privacy Policy <span className="text-muted font-normal">(Markdown)</span>
+                        </label>
+                        <textarea
+                            id="privacyPolicy"
+                            value={formData.privacyPolicy}
+                            onChange={(e) => setFormData({ ...formData, privacyPolicy: e.target.value })}
+                            disabled={isSubmitting}
+                            rows={15}
+                            placeholder="Enter Markdown content..."
+                            className="w-full px-4 py-3 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all resize-y font-mono text-sm disabled:opacity-50"
+                        />
+                        <p className="mt-1 text-xs text-muted">Leave empty to use the default boilerplate. Markdown only — not HTML.</p>
                     </div>
                 </div>
 

@@ -36,21 +36,21 @@ export async function GET(request: NextRequest) {
             if (!app.revenueCatProjectId || !app.revenueCatApiKeyEncrypted) return null;
 
             const rcKey = decrypt(app.revenueCatApiKeyEncrypted);
-            const baseParams = `?start_time=${startDate}&end_time=${endDate}&period=day&currency=USD&realtime=false`;
+            const baseParams = `?start_date=${startDate}&end_date=${endDate}&period=day&currency=USD&realtime=false`;
+
+
 
             const [metricsData, proceedsData] = await Promise.all([
-                rcFetch(`/projects/${app.revenueCatProjectId}/metrics/overview${baseParams}`, rcKey).catch(() => null),
+                rcFetch(`/projects/${app.revenueCatProjectId}/charts/revenue${baseParams}`, rcKey).catch(() => null),
                 rcFetch(`/projects/${app.revenueCatProjectId}/charts/revenue${baseParams}${proceedsSelector}`, rcKey).catch(() => null),
             ]);
 
-            if (!metricsData?.metrics) return null;
 
-            const metric = (metricsData.metrics as { id: string; value: number }[]).find(
-                (m) => m.id === "revenue"
-            );
+
+            if (!metricsData) return null;
 
             return {
-                gross: metric?.value ?? 0,
+                gross: metricsData?.summary?.total?.Revenue ?? 0,
                 proceeds: proceedsData?.summary?.total?.Proceeds ?? 0,
             };
         })
