@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/../convex/_generated/api";
 import { Id } from "@/../convex/_generated/dataModel";
-import { TimeframeSelector, Preset } from "@/components/admin/TimeframeSelector";
+import { DateRangePicker } from "@/components/admin/DateRangePicker";
 import { AllProjectsView } from "@/components/admin/AllProjectsView";
 import { SingleProjectView } from "@/components/admin/SingleProjectView";
 
@@ -15,9 +15,11 @@ function AnalyticsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const selectedAppId = searchParams.get("app") as Id<"apps"> | null;
-    const rangeParam = (searchParams.get("range") ?? "7d") as Preset;
-    const fromParam  = searchParams.get("from") ?? "";
-    const toParam    = searchParams.get("to")   ?? "";
+    // Default to last 30 days when no params
+    const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` })();
+    const thirtyAgo = (() => { const d = new Date(Date.now() - 29*86400000); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` })();
+    const fromParam  = searchParams.get("from") || thirtyAgo;
+    const toParam    = searchParams.get("to")   || todayStr;
     const currency   = searchParams.get("currency") ?? "USD";
 
     const apps = useQuery(api.apps.queries.getAll);
@@ -35,12 +37,8 @@ function AnalyticsContent() {
         router.push(buildUrl({ app: appId ?? null }));
     };
 
-    const handleTimeframe = (preset: Preset, from?: string, to?: string) => {
-        router.push(buildUrl({
-            range: preset,
-            from: preset === "custom" ? (from ?? "") : null,
-            to: preset === "custom" ? (to ?? "") : null,
-        }));
+    const handleRange = (from: string, to: string) => {
+        router.push(buildUrl({ range: "custom", from, to }));
     };
 
     return (
@@ -90,18 +88,17 @@ function AnalyticsContent() {
                             <option key={c} value={c}>{c}</option>
                         ))}
                     </select>
-                    <TimeframeSelector
-                        value={rangeParam}
-                        customFrom={fromParam}
-                        customTo={toParam}
-                        onChange={handleTimeframe}
+                    <DateRangePicker
+                        from={fromParam}
+                        to={toParam}
+                        onChange={handleRange}
                     />
                 </div>
             </div>
 
             {selectedAppId
-                ? <SingleProjectView appId={selectedAppId} range={rangeParam} customFrom={fromParam} customTo={toParam} currency={currency} />
-                : <AllProjectsView range={rangeParam} currency={currency} customFrom={fromParam} customTo={toParam} />
+                ? <SingleProjectView appId={selectedAppId} from={fromParam} to={toParam} currency={currency} />
+                : <AllProjectsView range="custom" currency={currency} customFrom={fromParam} customTo={toParam} />
             }
         </div>
     );

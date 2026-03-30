@@ -38,14 +38,10 @@ export async function GET(request: NextRequest) {
             const rcKey = decrypt(app.revenueCatApiKeyEncrypted);
             const baseParams = `?start_date=${startDate}&end_date=${endDate}&period=day&currency=USD&realtime=false`;
 
-
-
             const [metricsData, proceedsData] = await Promise.all([
                 rcFetch(`/projects/${app.revenueCatProjectId}/charts/revenue${baseParams}`, rcKey).catch(() => null),
                 rcFetch(`/projects/${app.revenueCatProjectId}/charts/revenue${baseParams}${proceedsSelector}`, rcKey).catch(() => null),
             ]);
-
-
 
             if (!metricsData) return null;
 

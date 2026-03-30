@@ -6,8 +6,6 @@ import Link from "next/link";
 import { Id } from "@/../convex/_generated/dataModel";
 import type { AnalyticsResult, RevenueType } from "@/app/api/analytics/apps/[appId]/route";
 import { MetricCard } from "./MetricCard";
-import { Preset } from "./TimeframeSelector";
-
 function MetricCardSkeleton() {
     return (
         <div className="bg-surface2/50 backdrop-blur-xl border border-border rounded-3xl p-6 flex flex-col gap-3 min-w-0 animate-pulse">
@@ -20,9 +18,8 @@ function MetricCardSkeleton() {
 
 export interface SingleProjectViewProps {
     appId: Id<"apps">;
-    range: Preset;
-    customFrom: string;
-    customTo: string;
+    from: string;
+    to: string;
     currency: string;
 }
 
@@ -35,7 +32,7 @@ function formatMoney(value: number, currency: string): string {
     }).format(value);
 }
 
-export function SingleProjectView({ appId, range, customFrom, customTo, currency }: SingleProjectViewProps) {
+export function SingleProjectView({ appId, from, to, currency }: SingleProjectViewProps) {
     const [data, setData] = useState<AnalyticsResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -46,11 +43,9 @@ export function SingleProjectView({ appId, range, customFrom, customTo, currency
         setError(null);
         setData(null);
 
-        const params = new URLSearchParams({ range, currency, revenueType });
-        if (range === "custom") {
-            if (customFrom) params.set("from", customFrom);
-            if (customTo) params.set("to", customTo);
-        }
+        const params = new URLSearchParams({ range: "custom", currency, revenueType });
+        if (from) params.set("from", from);
+        if (to) params.set("to", to);
 
         fetch(`/api/analytics/apps/${appId}?${params}`)
             .then(async (res) => {
@@ -67,7 +62,7 @@ export function SingleProjectView({ appId, range, customFrom, customTo, currency
             })
             .catch(() => setError("Failed to load analytics"))
             .finally(() => setLoading(false));
-    }, [appId, range, customFrom, customTo, currency, revenueType]);
+    }, [appId, from, to, currency, revenueType]);
 
     if (loading) {
         return (
