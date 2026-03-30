@@ -1,16 +1,26 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// NOTE: Existing users documents without a `type` field must be backfilled
+// via the Convex dashboard to `type: "admin"` before deployment.
+
 export default defineSchema({
-    // Users - central entity linked to Clerk
     users: defineTable({
         clerkId: v.string(),
         email: v.optional(v.string()),
+        type: v.union(v.literal("admin"), v.literal("creator")),
         createdAt: v.number(),
         updatedAt: v.number(),
     }).index("by_clerk", ["clerkId"]),
 
-    // Apps - applications that can have bugs and features
+    user_invites: defineTable({
+        email: v.string(),
+        role: v.union(v.literal("admin"), v.literal("creator")),
+        invitedBy: v.id("users"),
+        createdAt: v.number(),
+        usedAt: v.optional(v.number()),
+    }).index("by_email", ["email"]),
+
     apps: defineTable({
         name: v.string(),
         domain: v.optional(v.string()),
@@ -29,7 +39,7 @@ export default defineSchema({
         termsOfUse: v.optional(v.string()),
         privacyPolicy: v.optional(v.string()),
     }),
-    // Bugs - bug reports for apps
+
     bugs: defineTable({
         appId: v.id("apps"),
         title: v.string(),
@@ -38,7 +48,6 @@ export default defineSchema({
         status: v.string(),
     }).index("by_app", ["appId"]),
 
-    // Features - feature requests for apps
     features: defineTable({
         appId: v.id("apps"),
         title: v.string(),
@@ -47,7 +56,6 @@ export default defineSchema({
         status: v.string(),
     }).index("by_app", ["appId"]),
 
-    // Bug Subscribers - users subscribed to bug updates
     bugSubscribers: defineTable({
         email: v.string(),
         bugId: v.id("bugs"),
@@ -55,7 +63,6 @@ export default defineSchema({
         .index("by_bug", ["bugId"])
         .index("by_email_bug", ["email", "bugId"]),
 
-    // Feature Subscribers - users subscribed to feature updates
     featureSubscribers: defineTable({
         email: v.string(),
         featureId: v.id("features"),
@@ -63,13 +70,12 @@ export default defineSchema({
         .index("by_feature", ["featureId"])
         .index("by_email_feature", ["email", "featureId"]),
 
-
     vendors: defineTable({
-        name: v.string(),        // "tiktok", "google_cloud"
+        name: v.string(),
     }).index("by_name", ["name"]),
 
     categories: defineTable({
-        name: v.string(),        // "advertising", "infrastructure"
+        name: v.string(),
     }).index("by_name", ["name"]),
 
     expenses: defineTable({
@@ -84,7 +90,8 @@ export default defineSchema({
         tax_amount: v.optional(v.number()),
         date: v.string(),
         urls: v.optional(v.array(v.string())),
-    }).index("by_vendor", ["vendor_id"])
+    })
+        .index("by_vendor", ["vendor_id"])
         .index("by_category", ["category_id"])
         .index("by_vendor_invoice", ["vendor_id", "vendor_invoice_id"])
         .index("by_vendor_receipt", ["vendor_id", "vendor_receipt_id"]),
