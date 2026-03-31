@@ -11,25 +11,25 @@ export function AdminFloatingButtons() {
     const { signOut } = useClerk();
     const router = useRouter();
     const pathname = usePathname();
-    const [isAdmin, setIsAdmin] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         async function checkAdmin() {
             if (!userId) {
-                setIsAdmin(false);
+                setIsAuthenticated(false);
                 setIsLoading(false);
                 return;
             }
 
             try {
-                // Check if user has @northbyte.studio email
+                // Check if user is authenticated
                 const response = await fetch("/api/admin/check");
                 const data = await response.json();
-                setIsAdmin(data.isAdmin);
+                setIsAuthenticated(data.isAuthenticated);
             } catch (error) {
                 console.error("Error checking admin status:", error);
-                setIsAdmin(false);
+                setIsAuthenticated(false);
             } finally {
                 setIsLoading(false);
             }
@@ -48,7 +48,7 @@ export function AdminFloatingButtons() {
         return null;
     }
 
-    if (isLoading || !isAdmin) {
+    if (isLoading || !isAuthenticated) {
         return null;
     }
 

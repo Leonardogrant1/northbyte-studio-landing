@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { isNorthByteEmail } from "@/lib/auth-utils";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function AdminSignUpPage() {
     const { signUp, fetchStatus } = useSignUp();
@@ -20,16 +21,28 @@ export default function AdminSignUpPage() {
     const [verificationCode, setVerificationCode] = useState("");
     const [pendingVerification, setPendingVerification] = useState(false);
 
+    // Check if an open invite exists for the typed email (runs reactively)
+    const invite = useQuery(
+        api.user_invites.queries.getOpenInviteByEmail,
+        email.length > 3 ? { email } : "skip"
+    );
+    const createUserFromInvite = useMutation(api.users.mutations.createUserFromInvite);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (fetchStatus === "fetching") return;
         setError("");
 
-        if (!isNorthByteEmail(email)) {
-            setError("Nur @northbyte.studio E-Mail-Adressen sind erlaubt.");
+        // invite === undefined means query is still loading; null means no invite found
+        if (invite === null) {
+            setError("Du wurdest nicht eingeladen. Bitte wende dich an einen Admin.");
             return;
         }
+        if (invite === undefined) {
+            setError("Einladung wird geprüft…");
+            return;
+        }
+
         if (password !== confirmPassword) {
             setError("Passwörter stimmen nicht überein.");
             return;
@@ -53,7 +66,6 @@ export default function AdminSignUpPage() {
                 return;
             }
 
-            // Email Code schicken
             const { error: sendError } = await signUp.verifications.sendEmailCode();
             if (sendError) {
                 setError(sendError.message);
@@ -61,7 +73,7 @@ export default function AdminSignUpPage() {
             }
 
             setPendingVerification(true);
-        } catch (err) {
+        } catch {
             setError("Registrierung fehlgeschlagen.");
         } finally {
             setLoading(false);
@@ -84,12 +96,12 @@ export default function AdminSignUpPage() {
                 return;
             }
 
-            // Nur finalize wenn status complete
             if (signUp.status === "complete") {
                 await signUp.finalize();
+                await createUserFromInvite({ inviteId: invite!._id });
                 router.push("/admin");
             }
-        } catch (err) {
+        } catch {
             setError("Verifizierung fehlgeschlagen.");
         } finally {
             setLoading(false);
@@ -104,7 +116,7 @@ export default function AdminSignUpPage() {
                 className="w-full max-w-md"
             >
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold mb-2">Admin Registrierung</h1>
+                    <h1 className="text-4xl font-bold mb-2">Registrierung</h1>
                     <p className="text-secondary">NorthByte Studio Dashboard</p>
                 </div>
 
@@ -137,7 +149,6 @@ export default function AdminSignUpPage() {
                                         placeholder="Max"
                                     />
                                 </div>
-
                                 <div className="space-y-2">
                                     <label htmlFor="lastName" className="text-sm font-medium text-secondary">
                                         Nachname
@@ -167,11 +178,14 @@ export default function AdminSignUpPage() {
                                     required
                                     disabled={loading}
                                     className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
-                                    placeholder="admin@northbyte.studio"
+                                    placeholder="deine@email.com"
                                 />
-                                <p className="text-xs text-secondary/70">
-                                    Nur @northbyte.studio E-Mails
-                                </p>
+                                {email.length > 3 && invite === null && (
+                                    <p className="text-xs text-red-400">Keine Einladung für diese E-Mail gefunden.</p>
+                                )}
+                                {email.length > 3 && invite && (
+                                    <p className="text-xs text-green-400">Einladung gefunden — Rolle: {invite.role}</p>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -188,9 +202,7 @@ export default function AdminSignUpPage() {
                                     className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
                                     placeholder="••••••••"
                                 />
-                                <p className="text-xs text-secondary/70">
-                                    Mindestens 8 Zeichen
-                                </p>
+                                <p className="text-xs text-secondary/70">Mindestens 8 Zeichen</p>
                             </div>
 
                             <div className="space-y-2">
@@ -211,7 +223,7 @@ export default function AdminSignUpPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || fetchStatus == "fetching"}
+                                disabled={loading || fetchStatus === "fetching"}
                                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Wird registriert..." : "Registrieren"}
@@ -258,7 +270,7 @@ export default function AdminSignUpPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || fetchStatus == "fetching"}
+                                disabled={loading || fetchStatus === "fetching"}
                                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Wird verifiziert..." : "Verifizieren"}

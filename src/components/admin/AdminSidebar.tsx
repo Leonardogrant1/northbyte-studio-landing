@@ -2,82 +2,115 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { BarChart2, Bug, Lightbulb, AppWindow } from "lucide-react";
+import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot } from "lucide-react";
 import { Suspense } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 function AdminSidebarInner() {
     const pathname = usePathname();
     const params = useParams();
     const searchParams = useSearchParams();
+    const user = useCurrentUser();
 
-    // appId from URL segment (e.g. /admin/[appId]/settings)
     const appIdFromRoute = params?.appId as string | undefined;
-    // appId from query param (e.g. /admin/bugs?app=...)
     const appIdFromQuery = searchParams.get("app");
-
     const currentAppId = appIdFromRoute || appIdFromQuery;
-
-    // Build links — preserve the currently selected app across tabs
     const appQuery = currentAppId ? `?app=${currentAppId}` : "";
 
-    const tabs = [
+    const isAdmin = user?.type === "admin";
+
+    const allTabs = [
         {
             label: "Analytics",
             icon: BarChart2,
             href: `/admin${appQuery}`,
             isActive: pathname === "/admin",
-            disabled: false,
+            adminOnly: true,
         },
         {
             label: "Bugs",
             icon: Bug,
             href: `/admin/bugs${appQuery}`,
             isActive: pathname === "/admin/bugs",
-            disabled: false,
+            adminOnly: true,
         },
         {
             label: "Features",
             icon: Lightbulb,
             href: `/admin/features${appQuery}`,
             isActive: pathname === "/admin/features",
-            disabled: false,
+            adminOnly: true,
         },
         {
             label: "Apps",
             icon: AppWindow,
             href: `/admin/apps${appQuery}`,
             isActive: pathname === "/admin/apps",
-            disabled: false,
+            adminOnly: true,
+        },
+        {
+            label: "Media",
+            icon: Image,
+            href: "/admin/media",
+            isActive: pathname === "/admin/media",
+            adminOnly: false,
+        },
+        {
+            label: "AI-Lab",
+            icon: FlaskConical,
+            href: "/admin/ai-lab",
+            isActive: pathname === "/admin/ai-lab",
+            adminOnly: false,
+        },
+        {
+            label: "Post Content",
+            icon: FileEdit,
+            href: "/admin/post-content",
+            isActive: pathname === "/admin/post-content",
+            adminOnly: false,
+        },
+        {
+            label: "Social Accounts",
+            icon: AtSign,
+            href: "/admin/social-accounts",
+            isActive: pathname === "/admin/social-accounts",
+            adminOnly: true,
+        },
+        {
+            label: "AI Avatars",
+            icon: Bot,
+            href: "/admin/ai-avatars",
+            isActive: pathname === "/admin/ai-avatars",
+            adminOnly: true,
+        },
+        {
+            label: "User & Roles",
+            icon: Users,
+            href: "/admin/users",
+            isActive: pathname === "/admin/users",
+            adminOnly: true,
         },
     ];
+
+    const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin);
 
     return (
         <aside className="w-56 shrink-0 border-r border-border p-4">
             <nav className="space-y-1">
-                {tabs.map(({ label, icon: Icon, href, isActive, disabled }) =>
-                    disabled || !href ? (
-                        <div
-                            key={label}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-secondary/30 cursor-not-allowed select-none"
-                        >
-                            <Icon size={18} />
-                            <span className="font-medium">{label}</span>
-                        </div>
-                    ) : (
-                        <Link
-                            key={label}
-                            href={href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                isActive
-                                    ? "bg-accent/10 text-accent"
-                                    : "text-secondary hover:bg-surface2 hover:text-primary"
-                            }`}
-                        >
-                            <Icon size={18} />
-                            <span className="font-medium">{label}</span>
-                        </Link>
-                    )
-                )}
+                {tabs.map(({ label, icon: Icon, href, isActive }) => (
+                    <Link
+                        key={label}
+                        href={href}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                            isActive
+                                ? "bg-accent/10 text-accent"
+                                : "text-secondary hover:bg-surface2 hover:text-primary"
+                        }`}
+                    >
+                        <Icon size={18} />
+                        <span className="font-medium">{label}</span>
+                    </Link>
+                ))}
             </nav>
         </aside>
     );

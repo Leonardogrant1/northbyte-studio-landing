@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 
 export async function GET() {
     try {
-        const adminStatus = await isAdmin();
-        return NextResponse.json({ isAdmin: adminStatus });
+        const userId = await getAuthenticatedUserId();
+        return NextResponse.json({ isAuthenticated: userId !== null });
     } catch (error) {
         console.error("Error checking admin status:", error);
-        return NextResponse.json({ isAdmin: false }, { status: 500 });
+        return NextResponse.json({ isAuthenticated: false }, { status: 500 });
     }
 }

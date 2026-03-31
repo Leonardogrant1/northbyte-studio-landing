@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
-import { isAdmin } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import { decrypt } from "@/lib/encryption";
 import { getRangeDates, Range } from "../apps/[appId]/helpers/dates";
 import { rcFetch } from "../apps/[appId]/helpers/revenuecat";
@@ -16,7 +16,7 @@ export interface OverviewResult {
 }
 
 export async function GET(request: NextRequest) {
-    if (!(await isAdmin())) {
+    if (!(await getAuthenticatedUserId())) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
