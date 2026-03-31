@@ -8,6 +8,7 @@ export const create = mutation({
         hashtags: v.optional(v.array(v.string())),
         videoUrl: v.string(),
         accountId: v.id("social_accounts"),
+        scheduledAt: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -25,7 +26,8 @@ export const create = mutation({
             hashtags: args.hashtags,
             videoUrl: args.videoUrl,
             accountId: args.accountId,
-            status: "scheduled",
+            scheduledAt: args.scheduledAt,
+            status: "ready_to_post",
             createdBy: user._id,
             createdAt: Date.now(),
         });

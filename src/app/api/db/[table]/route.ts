@@ -5,6 +5,31 @@ import { checkInternalApiSecret } from "@/lib/internal-auth";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+function applySorting(records: unknown[], sortParam: string | null): unknown[] {
+    if (!sortParam) return records;
+
+    const [field, rawOrder] = sortParam.split(":");
+    const order = rawOrder === "asc" ? 1 : -1;
+
+    return [...records].sort((a, b) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const aVal = (a as any)[field];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bVal = (b as any)[field];
+
+        if (aVal === undefined || aVal === null) return 1;
+        if (bVal === undefined || bVal === null) return -1;
+
+        if (typeof aVal === "string" && typeof bVal === "string") {
+            return aVal.localeCompare(bVal) * order;
+        }
+        if (typeof aVal === "number" && typeof bVal === "number") {
+            return (aVal - bVal) * order;
+        }
+        return 0;
+    });
+}
+
 const ALLOWED_TABLES = [
     "social_accounts",
     "posts",
@@ -35,6 +60,7 @@ export async function GET(
         const field = searchParams.get("field");
         const value = searchParams.get("value");
         const exists = searchParams.get("exists");
+        const sort = searchParams.get("sort");
 
         if (filtersParam) {
             let filters: Record<string, unknown>;
@@ -51,21 +77,21 @@ export async function GET(
                 return { field: f, value: v };
             });
 
-            const records = await convex.query(api.generic.queries.findByFilters, { table, conditions });
-            return NextResponse.json({ success: true, records }, { status: 200 });
+            const raw = await convex.query(api.generic.queries.findByFilters, { table, conditions });
+            return NextResponse.json({ success: true, records: applySorting(raw, sort) }, { status: 200 });
         }
 
         if (field && (value !== null || exists !== null)) {
-            const records = await convex.query(api.generic.queries.findByField, {
+            const raw = await convex.query(api.generic.queries.findByField, {
                 table,
                 field,
                 ...(exists !== null ? { exists: exists === "true" } : { value }),
             });
-            return NextResponse.json({ success: true, records }, { status: 200 });
+            return NextResponse.json({ success: true, records: applySorting(raw, sort) }, { status: 200 });
         }
 
-        const records = await convex.query(api.generic.queries.getAll, { table });
-        return NextResponse.json({ success: true, records }, { status: 200 });
+        const raw = await convex.query(api.generic.queries.getAll, { table });
+        return NextResponse.json({ success: true, records: applySorting(raw, sort) }, { status: 200 });
     } catch (error) {
         console.error(`Error querying table '${table}':`, error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
