@@ -18,10 +18,16 @@ export const getById = query({
 });
 
 export const findByField = query({
-    args: { table: v.string(), field: v.string(), value: v.any() },
+    args: { table: v.string(), field: v.string(), value: v.optional(v.any()), exists: v.optional(v.boolean()) },
     handler: async (ctx, args) => {
         const records = await ctx.db.query(args.table as TableNames).collect();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return records.filter((r: any) => r[args.field] === args.value);
+        return records.filter((r: any) => {
+            if (args.exists !== undefined) {
+                const fieldExists = r[args.field] !== undefined && r[args.field] !== null;
+                return args.exists ? fieldExists : !fieldExists;
+            }
+            return r[args.field] === args.value;
+        });
     },
 });

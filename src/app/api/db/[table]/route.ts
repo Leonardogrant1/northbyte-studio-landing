@@ -33,12 +33,13 @@ export async function GET(
         const { searchParams } = new URL(request.url);
         const field = searchParams.get("field");
         const value = searchParams.get("value");
+        const exists = searchParams.get("exists");
 
-        if (field && value !== null) {
+        if (field && (value !== null || exists !== null)) {
             const records = await convex.query(api.generic.queries.findByField, {
                 table,
                 field,
-                value,
+                ...(exists !== null ? { exists: exists === "true" } : { value }),
             });
             return NextResponse.json({ success: true, records }, { status: 200 });
         }
