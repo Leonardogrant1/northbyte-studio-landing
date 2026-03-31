@@ -1,4 +1,16 @@
 import { query } from "../_generated/server";
+import { v } from "convex/values";
+
+export const getReadyToPostByAccount = query({
+    args: { accountId: v.id("social_accounts") },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("posts")
+            .withIndex("by_status", (q) => q.eq("status", "ready_to_post"))
+            .filter((q) => q.eq(q.field("accountId"), args.accountId))
+            .collect();
+    },
+});
 
 export const getMyPosts = query({
     args: {},

@@ -22,6 +22,8 @@ import type * as expenses_queries from "../expenses/queries.js";
 import type * as features_actions from "../features/actions.js";
 import type * as features_mutations from "../features/mutations.js";
 import type * as features_queries from "../features/queries.js";
+import type * as generic_mutations from "../generic/mutations.js";
+import type * as generic_queries from "../generic/queries.js";
 import type * as http from "../http.js";
 import type * as kling_tasks_mutations from "../kling_tasks/mutations.js";
 import type * as kling_tasks_queries from "../kling_tasks/queries.js";
@@ -63,6 +65,8 @@ declare const fullApi: ApiFromModules<{
   "features/actions": typeof features_actions;
   "features/mutations": typeof features_mutations;
   "features/queries": typeof features_queries;
+  "generic/mutations": typeof generic_mutations;
+  "generic/queries": typeof generic_queries;
   http: typeof http;
   "kling_tasks/mutations": typeof kling_tasks_mutations;
   "kling_tasks/queries": typeof kling_tasks_queries;
