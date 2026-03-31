@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as ai_avatars_mutations from "../ai_avatars/mutations.js";
+import type * as ai_avatars_queries from "../ai_avatars/queries.js";
 import type * as apps_mutations from "../apps/mutations.js";
 import type * as apps_queries from "../apps/queries.js";
 import type * as bugs_actions from "../bugs/actions.js";
@@ -21,9 +23,19 @@ import type * as features_actions from "../features/actions.js";
 import type * as features_mutations from "../features/mutations.js";
 import type * as features_queries from "../features/queries.js";
 import type * as http from "../http.js";
+import type * as kling_tasks_mutations from "../kling_tasks/mutations.js";
+import type * as kling_tasks_queries from "../kling_tasks/queries.js";
+import type * as media_mutations from "../media/mutations.js";
+import type * as media_queries from "../media/queries.js";
+import type * as posts_mutations from "../posts/mutations.js";
+import type * as posts_queries from "../posts/queries.js";
+import type * as social_accounts_mutations from "../social_accounts/mutations.js";
+import type * as social_accounts_queries from "../social_accounts/queries.js";
 import type * as storage_actions from "../storage/actions.js";
 import type * as storage_mutations from "../storage/mutations.js";
 import type * as storage_queries from "../storage/queries.js";
+import type * as user_invites_mutations from "../user_invites/mutations.js";
+import type * as user_invites_queries from "../user_invites/queries.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 import type * as users_webhooks from "../users/webhooks.js";
@@ -37,6 +49,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "ai_avatars/mutations": typeof ai_avatars_mutations;
+  "ai_avatars/queries": typeof ai_avatars_queries;
   "apps/mutations": typeof apps_mutations;
   "apps/queries": typeof apps_queries;
   "bugs/actions": typeof bugs_actions;
@@ -50,9 +64,19 @@ declare const fullApi: ApiFromModules<{
   "features/mutations": typeof features_mutations;
   "features/queries": typeof features_queries;
   http: typeof http;
+  "kling_tasks/mutations": typeof kling_tasks_mutations;
+  "kling_tasks/queries": typeof kling_tasks_queries;
+  "media/mutations": typeof media_mutations;
+  "media/queries": typeof media_queries;
+  "posts/mutations": typeof posts_mutations;
+  "posts/queries": typeof posts_queries;
+  "social_accounts/mutations": typeof social_accounts_mutations;
+  "social_accounts/queries": typeof social_accounts_queries;
   "storage/actions": typeof storage_actions;
   "storage/mutations": typeof storage_mutations;
   "storage/queries": typeof storage_queries;
+  "user_invites/mutations": typeof user_invites_mutations;
+  "user_invites/queries": typeof user_invites_queries;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
   "users/webhooks": typeof users_webhooks;

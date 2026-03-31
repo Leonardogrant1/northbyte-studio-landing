@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { isNorthByteEmail } from "@/lib/auth-utils";
 
 export default function AdminLoginPage() {
     const { signIn, fetchStatus } = useSignIn();
@@ -23,10 +22,6 @@ export default function AdminLoginPage() {
         if (fetchStatus === "fetching") return;
         setError("");
 
-        if (!needs2FA && !isNorthByteEmail(email)) {
-            setError("Nur @northbyte.studio E-Mail-Adressen sind erlaubt.");
-            return;
-        }
 
         setLoading(true);
 
@@ -111,11 +106,8 @@ export default function AdminLoginPage() {
                                         required
                                         disabled={loading}
                                         className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
-                                        placeholder="admin@northbyte.studio"
+                                        placeholder="deine@email.com"
                                     />
-                                    <p className="text-xs text-secondary/70">
-                                        Nur @northbyte.studio E-Mails
-                                    </p>
                                 </div>
 
                                 <div className="space-y-2">

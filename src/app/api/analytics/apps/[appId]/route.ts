@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
 import { Id } from "@/../convex/_generated/dataModel";
-import { isAdmin } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import { decrypt } from "@/lib/encryption";
 import { ltvBadge, rpiBadge, d2tBadge, t2pBadge } from "./helpers/badges";
 import { getRangeDates, Range } from "./helpers/dates";
@@ -32,7 +32,7 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ appId: string }> }
 ) {
-    if (!(await isAdmin())) {
+    if (!(await getAuthenticatedUserId())) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

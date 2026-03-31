@@ -1,16 +1,56 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// NOTE: Existing users documents without a `type` field must be backfilled
+// via the Convex dashboard to `type: "admin"` before deployment.
+
 export default defineSchema({
-    // Users - central entity linked to Clerk
     users: defineTable({
         clerkId: v.string(),
         email: v.optional(v.string()),
+        type: v.union(v.literal("admin"), v.literal("creator")),
         createdAt: v.number(),
         updatedAt: v.number(),
     }).index("by_clerk", ["clerkId"]),
 
-    // Apps - applications that can have bugs and features
+    user_invites: defineTable({
+        email: v.string(),
+        role: v.union(v.literal("admin"), v.literal("creator")),
+        invitedBy: v.id("users"),
+        createdAt: v.number(),
+        usedAt: v.optional(v.number()),
+    }).index("by_email", ["email"]),
+
+    media: defineTable({
+        title: v.string(),
+        type: v.union(v.literal("video"), v.literal("image")),
+        fileUrl: v.string(),
+        thumbnailUrl: v.string(),
+        appId: v.optional(v.id("apps")),
+        avatarId: v.optional(v.id("ai_avatars")),
+        gender: v.optional(v.union(
+            v.literal("male"),
+            v.literal("female"),
+            v.literal("diverse")
+        )),
+        skinTone: v.optional(v.union(
+            v.literal("white"),
+            v.literal("black"),
+            v.literal("light-skin"),
+            v.literal("asian"),
+            v.literal("indian"),
+            v.literal("brown")
+        )),
+        contentType: v.optional(v.union(v.literal("creator"), v.literal("demo"))),
+        language: v.optional(v.string()),
+        uploadedBy: v.id("users"),
+        createdAt: v.number(),
+    })
+        .index("by_app", ["appId"])
+        .index("by_type", ["type"])
+        .index("by_uploader", ["uploadedBy"])
+        .index("by_avatar", ["avatarId"]),
+
     apps: defineTable({
         name: v.string(),
         domain: v.optional(v.string()),
@@ -29,7 +69,7 @@ export default defineSchema({
         termsOfUse: v.optional(v.string()),
         privacyPolicy: v.optional(v.string()),
     }),
-    // Bugs - bug reports for apps
+
     bugs: defineTable({
         appId: v.id("apps"),
         title: v.string(),
@@ -38,7 +78,6 @@ export default defineSchema({
         status: v.string(),
     }).index("by_app", ["appId"]),
 
-    // Features - feature requests for apps
     features: defineTable({
         appId: v.id("apps"),
         title: v.string(),
@@ -47,7 +86,6 @@ export default defineSchema({
         status: v.string(),
     }).index("by_app", ["appId"]),
 
-    // Bug Subscribers - users subscribed to bug updates
     bugSubscribers: defineTable({
         email: v.string(),
         bugId: v.id("bugs"),
@@ -55,7 +93,6 @@ export default defineSchema({
         .index("by_bug", ["bugId"])
         .index("by_email_bug", ["email", "bugId"]),
 
-    // Feature Subscribers - users subscribed to feature updates
     featureSubscribers: defineTable({
         email: v.string(),
         featureId: v.id("features"),
@@ -63,13 +100,82 @@ export default defineSchema({
         .index("by_feature", ["featureId"])
         .index("by_email_feature", ["email", "featureId"]),
 
+    ai_avatars: defineTable({
+        name: v.string(),
+        imageUrl: v.string(),
+        description: v.string(),
+        gender: v.optional(v.union(v.literal("male"), v.literal("female"), v.literal("diverse"))),
+        ethnicity: v.optional(v.union(
+            v.literal("white"),
+            v.literal("black"),
+            v.literal("light-skin"),
+            v.literal("asian"),
+            v.literal("indian"),
+            v.literal("brown")
+        )),
+        country: v.optional(v.union(v.literal("de"), v.literal("br"), v.literal("us"))),
+        language: v.optional(v.string()),
+        createdAt: v.number(),
+    }),
+
+    social_accounts: defineTable({
+        platform: v.union(v.literal("tiktok"), v.literal("instagram")),
+        isAI: v.boolean(),
+        username: v.string(),
+        platformId: v.optional(v.string()),
+        postizId: v.optional(v.string()),
+        timezone: v.optional(v.string()),
+        postingTimes: v.optional(v.array(v.string())),
+        bio: v.optional(v.string()),
+        followers: v.optional(v.number()),
+        following: v.optional(v.number()),
+        likes: v.optional(v.number()),
+        profileImageUrl: v.optional(v.string()),
+        assignedTo: v.optional(v.id("users")),
+        avatarId: v.optional(v.id("ai_avatars")),
+        createdAt: v.number(),
+    })
+        .index("by_platform", ["platform"])
+        .index("by_assigned", ["assignedTo"]),
+
+    kling_tasks: defineTable({
+        taskId: v.string(),
+        prompt: v.string(),
+        imageUrl: v.string(),
+        videoUrl: v.string(),
+        status: v.union(
+            v.literal("submitted"),
+            v.literal("processing"),
+            v.literal("succeed"),
+            v.literal("failed")
+        ),
+        resultUrl: v.optional(v.string()),
+        createdBy: v.id("users"),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+        .index("by_task", ["taskId"])
+        .index("by_creator", ["createdBy"]),
+
+    posts: defineTable({
+        title: v.string(),
+        description: v.optional(v.string()),
+        hashtags: v.optional(v.array(v.string())),
+        videoUrl: v.string(),
+        accountId: v.id("social_accounts"),
+        status: v.union(v.literal("scheduled"), v.literal("posted"), v.literal("failed")),
+        createdBy: v.id("users"),
+        createdAt: v.number(),
+    })
+        .index("by_creator", ["createdBy"])
+        .index("by_status", ["status"]),
 
     vendors: defineTable({
-        name: v.string(),        // "tiktok", "google_cloud"
+        name: v.string(),
     }).index("by_name", ["name"]),
 
     categories: defineTable({
-        name: v.string(),        // "advertising", "infrastructure"
+        name: v.string(),
     }).index("by_name", ["name"]),
 
     expenses: defineTable({
@@ -84,7 +190,8 @@ export default defineSchema({
         tax_amount: v.optional(v.number()),
         date: v.string(),
         urls: v.optional(v.array(v.string())),
-    }).index("by_vendor", ["vendor_id"])
+    })
+        .index("by_vendor", ["vendor_id"])
         .index("by_category", ["category_id"])
         .index("by_vendor_invoice", ["vendor_id", "vendor_invoice_id"])
         .index("by_vendor_receipt", ["vendor_id", "vendor_receipt_id"]),

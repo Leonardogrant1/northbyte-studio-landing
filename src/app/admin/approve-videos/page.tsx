@@ -154,7 +154,7 @@ export default function ApproveVideosPage() {
         fetch("/api/admin/check")
             .then((res) => res.json())
             .then((data) => {
-                if (!data.isAdmin) {
+                if (!data.isAuthenticated) {
                     router.push("/admin/login");
                 } else {
                     setIsChecking(false);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
 import { Id } from "@/../convex/_generated/dataModel";
-import { isAdmin } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import { encrypt } from "@/lib/encryption";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -11,7 +11,7 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ appId: string }> }
 ) {
-    if (!(await isAdmin())) {
+    if (!(await getAuthenticatedUserId())) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

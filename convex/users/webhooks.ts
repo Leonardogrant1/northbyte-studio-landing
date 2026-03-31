@@ -1,10 +1,7 @@
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 
-// Clerk Webhook for user.created events
-// Documentation: https://clerk.com/docs/integrations/webhooks
 export const clerkWebhook = httpAction(async (ctx, request) => {
-  // Verify webhook signature (Svix headers)
   const svix_id = request.headers.get("svix-id");
   const svix_timestamp = request.headers.get("svix-timestamp");
   const svix_signature = request.headers.get("svix-signature");
@@ -14,9 +11,6 @@ export const clerkWebhook = httpAction(async (ctx, request) => {
     return new Response("Missing svix headers", { status: 400 });
   }
 
-  // In production, verify the signature using svix library
-  // For now, we'll process the webhook directly
-
   try {
     const body = await request.json();
     const eventType = body.type;
@@ -25,14 +19,24 @@ export const clerkWebhook = httpAction(async (ctx, request) => {
 
     if (eventType === "user.created") {
       const { id: clerkId, email_addresses } = body.data;
-      const email = email_addresses?.[0]?.email_address;
+      const email: string | undefined = email_addresses?.[0]?.email_address;
+
+      // Look up open invite to determine role
+      let type: "admin" | "creator" | undefined;
+      if (email) {
+        const invite = await ctx.runQuery(internal.user_invites.queries.getOpenInviteByEmailInternal, { email });
+        if (invite) {
+          type = invite.role;
+        }
+      }
 
       await ctx.runMutation(internal.users.mutations.createUser, {
         clerkId,
         email,
+        type,
       });
 
-      console.log("User created:", clerkId);
+      console.log("User created:", clerkId, "type:", type ?? "fallback");
     }
 
     return new Response("OK", { status: 200 });

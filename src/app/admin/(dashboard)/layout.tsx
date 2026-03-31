@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
-import { isAdmin } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { RoleGuard } from "@/components/admin/RoleGuard";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const adminStatus = await isAdmin();
+    const userId = await getAuthenticatedUserId();
 
-    if (!adminStatus) {
+    if (!userId) {
         redirect("/admin/login");
     }
 
@@ -18,7 +19,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="flex flex-1">
                 <AdminSidebar />
                 <main className="flex-1 p-8 overflow-auto">
-                    {children}
+                    <RoleGuard>
+                        {children}
+                    </RoleGuard>
                 </main>
             </div>
         </div>
