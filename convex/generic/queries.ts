@@ -40,6 +40,8 @@ export const findByFilters = query({
             v.union(
                 v.object({ field: v.string(), value: v.any() }),
                 v.object({ field: v.string(), exists: v.boolean() }),
+                v.object({ field: v.string(), contains: v.string() }),
+                v.object({ field: v.string(), containedIn: v.string() }),
             )
         ),
     },
@@ -51,6 +53,14 @@ export const findByFilters = query({
                 if ("exists" in condition) {
                     const fieldExists = r[condition.field] !== undefined && r[condition.field] !== null;
                     return condition.exists ? fieldExists : !fieldExists;
+                }
+                if ("contains" in condition) {
+                    return typeof r[condition.field] === "string" &&
+                        r[condition.field].toLowerCase().includes(condition.contains.toLowerCase());
+                }
+                if ("containedIn" in condition) {
+                    return typeof r[condition.field] === "string" &&
+                        condition.containedIn.toLowerCase().includes(r[condition.field].toLowerCase());
                 }
                 return r[condition.field] === condition.value;
             })

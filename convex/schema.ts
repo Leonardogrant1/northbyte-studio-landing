@@ -166,6 +166,12 @@ export default defineSchema({
         status: v.union(v.literal("scheduled"), v.literal("posted"), v.literal("failed"), v.literal("ready_to_post")),
         scheduledAt: v.optional(v.number()),
         releaseUrl: v.optional(v.string()),
+        postizPostId: v.optional(v.string()),
+        likes: v.optional(v.number()),
+        comments: v.optional(v.number()),
+        shares: v.optional(v.number()),
+        views: v.optional(v.number()),
+        reposts: v.optional(v.number()),
         createdBy: v.id("users"),
         createdAt: v.number(),
     })
