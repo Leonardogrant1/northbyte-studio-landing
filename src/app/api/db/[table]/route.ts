@@ -104,3 +104,50 @@ export async function GET(
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ table: string }> }
+) {
+    if (!checkInternalApiSecret(request)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { table } = await params;
+
+    if (!ALLOWED_TABLES.includes(table)) {
+        return NextResponse.json({ error: `Table '${table}' is not allowed` }, { status: 400 });
+    }
+
+    try {
+        const body = await request.json();
+        const { filters, patch } = body as { filters?: Record<string, unknown>; patch: Record<string, unknown> };
+
+        if (!patch || typeof patch !== "object") {
+            return NextResponse.json({ error: "'patch' is required" }, { status: 400 });
+        }
+
+        let records: { _id: string }[];
+
+        if (filters) {
+            const conditions = Object.entries(filters).map(([f, v]) => {
+                if (typeof v === "object" && v !== null && "exists" in v) {
+                    return { field: f, exists: Boolean((v as Record<string, unknown>).exists) };
+                }
+                return { field: f, value: v };
+            });
+            records = await convex.query(api.generic.queries.findByFilters, { table, conditions }) as { _id: string }[];
+        } else {
+            records = await convex.query(api.generic.queries.getAll, { table }) as { _id: string }[];
+        }
+
+        await Promise.all(
+            records.map((r) => convex.mutation(api.generic.mutations.updateById, { id: r._id, patch }))
+        );
+
+        return NextResponse.json({ success: true, updated: records.length }, { status: 200 });
+    } catch (error) {
+        console.error(`Error updating table '${table}':`, error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+}

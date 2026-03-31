@@ -165,6 +165,7 @@ export default defineSchema({
         accountId: v.id("social_accounts"),
         status: v.union(v.literal("scheduled"), v.literal("posted"), v.literal("failed"), v.literal("ready_to_post")),
         scheduledAt: v.optional(v.number()),
+        releaseUrl: v.optional(v.string()),
         createdBy: v.id("users"),
         createdAt: v.number(),
     })
