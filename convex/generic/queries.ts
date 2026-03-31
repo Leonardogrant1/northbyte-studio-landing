@@ -31,3 +31,29 @@ export const findByField = query({
         });
     },
 });
+
+// Each condition: { field, value } for equality or { field, exists: true/false } for null-check
+export const findByFilters = query({
+    args: {
+        table: v.string(),
+        conditions: v.array(
+            v.union(
+                v.object({ field: v.string(), value: v.any() }),
+                v.object({ field: v.string(), exists: v.boolean() }),
+            )
+        ),
+    },
+    handler: async (ctx, args) => {
+        const records = await ctx.db.query(args.table as TableNames).collect();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return records.filter((r: any) =>
+            args.conditions.every((condition) => {
+                if ("exists" in condition) {
+                    const fieldExists = r[condition.field] !== undefined && r[condition.field] !== null;
+                    return condition.exists ? fieldExists : !fieldExists;
+                }
+                return r[condition.field] === condition.value;
+            })
+        );
+    },
+});
