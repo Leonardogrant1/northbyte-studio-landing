@@ -9,6 +9,7 @@ export const create = mutation({
         videoUrl: v.string(),
         accountId: v.id("social_accounts"),
         scheduledAt: v.optional(v.number()),
+        releaseUrl: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -27,6 +28,7 @@ export const create = mutation({
             videoUrl: args.videoUrl,
             accountId: args.accountId,
             scheduledAt: args.scheduledAt,
+            releaseUrl: args.releaseUrl,
             status: "ready_to_post",
             createdBy: user._id,
             createdAt: Date.now(),
