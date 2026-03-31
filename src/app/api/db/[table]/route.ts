@@ -5,6 +5,11 @@ import { checkInternalApiSecret } from "@/lib/internal-auth";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+function applyLimit(records: unknown[], limit: number | null): unknown[] {
+    if (!limit || limit <= 0) return records;
+    return records.slice(0, limit);
+}
+
 function applySorting(records: unknown[], sortParam: string | null): unknown[] {
     if (!sortParam) return records;
 
@@ -61,6 +66,8 @@ export async function GET(
         const value = searchParams.get("value");
         const exists = searchParams.get("exists");
         const sort = searchParams.get("sort");
+        const limitParam = searchParams.get("limit");
+        const limit = limitParam ? parseInt(limitParam, 10) : null;
 
         if (filtersParam) {
             let filters: Record<string, unknown>;
@@ -78,7 +85,7 @@ export async function GET(
             });
 
             const raw = await convex.query(api.generic.queries.findByFilters, { table, conditions });
-            return NextResponse.json({ success: true, records: applySorting(raw, sort) }, { status: 200 });
+            return NextResponse.json({ success: true, records: applyLimit(applySorting(raw, sort), limit) }, { status: 200 });
         }
 
         if (field && (value !== null || exists !== null)) {
@@ -87,11 +94,11 @@ export async function GET(
                 field,
                 ...(exists !== null ? { exists: exists === "true" } : { value }),
             });
-            return NextResponse.json({ success: true, records: applySorting(raw, sort) }, { status: 200 });
+            return NextResponse.json({ success: true, records: applyLimit(applySorting(raw, sort), limit) }, { status: 200 });
         }
 
         const raw = await convex.query(api.generic.queries.getAll, { table });
-        return NextResponse.json({ success: true, records: applySorting(raw, sort) }, { status: 200 });
+        return NextResponse.json({ success: true, records: applyLimit(applySorting(raw, sort), limit) }, { status: 200 });
     } catch (error) {
         console.error(`Error querying table '${table}':`, error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
