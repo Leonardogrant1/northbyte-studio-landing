@@ -81,6 +81,12 @@ export async function GET(
                 if (typeof v === "object" && v !== null && "exists" in v) {
                     return { field: f, exists: Boolean((v as Record<string, unknown>).exists) };
                 }
+                if (typeof v === "object" && v !== null && "contains" in v) {
+                    return { field: f, contains: String((v as Record<string, unknown>).contains) };
+                }
+                if (typeof v === "object" && v !== null && "containedIn" in v) {
+                    return { field: f, containedIn: String((v as Record<string, unknown>).containedIn) };
+                }
                 return { field: f, value: v };
             });
 
@@ -133,6 +139,12 @@ export async function PATCH(
             const conditions = Object.entries(filters).map(([f, v]) => {
                 if (typeof v === "object" && v !== null && "exists" in v) {
                     return { field: f, exists: Boolean((v as Record<string, unknown>).exists) };
+                }
+                if (typeof v === "object" && v !== null && "contains" in v) {
+                    return { field: f, contains: String((v as Record<string, unknown>).contains) };
+                }
+                if (typeof v === "object" && v !== null && "containedIn" in v) {
+                    return { field: f, containedIn: String((v as Record<string, unknown>).containedIn) };
                 }
                 return { field: f, value: v };
             });
