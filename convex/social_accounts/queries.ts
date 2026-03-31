@@ -1,5 +1,13 @@
 import { query } from "../_generated/server";
 
+export const getWithPostizId = query({
+    args: {},
+    handler: async (ctx) => {
+        const accounts = await ctx.db.query("social_accounts").collect();
+        return accounts.filter((a) => a.postizId !== undefined && a.postizId !== null);
+    },
+});
+
 export const getAll = query({
     args: {},
     handler: async (ctx) => {

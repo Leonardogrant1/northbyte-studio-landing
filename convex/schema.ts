@@ -163,7 +163,7 @@ export default defineSchema({
         hashtags: v.optional(v.array(v.string())),
         videoUrl: v.string(),
         accountId: v.id("social_accounts"),
-        status: v.union(v.literal("scheduled"), v.literal("posted"), v.literal("failed")),
+        status: v.union(v.literal("scheduled"), v.literal("posted"), v.literal("failed"), v.literal("ready_to_post")),
         createdBy: v.id("users"),
         createdAt: v.number(),
     })
