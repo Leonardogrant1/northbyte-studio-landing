@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { Trash2, UserPlus } from "lucide-react";
+import { usePaginatedQuery, useQuery, useMutation } from "convex/react";
+import { Trash2, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function UsersPage() {
-    const users = useQuery(api.users.queries.getAllUsers);
+    const currentUser = useCurrentUser();
+    const isAdmin = currentUser?.type === "admin";
+
+    const { results: users, status, loadMore } = usePaginatedQuery(
+        api.users.queries.getAllUsersPaginated,
+        isAdmin ? {} : "skip",
+        { initialNumItems: 20 }
+    );
     const invites = useQuery(api.user_invites.queries.getAll);
     const createInvite = useMutation(api.user_invites.mutations.create);
     const removeInvite = useMutation(api.user_invites.mutations.remove);
@@ -145,35 +153,54 @@ export default function UsersPage() {
             {/* Active Users */}
             <section>
                 <h2 className="text-xl font-semibold mb-4">Aktive Benutzer</h2>
-                {!users || users.length === 0 ? (
+                {status === "LoadingFirstPage" ? (
+                    <div className="flex items-center gap-2 text-secondary text-sm">
+                        <Loader2 size={14} className="animate-spin" /> Wird geladen…
+                    </div>
+                ) : users.length === 0 ? (
                     <p className="text-secondary text-sm">Keine Benutzer vorhanden.</p>
                 ) : (
-                    <div className="border border-border rounded-2xl overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border bg-surface2/30">
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">Rolle</th>
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">Registriert am</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((u) => (
-                                    <tr key={u._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
-                                        <td className="px-4 py-3 text-primary">{u.email ?? "—"}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.type === "admin"
-                                                    ? "bg-accent/20 text-accent"
-                                                    : "bg-blue-500/20 text-blue-400"
-                                                }`}>
-                                                {u.type === "admin" ? "Admin" : "Creator"}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-secondary">{formatDate(u.createdAt)}</td>
+                    <div className="space-y-3">
+                        <div className="border border-border rounded-2xl overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-surface2/30">
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">Rolle</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">Registriert am</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {users.map((u) => (
+                                        <tr key={u._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
+                                            <td className="px-4 py-3 text-primary">{u.email ?? "—"}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.type === "admin"
+                                                        ? "bg-accent/20 text-accent"
+                                                        : "bg-blue-500/20 text-blue-400"
+                                                    }`}>
+                                                    {u.type === "admin" ? "Admin" : "Creator"}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-secondary">{formatDate(u.createdAt)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {status === "CanLoadMore" && (
+                            <button
+                                onClick={() => loadMore(20)}
+                                className="w-full py-2.5 text-sm text-secondary border border-border rounded-xl hover:border-accent/50 hover:text-primary transition-all"
+                            >
+                                Mehr laden
+                            </button>
+                        )}
+                        {status === "LoadingMore" && (
+                            <div className="flex items-center justify-center gap-2 text-secondary text-sm py-2">
+                                <Loader2 size={14} className="animate-spin" /> Wird geladen…
+                            </div>
+                        )}
                     </div>
                 )}
             </section>
