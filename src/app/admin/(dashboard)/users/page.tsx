@@ -116,8 +116,8 @@ export default function UsersPage() {
                                         <td className="px-4 py-3 text-primary">{invite.email}</td>
                                         <td className="px-4 py-3">
                                             <span className={`text-xs font-medium px-2 py-1 rounded-full ${invite.role === "admin"
-                                                    ? "bg-accent/20 text-accent"
-                                                    : "bg-blue-500/20 text-blue-400"
+                                                ? "bg-accent/20 text-accent"
+                                                : "bg-blue-500/20 text-blue-400"
                                                 }`}>
                                                 {invite.role === "admin" ? "Admin" : "Creator"}
                                             </span>
@@ -125,8 +125,8 @@ export default function UsersPage() {
                                         <td className="px-4 py-3 text-secondary">{formatDate(invite.createdAt)}</td>
                                         <td className="px-4 py-3">
                                             <span className={`text-xs font-medium px-2 py-1 rounded-full ${invite.usedAt
-                                                    ? "bg-green-500/20 text-green-400"
-                                                    : "bg-yellow-500/20 text-yellow-400"
+                                                ? "bg-green-500/20 text-green-400"
+                                                : "bg-yellow-500/20 text-yellow-400"
                                                 }`}>
                                                 {invite.usedAt ? "Eingelöst" : "Offen"}
                                             </span>
@@ -176,8 +176,8 @@ export default function UsersPage() {
                                             <td className="px-4 py-3 text-primary">{u.email ?? "—"}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.type === "admin"
-                                                        ? "bg-accent/20 text-accent"
-                                                        : "bg-blue-500/20 text-blue-400"
+                                                    ? "bg-accent/20 text-accent"
+                                                    : "bg-blue-500/20 text-blue-400"
                                                     }`}>
                                                     {u.type === "admin" ? "Admin" : "Creator"}
                                                 </span>
@@ -193,7 +193,7 @@ export default function UsersPage() {
                                 onClick={() => loadMore(20)}
                                 className="w-full py-2.5 text-sm text-secondary border border-border rounded-xl hover:border-accent/50 hover:text-primary transition-all"
                             >
-                                Mehr laden
+                                Load more
                             </button>
                         )}
                         {status === "LoadingMore" && (
