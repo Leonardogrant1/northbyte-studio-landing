@@ -31,9 +31,29 @@ export async function GET(
 
     try {
         const { searchParams } = new URL(request.url);
+        const filtersParam = searchParams.get("filters");
         const field = searchParams.get("field");
         const value = searchParams.get("value");
         const exists = searchParams.get("exists");
+
+        if (filtersParam) {
+            let filters: Record<string, unknown>;
+            try {
+                filters = JSON.parse(filtersParam);
+            } catch {
+                return NextResponse.json({ error: "Invalid JSON in 'filters' parameter" }, { status: 400 });
+            }
+
+            const conditions = Object.entries(filters).map(([f, v]) => {
+                if (typeof v === "object" && v !== null && "exists" in v) {
+                    return { field: f, exists: Boolean((v as Record<string, unknown>).exists) };
+                }
+                return { field: f, value: v };
+            });
+
+            const records = await convex.query(api.generic.queries.findByFilters, { table, conditions });
+            return NextResponse.json({ success: true, records }, { status: 200 });
+        }
 
         if (field && (value !== null || exists !== null)) {
             const records = await convex.query(api.generic.queries.findByField, {
