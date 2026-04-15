@@ -1,5 +1,6 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
+import { Id } from "../_generated/dataModel";
 
 export const getReadyToPostByAccount = query({
     args: { accountId: v.id("social_accounts") },
@@ -33,5 +34,47 @@ export const getMyPosts = query({
             .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
             .order("desc")
             .collect();
+    },
+});
+
+// Returns the last 20 posts enriched with account info.
+// Admin sees all; creator sees only their own.
+export const getRecent = query({
+    args: { limit: v.optional(v.number()) },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!user) throw new Error("User not found.");
+
+        const limit = args.limit ?? 20;
+
+        let posts;
+        if (user.type === "admin") {
+            posts = await ctx.db.query("posts").order("desc").take(limit);
+        } else {
+            posts = await ctx.db
+                .query("posts")
+                .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
+                .order("desc")
+                .take(limit);
+        }
+
+        // Enrich with social account data
+        return await Promise.all(
+            posts.map(async (post) => {
+                const account = await ctx.db.get(post.accountId);
+                return {
+                    ...post,
+                    account: account
+                        ? { username: account.username, platform: account.platform }
+                        : null,
+                };
+            })
+        );
     },
 });
