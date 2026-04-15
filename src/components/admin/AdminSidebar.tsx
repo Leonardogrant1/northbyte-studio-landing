@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot } from "lucide-react";
+import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList } from "lucide-react";
 import { Suspense } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -67,6 +67,13 @@ function AdminSidebarInner() {
             icon: FileEdit,
             href: "/admin/post-content",
             isActive: pathname === "/admin/post-content",
+            adminOnly: false,
+        },
+        {
+            label: "Contents",
+            icon: LayoutList,
+            href: "/admin/contents",
+            isActive: pathname === "/admin/contents",
             adminOnly: false,
         },
         {
