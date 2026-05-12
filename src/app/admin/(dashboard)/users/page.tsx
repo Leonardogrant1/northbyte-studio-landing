@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePaginatedQuery, useQuery, useMutation } from "convex/react";
+import { usePaginatedQuery, useQuery, useMutation, useAction } from "convex/react";
 import { Trash2, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
@@ -18,7 +18,7 @@ export default function UsersPage() {
         { initialNumItems: 20 }
     );
     const invites = useQuery(api.user_invites.queries.getAll);
-    const createInvite = useMutation(api.user_invites.mutations.create);
+    const createAndSend = useAction(api.user_invites.actions.createAndSend);
     const removeInvite = useMutation(api.user_invites.mutations.remove);
 
     const [inviteEmail, setInviteEmail] = useState("");
@@ -29,9 +29,13 @@ export default function UsersPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            await createInvite({ email: inviteEmail, role: inviteRole });
+            const result = await createAndSend({ email: inviteEmail, role: inviteRole });
             setInviteEmail("");
-            toast.success(`Einladung für ${inviteEmail} erstellt.`);
+            if (result.emailSent) {
+                toast.success(`Einladung an ${inviteEmail} gesendet.`);
+            } else {
+                toast.success(`Einladung für ${inviteEmail} erstellt. (E-Mail konnte nicht gesendet werden.)`);
+            }
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "Fehler beim Einladen.");
         } finally {
@@ -96,58 +100,50 @@ export default function UsersPage() {
             {/* Open Invites */}
             <section>
                 <h2 className="text-xl font-semibold mb-4">Einladungen</h2>
-                {!invites || invites.length === 0 ? (
-                    <p className="text-secondary text-sm">Keine Einladungen vorhanden.</p>
-                ) : (
-                    <div className="border border-border rounded-2xl overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border bg-surface2/30">
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">Rolle</th>
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">Eingeladen am</th>
-                                    <th className="text-left px-4 py-3 text-secondary font-medium">Status</th>
-                                    <th className="px-4 py-3" />
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {invites.map((invite: { _id: Id<"user_invites">; email: string; role: "admin" | "creator"; createdAt: number; usedAt?: number }) => (
-                                    <tr key={invite._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
-                                        <td className="px-4 py-3 text-primary">{invite.email}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${invite.role === "admin"
-                                                ? "bg-accent/20 text-accent"
-                                                : "bg-blue-500/20 text-blue-400"
-                                                }`}>
-                                                {invite.role === "admin" ? "Admin" : "Creator"}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-secondary">{formatDate(invite.createdAt)}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${invite.usedAt
-                                                ? "bg-green-500/20 text-green-400"
-                                                : "bg-yellow-500/20 text-yellow-400"
-                                                }`}>
-                                                {invite.usedAt ? "Eingelöst" : "Offen"}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            {!invite.usedAt && (
+                {(() => {
+                    const openInvites = invites?.filter((i: { usedAt?: number }) => i.usedAt === undefined) ?? [];
+                    return !invites || openInvites.length === 0 ? (
+                        <p className="text-secondary text-sm">Keine offenen Einladungen vorhanden.</p>
+                    ) : (
+                        <div className="border border-border rounded-2xl overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-surface2/30">
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">Rolle</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">Eingeladen am</th>
+                                        <th className="px-4 py-3" />
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {openInvites.map((invite: { _id: Id<"user_invites">; email: string; role: "admin" | "creator"; createdAt: number }) => (
+                                        <tr key={invite._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
+                                            <td className="px-4 py-3 text-primary">{invite.email}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${invite.role === "admin"
+                                                    ? "bg-accent/20 text-accent"
+                                                    : "bg-blue-500/20 text-blue-400"
+                                                    }`}>
+                                                    {invite.role === "admin" ? "Admin" : "Creator"}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-secondary">{formatDate(invite.createdAt)}</td>
+                                            <td className="px-4 py-3 text-right">
                                                 <button
                                                     onClick={() => handleRevoke(invite._id)}
                                                     className="text-secondary hover:text-red-400 transition-colors p-1"
-                                                    title="Einladung widerrufen"
+                                                    title="Einladung löschen"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
             </section>
 
             {/* Active Users */}

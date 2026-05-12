@@ -36,6 +36,7 @@ import type * as social_accounts_queries from "../social_accounts/queries.js";
 import type * as storage_actions from "../storage/actions.js";
 import type * as storage_mutations from "../storage/mutations.js";
 import type * as storage_queries from "../storage/queries.js";
+import type * as user_invites_actions from "../user_invites/actions.js";
 import type * as user_invites_mutations from "../user_invites/mutations.js";
 import type * as user_invites_queries from "../user_invites/queries.js";
 import type * as users_mutations from "../users/mutations.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   "storage/actions": typeof storage_actions;
   "storage/mutations": typeof storage_mutations;
   "storage/queries": typeof storage_queries;
+  "user_invites/actions": typeof user_invites_actions;
   "user_invites/mutations": typeof user_invites_mutations;
   "user_invites/queries": typeof user_invites_queries;
   "users/mutations": typeof users_mutations;

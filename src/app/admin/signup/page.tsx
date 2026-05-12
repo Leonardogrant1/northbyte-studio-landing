@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSignUp } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
-export default function AdminSignUpPage() {
+function AdminSignUpPage() {
     const { signUp, fetchStatus } = useSignUp();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const tokenFromUrl = searchParams.get("token");
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -21,11 +23,28 @@ export default function AdminSignUpPage() {
     const [verificationCode, setVerificationCode] = useState("");
     const [pendingVerification, setPendingVerification] = useState(false);
 
-    // Check if an open invite exists for the typed email (runs reactively)
-    const invite = useQuery(
-        api.user_invites.queries.getOpenInviteByEmail,
-        email.length > 3 ? { email } : "skip"
+    // Token path: used when arriving via magic link
+    const inviteByToken = useQuery(
+        api.user_invites.queries.getByToken,
+        tokenFromUrl ? { token: tokenFromUrl } : "skip"
     );
+
+    // Email path: existing behavior, skip if a token is already in the URL
+    const inviteByEmail = useQuery(
+        api.user_invites.queries.getOpenInviteByEmail,
+        !tokenFromUrl && email.length > 3 ? { email } : "skip"
+    );
+
+    // Unified invite reference — handleSubmit logic stays unchanged
+    const invite = tokenFromUrl ? inviteByToken : inviteByEmail;
+
+    // Pre-fill email when arriving via magic link
+    useEffect(() => {
+        if (inviteByToken) {
+            setEmail(inviteByToken.email);
+        }
+    }, [inviteByToken]);
+
     const createUserFromInvite = useMutation(api.users.mutations.createUserFromInvite);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -174,17 +193,26 @@ export default function AdminSignUpPage() {
                                     type="email"
                                     id="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => !tokenFromUrl && setEmail(e.target.value)}
+                                    readOnly={!!tokenFromUrl}
                                     required
                                     disabled={loading}
-                                    className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                                    className={`w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50 ${tokenFromUrl ? "opacity-70 cursor-default" : ""}`}
                                     placeholder="deine@email.com"
                                 />
-                                {email.length > 3 && invite === null && (
+                                {/* Token path feedback */}
+                                {tokenFromUrl && inviteByToken === null && (
+                                    <p className="text-xs text-red-400">Dieser Einladungslink ist ungültig oder wurde bereits verwendet.</p>
+                                )}
+                                {tokenFromUrl && inviteByToken && (
+                                    <p className="text-xs text-green-400">Einladung gefunden — Rolle: {inviteByToken.role}</p>
+                                )}
+                                {/* Email path feedback */}
+                                {!tokenFromUrl && email.length > 3 && inviteByEmail === null && (
                                     <p className="text-xs text-red-400">Keine Einladung für diese E-Mail gefunden.</p>
                                 )}
-                                {email.length > 3 && invite && (
-                                    <p className="text-xs text-green-400">Einladung gefunden — Rolle: {invite.role}</p>
+                                {!tokenFromUrl && email.length > 3 && inviteByEmail && (
+                                    <p className="text-xs text-green-400">Einladung gefunden — Rolle: {inviteByEmail.role}</p>
                                 )}
                             </div>
 
@@ -307,5 +335,13 @@ export default function AdminSignUpPage() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function AdminSignUpPageWrapper() {
+    return (
+        <Suspense fallback={null}>
+            <AdminSignUpPage />
+        </Suspense>
     );
 }

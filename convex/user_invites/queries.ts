@@ -36,6 +36,21 @@ export const getAll = query({
   },
 });
 
+// Public query — used by the signup page when arriving via a magic link token.
+// Returns the open invite for this token, or null if not found / already used.
+export const getByToken = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const invite = await ctx.db
+      .query("user_invites")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .first();
+    if (!invite) return null;
+    if (invite.usedAt !== undefined) return null;
+    return invite;
+  },
+});
+
 // Internal version — used by the webhook (no auth check needed, called server-side).
 export const getOpenInviteByEmailInternal = internalQuery({
   args: { email: v.string() },
