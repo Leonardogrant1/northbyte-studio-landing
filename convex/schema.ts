@@ -19,7 +19,10 @@ export default defineSchema({
         invitedBy: v.id("users"),
         createdAt: v.number(),
         usedAt: v.optional(v.number()),
-    }).index("by_email", ["email"]),
+        token: v.optional(v.string()),
+    })
+        .index("by_email", ["email"])
+        .index("by_token", ["token"]),
 
     media: defineTable({
         title: v.string(),

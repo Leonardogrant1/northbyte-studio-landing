@@ -6,6 +6,7 @@ export const create = mutation({
   args: {
     email: v.string(),
     role: v.union(v.literal("admin"), v.literal("creator")),
+    token: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -30,6 +31,7 @@ export const create = mutation({
       role: args.role,
       invitedBy: caller._id,
       createdAt: Date.now(),
+      token: args.token,
     });
   },
 });
@@ -49,7 +51,6 @@ export const remove = mutation({
 
     const invite = await ctx.db.get(args.inviteId);
     if (!invite) throw new Error("Einladung nicht gefunden.");
-    if (invite.usedAt !== undefined) throw new Error("Eingelöste Einladungen können nicht widerrufen werden.");
 
     await ctx.db.delete(args.inviteId);
   },
