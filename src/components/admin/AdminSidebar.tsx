@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList } from "lucide-react";
+import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp } from "lucide-react";
 import { Suspense } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -18,6 +18,7 @@ function AdminSidebarInner() {
     const appQuery = currentAppId ? `?app=${currentAppId}` : "";
 
     const isAdmin = user?.type === "admin";
+    const isAffiliate = user?.type === "affiliate";
 
     const allTabs = [
         {
@@ -26,6 +27,7 @@ function AdminSidebarInner() {
             href: `/admin${appQuery}`,
             isActive: pathname === "/admin",
             adminOnly: true,
+            affiliateOnly: false,
         },
         {
             label: "Bugs",
@@ -54,6 +56,7 @@ function AdminSidebarInner() {
             href: "/admin/media",
             isActive: pathname === "/admin/media",
             adminOnly: false,
+            affiliateOnly: false,
         },
         {
             label: "AI-Lab",
@@ -61,6 +64,7 @@ function AdminSidebarInner() {
             href: "/admin/ai-lab",
             isActive: pathname === "/admin/ai-lab",
             adminOnly: false,
+            affiliateOnly: false,
         },
         {
             label: "Post Content",
@@ -68,6 +72,7 @@ function AdminSidebarInner() {
             href: "/admin/post-content",
             isActive: pathname === "/admin/post-content",
             adminOnly: false,
+            affiliateOnly: false,
         },
         {
             label: "Contents",
@@ -75,6 +80,7 @@ function AdminSidebarInner() {
             href: "/admin/contents",
             isActive: pathname === "/admin/contents",
             adminOnly: false,
+            affiliateOnly: false,
         },
         {
             label: "Social Accounts",
@@ -96,10 +102,22 @@ function AdminSidebarInner() {
             href: "/admin/users",
             isActive: pathname === "/admin/users",
             adminOnly: true,
+            affiliateOnly: false,
+        },
+        {
+            label: "Dashboard",
+            icon: TrendingUp,
+            href: "/admin/affiliate",
+            isActive: pathname === "/admin/affiliate",
+            adminOnly: false,
+            affiliateOnly: true,
         },
     ];
 
-    const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin);
+    const tabs = allTabs.filter((tab) => {
+        if (isAffiliate) return tab.affiliateOnly === true;
+        return !tab.adminOnly || isAdmin;
+    });
 
     return (
         <aside className="w-56 shrink-0 border-r border-border p-4">

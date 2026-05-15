@@ -117,7 +117,11 @@ function AdminSignUpPage() {
 
             if (signUp.status === "complete") {
                 await signUp.finalize();
-                await createUserFromInvite({ inviteId: invite!._id });
+                await createUserFromInvite({
+                    inviteId: invite!._id,
+                    name: firstName || undefined,
+                    lastName: lastName || undefined,
+                });
                 router.push("/admin");
             }
         } catch {

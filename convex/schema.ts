@@ -8,18 +8,59 @@ export default defineSchema({
     users: defineTable({
         clerkId: v.string(),
         email: v.optional(v.string()),
-        type: v.union(v.literal("admin"), v.literal("creator")),
+        name: v.optional(v.string()),
+        lastName: v.optional(v.string()),
+        type: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
         createdAt: v.number(),
         updatedAt: v.number(),
     }).index("by_clerk", ["clerkId"]),
 
+    affiliate_profiles: defineTable({
+        userId: v.id("users"),
+        affiliateCode: v.string(),
+        commissionType: v.union(v.literal("percentage"), v.literal("fixed")),
+        commissionAmount: v.number(),
+        isActive: v.boolean(),
+    }).index("by_user", ["userId"]),
+
+
+    affiliate_referral: defineTable({
+        affiliateId: v.id("affiliate_profiles"),
+        appId: v.id("apps"),
+        appUserId: v.optional(v.string()),
+        revenueCatUserId: v.optional(v.string()),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("converted"),
+            v.literal("cancelled"),
+            v.literal("refunded"),
+        ),
+        productId: v.optional(v.string()),
+        subscriptionId: v.optional(v.string()),
+        price: v.optional(v.number()),
+        currency: v.optional(v.string()),
+        priceUsd: v.optional(v.number()),
+        countryCode: v.optional(v.string()),
+        store: v.optional(v.string()), // "APP_STORE" | "PLAY_STORE" | "AMAZON" | "STRIPE" | "MAC_APP_STORE" | "PROMOTIONAL"
+        convertedAt: v.optional(v.number()),
+        cancelledAt: v.optional(v.number()),
+        uncancelledAt: v.optional(v.number()),
+        refundedAt: v.optional(v.number()),
+        createdAt: v.number(),
+    })
+        .index("by_affiliate", ["affiliateId"])
+        .index("by_rc_user", ["revenueCatUserId"]),
+
     user_invites: defineTable({
         email: v.string(),
-        role: v.union(v.literal("admin"), v.literal("creator")),
+        role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
         invitedBy: v.id("users"),
         createdAt: v.number(),
         usedAt: v.optional(v.number()),
         token: v.optional(v.string()),
+        affiliateCode: v.optional(v.string()),
+        commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
+        commissionAmount: v.optional(v.number()),
     })
         .index("by_email", ["email"])
         .index("by_token", ["token"]),
@@ -65,13 +106,17 @@ export default defineSchema({
         status: v.string(),
         revenueCatProjectId: v.optional(v.string()),
         revenueCatApiKeyEncrypted: v.optional(v.string()),
+        revenueCatAppStoreId: v.optional(v.string()),
+        revenueCatPlayStoreId: v.optional(v.string()),
         postHogProjectId: v.optional(v.string()),
         postHogApiKeyEncrypted: v.optional(v.string()),
         postHogInstallEvent: v.optional(v.string()),
         postHogTrialEvent: v.optional(v.string()),
         termsOfUse: v.optional(v.string()),
         privacyPolicy: v.optional(v.string()),
-    }),
+    })
+        .index("by_rc_appstore_id", ["revenueCatAppStoreId"])
+        .index("by_rc_playstore_id", ["revenueCatPlayStoreId"]),
 
     bugs: defineTable({
         appId: v.id("apps"),

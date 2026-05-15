@@ -14,6 +14,11 @@ function isAdminOnlyRoute(pathname: string): boolean {
     return ADMIN_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
 }
 
+// Affiliates can only access their own dashboard
+function isAffiliateAllowedRoute(pathname: string): boolean {
+    return pathname === "/admin/affiliate" || pathname.startsWith("/admin/affiliate/");
+}
+
 interface RoleGuardProps {
     children: React.ReactNode;
 }
@@ -33,12 +38,15 @@ export function RoleGuard({ children }: RoleGuardProps) {
         if (user.type === "creator" && isAdminOnlyRoute(pathname)) {
             router.replace("/admin/media");
         }
+
+        if (user.type === "affiliate" && !isAffiliateAllowedRoute(pathname)) {
+            router.replace("/admin/affiliate");
+        }
     }, [user, pathname, router]);
 
     // Show nothing while redirecting to avoid flash
-    if (user?.type === "creator" && isAdminOnlyRoute(pathname)) {
-        return null;
-    }
+    if (user?.type === "creator" && isAdminOnlyRoute(pathname)) return null;
+    if (user?.type === "affiliate" && !isAffiliateAllowedRoute(pathname)) return null;
 
     return <>{children}</>;
 }

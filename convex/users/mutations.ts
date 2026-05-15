@@ -7,7 +7,7 @@ export const createUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("admin"), v.literal("creator"))),
+    type: v.optional(v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"))),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -18,7 +18,7 @@ export const createUser = internalMutation({
     if (existing) return existing._id;
 
     // Determine role: explicit type > northbyte fallback > default creator
-    let type: "admin" | "creator" = args.type ?? "creator";
+    let type: "admin" | "creator" | "affiliate" = args.type ?? "creator";
     if (!args.type && args.email?.endsWith("@northbyte.studio")) {
       type = "admin";
     }
@@ -38,7 +38,11 @@ export const createUser = internalMutation({
 // Creates (or updates) the user with the role from a valid invite.
 // Marks the invite as used.
 export const createUserFromInvite = mutation({
-  args: { inviteId: v.id("user_invites") },
+  args: {
+    inviteId: v.id("user_invites"),
+    name: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
@@ -57,21 +61,41 @@ export const createUserFromInvite = mutation({
       .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
       .first();
 
+    let userId;
     if (existing) {
-      // Webhook may have already created the user — update their type
-      await ctx.db.patch(existing._id, { type: invite.role, updatedAt: now });
-      await ctx.db.patch(args.inviteId, { usedAt: now });
-      return existing._id;
+      // Webhook may have already created the user — update their type and name
+      await ctx.db.patch(existing._id, {
+        type: invite.role,
+        name: args.name,
+        lastName: args.lastName,
+        updatedAt: now,
+      });
+      userId = existing._id;
+    } else {
+      userId = await ctx.db.insert("users", {
+        clerkId: identity.subject,
+        email: identity.email,
+        name: args.name,
+        lastName: args.lastName,
+        type: invite.role,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
-    const userId = await ctx.db.insert("users", {
-      clerkId: identity.subject,
-      email: identity.email,
-      type: invite.role,
-      createdAt: now,
-      updatedAt: now,
-    });
     await ctx.db.patch(args.inviteId, { usedAt: now });
+
+    // If affiliate, create the affiliate profile with the code from the invite
+    if (invite.role === "affiliate" && invite.affiliateCode) {
+      await ctx.db.insert("affiliate_profiles", {
+        userId,
+        affiliateCode: invite.affiliateCode,
+        commissionType: invite.commissionType ?? "percentage",
+        commissionAmount: invite.commissionAmount ?? 10,
+        isActive: true,
+      });
+    }
+
     return userId;
   },
 });

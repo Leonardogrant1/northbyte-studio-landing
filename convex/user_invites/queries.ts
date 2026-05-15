@@ -24,13 +24,13 @@ export const getAll = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) return null;
 
     const caller = await ctx.db
       .query("users")
       .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
       .first();
-    if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
+    if (!caller || caller.type !== "admin") return null;
 
     return await ctx.db.query("user_invites").order("desc").collect();
   },

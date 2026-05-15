@@ -2,11 +2,153 @@
 
 import { useState } from "react";
 import { usePaginatedQuery, useQuery, useMutation, useAction } from "convex/react";
-import { Trash2, UserPlus, Loader2 } from "lucide-react";
+import { Trash2, UserPlus, Loader2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+
+type CommissionType = "percentage" | "fixed";
+
+interface AffiliateEditModalProps {
+    userId: Id<"users">;
+    onClose: () => void;
+}
+
+function AffiliateEditModal({ userId, onClose }: AffiliateEditModalProps) {
+    const profile = useQuery(api.affiliate_profiles.queries.getByUserId, { userId });
+    const updateProfile = useMutation(api.affiliate_profiles.mutations.update);
+
+    const [code, setCode] = useState<string | null>(null);
+    const [commissionType, setCommissionType] = useState<CommissionType | null>(null);
+    const [commissionAmount, setCommissionAmount] = useState<string | null>(null);
+    const [isActive, setIsActive] = useState<boolean | null>(null);
+    const [saving, setSaving] = useState(false);
+
+    // Init state from loaded profile (once)
+    if (profile && code === null) {
+        setCode(profile.affiliateCode);
+        setCommissionType(profile.commissionType);
+        setCommissionAmount(profile.commissionAmount.toString());
+        setIsActive(profile.isActive);
+    }
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!profile || code === null || commissionType === null || commissionAmount === null || isActive === null) return;
+        setSaving(true);
+        try {
+            await updateProfile({
+                profileId: profile._id,
+                affiliateCode: code.trim(),
+                commissionType,
+                commissionAmount: parseFloat(commissionAmount),
+                isActive,
+            });
+            toast.success("Affiliate-Profil gespeichert.");
+            onClose();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Fehler beim Speichern.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-surface2 border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Affiliate bearbeiten</h2>
+                    <button onClick={onClose} className="text-secondary hover:text-primary transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {!profile ? (
+                    <div className="flex items-center gap-2 text-secondary text-sm py-4">
+                        <Loader2 size={14} className="animate-spin" /> Wird geladen…
+                    </div>
+                ) : (
+                    <form onSubmit={handleSave} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-secondary">Affiliate-Code</label>
+                            <input
+                                type="text"
+                                value={code ?? ""}
+                                onChange={(e) => setCode(e.target.value)}
+                                required
+                                disabled={saving}
+                                className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary font-mono focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-secondary">Provisionstyp</label>
+                                <select
+                                    value={commissionType ?? "percentage"}
+                                    onChange={(e) => setCommissionType(e.target.value as CommissionType)}
+                                    disabled={saving}
+                                    className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
+                                >
+                                    <option value="percentage">Prozent (%)</option>
+                                    <option value="fixed">Fest ($)</option>
+                                </select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-secondary">
+                                    Betrag {commissionType === "percentage" ? "(%)" : "($)"}
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={commissionAmount ?? ""}
+                                    onChange={(e) => setCommissionAmount(e.target.value)}
+                                    required
+                                    disabled={saving}
+                                    className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsActive((v) => !v)}
+                                disabled={saving}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${isActive ? "bg-accent" : "bg-border"}`}
+                            >
+                                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? "translate-x-6" : "translate-x-1"}`} />
+                            </button>
+                            <span className="text-sm text-secondary">
+                                {isActive ? "Aktiv" : "Inaktiv"}
+                            </span>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                disabled={saving}
+                                className="flex-1 py-3 border border-border rounded-xl text-secondary hover:text-primary hover:border-accent/50 transition-all disabled:opacity-50"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="flex-1 py-3 bg-accent text-background font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {saving ? "Wird gespeichert…" : "Speichern"}
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function UsersPage() {
     const currentUser = useCurrentUser();
@@ -17,20 +159,34 @@ export default function UsersPage() {
         isAdmin ? {} : "skip",
         { initialNumItems: 20 }
     );
-    const invites = useQuery(api.user_invites.queries.getAll);
+    const invites = useQuery(api.user_invites.queries.getAll, isAdmin ? {} : "skip");
     const createAndSend = useAction(api.user_invites.actions.createAndSend);
     const removeInvite = useMutation(api.user_invites.mutations.remove);
 
     const [inviteEmail, setInviteEmail] = useState("");
-    const [inviteRole, setInviteRole] = useState<"admin" | "creator">("creator");
+    const [inviteRole, setInviteRole] = useState<"admin" | "creator" | "affiliate">("creator");
+    const [inviteAffiliateCode, setInviteAffiliateCode] = useState("");
+    const [inviteCommissionType, setInviteCommissionType] = useState<CommissionType>("percentage");
+    const [inviteCommissionAmount, setInviteCommissionAmount] = useState("10");
     const [loading, setLoading] = useState(false);
+
+    const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const result = await createAndSend({ email: inviteEmail, role: inviteRole });
+            const result = await createAndSend({
+                email: inviteEmail,
+                role: inviteRole,
+                affiliateCode: inviteRole === "affiliate" ? inviteAffiliateCode : undefined,
+                commissionType: inviteRole === "affiliate" ? inviteCommissionType : undefined,
+                commissionAmount: inviteRole === "affiliate" ? parseFloat(inviteCommissionAmount) : undefined,
+            });
             setInviteEmail("");
+            setInviteAffiliateCode("");
+            setInviteCommissionAmount("10");
+            setInviteCommissionType("percentage");
             if (result.emailSent) {
                 toast.success(`Einladung an ${inviteEmail} gesendet.`);
             } else {
@@ -68,32 +224,74 @@ export default function UsersPage() {
                     <UserPlus size={20} />
                     Benutzer einladen
                 </h2>
-                <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
-                    <input
-                        type="email"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        required
-                        placeholder="email@beispiel.com"
-                        disabled={loading}
-                        className="flex-1 bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
-                    />
-                    <select
-                        value={inviteRole}
-                        onChange={(e) => setInviteRole(e.target.value as "admin" | "creator")}
-                        disabled={loading}
-                        className="bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
-                    >
-                        <option value="creator">Creator</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-6 py-3 bg-accent text-background font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "Wird eingeladen…" : "Einladen"}
-                    </button>
+                <form onSubmit={handleInvite} className="flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            required
+                            placeholder="email@beispiel.com"
+                            disabled={loading}
+                            className="flex-1 bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                        />
+                        <select
+                            value={inviteRole}
+                            onChange={(e) => {
+                                setInviteRole(e.target.value as "admin" | "creator" | "affiliate");
+                                setInviteAffiliateCode("");
+                                setInviteCommissionAmount("10");
+                                setInviteCommissionType("percentage");
+                            }}
+                            disabled={loading}
+                            className="bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
+                        >
+                            <option value="creator">Creator</option>
+                            <option value="admin">Admin</option>
+                            <option value="affiliate">Affiliate</option>
+                        </select>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-6 py-3 bg-accent text-background font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? "Wird eingeladen…" : "Einladen"}
+                        </button>
+                    </div>
+
+                    {inviteRole === "affiliate" && (
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <input
+                                type="text"
+                                value={inviteAffiliateCode}
+                                onChange={(e) => setInviteAffiliateCode(e.target.value)}
+                                required
+                                placeholder="Affiliate-Code (z.B. johndoe)"
+                                disabled={loading}
+                                className="flex-1 bg-surface2 border border-border rounded-xl px-4 py-3 text-primary font-mono focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                            />
+                            <select
+                                value={inviteCommissionType}
+                                onChange={(e) => setInviteCommissionType(e.target.value as CommissionType)}
+                                disabled={loading}
+                                className="bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
+                            >
+                                <option value="percentage">Prozent (%)</option>
+                                <option value="fixed">Fest ($)</option>
+                            </select>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={inviteCommissionAmount}
+                                onChange={(e) => setInviteCommissionAmount(e.target.value)}
+                                required
+                                placeholder={inviteCommissionType === "percentage" ? "10" : "5.00"}
+                                disabled={loading}
+                                className="w-28 bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                            />
+                        </div>
+                    )}
                 </form>
             </section>
 
@@ -116,16 +314,37 @@ export default function UsersPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {openInvites.map((invite: { _id: Id<"user_invites">; email: string; role: "admin" | "creator"; createdAt: number }) => (
+                                    {openInvites.map((invite: {
+                                        _id: Id<"user_invites">;
+                                        email: string;
+                                        role: "admin" | "creator" | "affiliate";
+                                        affiliateCode?: string;
+                                        commissionType?: CommissionType;
+                                        commissionAmount?: number;
+                                        createdAt: number;
+                                    }) => (
                                         <tr key={invite._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
                                             <td className="px-4 py-3 text-primary">{invite.email}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${invite.role === "admin"
-                                                    ? "bg-accent/20 text-accent"
-                                                    : "bg-blue-500/20 text-blue-400"
-                                                    }`}>
-                                                    {invite.role === "admin" ? "Admin" : "Creator"}
+                                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                                    invite.role === "admin"
+                                                        ? "bg-accent/20 text-accent"
+                                                        : invite.role === "affiliate"
+                                                        ? "bg-purple-500/20 text-purple-400"
+                                                        : "bg-blue-500/20 text-blue-400"
+                                                }`}>
+                                                    {invite.role === "admin" ? "Admin" : invite.role === "affiliate" ? "Affiliate" : "Creator"}
                                                 </span>
+                                                {invite.role === "affiliate" && (
+                                                    <span className="ml-2 text-xs text-secondary font-mono">{invite.affiliateCode}</span>
+                                                )}
+                                                {invite.role === "affiliate" && invite.commissionAmount !== undefined && (
+                                                    <span className="ml-2 text-xs text-secondary">
+                                                        {invite.commissionType === "percentage"
+                                                            ? `${invite.commissionAmount}%`
+                                                            : `$${invite.commissionAmount}`}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-secondary">{formatDate(invite.createdAt)}</td>
                                             <td className="px-4 py-3 text-right">
@@ -164,6 +383,7 @@ export default function UsersPage() {
                                         <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
                                         <th className="text-left px-4 py-3 text-secondary font-medium">Rolle</th>
                                         <th className="text-left px-4 py-3 text-secondary font-medium">Registriert am</th>
+                                        <th className="px-4 py-3" />
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -171,14 +391,28 @@ export default function UsersPage() {
                                         <tr key={u._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
                                             <td className="px-4 py-3 text-primary">{u.email ?? "—"}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.type === "admin"
-                                                    ? "bg-accent/20 text-accent"
-                                                    : "bg-blue-500/20 text-blue-400"
-                                                    }`}>
-                                                    {u.type === "admin" ? "Admin" : "Creator"}
+                                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                                    u.type === "admin"
+                                                        ? "bg-accent/20 text-accent"
+                                                        : u.type === "affiliate"
+                                                        ? "bg-purple-500/20 text-purple-400"
+                                                        : "bg-blue-500/20 text-blue-400"
+                                                }`}>
+                                                    {u.type === "admin" ? "Admin" : u.type === "affiliate" ? "Affiliate" : "Creator"}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-secondary">{formatDate(u.createdAt)}</td>
+                                            <td className="px-4 py-3 text-right">
+                                                {u.type === "affiliate" && (
+                                                    <button
+                                                        onClick={() => setEditingUserId(u._id)}
+                                                        className="text-secondary hover:text-accent transition-colors p-1"
+                                                        title="Affiliate bearbeiten"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -200,6 +434,13 @@ export default function UsersPage() {
                     </div>
                 )}
             </section>
+
+            {editingUserId && (
+                <AffiliateEditModal
+                    userId={editingUserId}
+                    onClose={() => setEditingUserId(null)}
+                />
+            )}
         </div>
     );
 }

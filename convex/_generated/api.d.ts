@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as affiliate_profiles_mutations from "../affiliate_profiles/mutations.js";
+import type * as affiliate_profiles_queries from "../affiliate_profiles/queries.js";
+import type * as affiliate_referral_mutations from "../affiliate_referral/mutations.js";
 import type * as ai_avatars_mutations from "../ai_avatars/mutations.js";
 import type * as ai_avatars_queries from "../ai_avatars/queries.js";
 import type * as apps_mutations from "../apps/mutations.js";
@@ -52,6 +55,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "affiliate_profiles/mutations": typeof affiliate_profiles_mutations;
+  "affiliate_profiles/queries": typeof affiliate_profiles_queries;
+  "affiliate_referral/mutations": typeof affiliate_referral_mutations;
   "ai_avatars/mutations": typeof ai_avatars_mutations;
   "ai_avatars/queries": typeof ai_avatars_queries;
   "apps/mutations": typeof apps_mutations;

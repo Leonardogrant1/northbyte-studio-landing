@@ -10,7 +10,10 @@ import nodemailer from "nodemailer";
 export const createAndSend = action({
   args: {
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("creator")),
+    role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
+    affiliateCode: v.optional(v.string()),
+    commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
+    commissionAmount: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ inviteId: Id<"user_invites">; emailSent: boolean }> => {
     const token = randomUUID();
@@ -20,6 +23,9 @@ export const createAndSend = action({
       email: args.email,
       role: args.role,
       token,
+      affiliateCode: args.affiliateCode,
+      commissionType: args.commissionType,
+      commissionAmount: args.commissionAmount,
     })) as Id<"user_invites">;
 
     const emailUser = process.env.EMAIL_USER;
@@ -42,7 +48,7 @@ export const createAndSend = action({
     });
 
     const magicLink = `${appUrl}/admin/signup?token=${token}`;
-    const roleLabel = args.role === "admin" ? "Admin" : "Creator";
+    const roleLabel = args.role === "admin" ? "Admin" : args.role === "affiliate" ? "Affiliate" : "Creator";
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f0f0f; color: #e0e0e0; padding: 40px 32px; border-radius: 12px;">

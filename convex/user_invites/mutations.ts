@@ -5,8 +5,11 @@ import { v } from "convex/values";
 export const create = mutation({
   args: {
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("creator")),
+    role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
     token: v.optional(v.string()),
+    affiliateCode: v.optional(v.string()),
+    commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
+    commissionAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -17,6 +20,25 @@ export const create = mutation({
       .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
       .first();
     if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
+
+    if (args.role === "affiliate" && !args.affiliateCode) {
+      throw new Error("Ein Affiliate-Code ist für Affiliate-Einladungen erforderlich.");
+    }
+
+    // Check if affiliate code is already taken (in profiles or in open invites)
+    if (args.affiliateCode) {
+      const codeInProfiles = await ctx.db
+        .query("affiliate_profiles")
+        .collect()
+        .then((all) => all.some((p) => p.affiliateCode === args.affiliateCode));
+      if (codeInProfiles) throw new Error(`Der Affiliate-Code "${args.affiliateCode}" ist bereits vergeben.`);
+
+      const openInvitesWithCode = await ctx.db
+        .query("user_invites")
+        .collect()
+        .then((all) => all.some((i) => i.affiliateCode === args.affiliateCode && i.usedAt === undefined));
+      if (openInvitesWithCode) throw new Error(`Der Affiliate-Code "${args.affiliateCode}" ist bereits in einer offenen Einladung vergeben.`);
+    }
 
     // Check if an open invite for this email already exists
     const existing = await ctx.db
@@ -32,6 +54,9 @@ export const create = mutation({
       invitedBy: caller._id,
       createdAt: Date.now(),
       token: args.token,
+      affiliateCode: args.affiliateCode,
+      commissionType: args.commissionType,
+      commissionAmount: args.commissionAmount,
     });
   },
 });
