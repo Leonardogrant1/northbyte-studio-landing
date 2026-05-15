@@ -14,6 +14,9 @@ const HANDLED_EVENTS = [
 ] as const;
 type HandledEvent = (typeof HANDLED_EVENTS)[number];
 
+type RCStore = "APP_STORE" | "PLAY_STORE" | "AMAZON" | "STRIPE" | "MAC_APP_STORE" | "PROMOTIONAL";
+type RCEnvironment = "PRODUCTION" | "SANDBOX";
+
 type RevenueCatEvent = {
   type: string;
   app_id: string;
@@ -25,8 +28,9 @@ type RevenueCatEvent = {
   price?: number;
   currency?: string;
   country_code?: string;
-  store?: string;
+  store?: RCStore;
   takehome_percentage?: number;
+  environment?: RCEnvironment;
 };
 
 type RevenueCatWebhookBody = {
@@ -78,6 +82,7 @@ export async function POST(request: NextRequest) {
       countryCode: event.country_code,
       store: event.store,
       takehomePercentage: event.takehome_percentage,
+      environment: event.environment,
     });
 
     return NextResponse.json({ received: true }, { status: 200 });

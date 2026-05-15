@@ -41,9 +41,20 @@ export default defineSchema({
         currency: v.optional(v.string()),
         priceUsd: v.optional(v.number()),
         countryCode: v.optional(v.string()),
-        store: v.optional(v.string()), // "APP_STORE" | "PLAY_STORE" | "AMAZON" | "STRIPE" | "MAC_APP_STORE" | "PROMOTIONAL"
+        store: v.optional(v.union(
+            v.literal("APP_STORE"),
+            v.literal("PLAY_STORE"),
+            v.literal("AMAZON"),
+            v.literal("STRIPE"),
+            v.literal("MAC_APP_STORE"),
+            v.literal("PROMOTIONAL"),
+        )),
         takehomePercentage: v.optional(v.number()), // e.g. 0.85 — developer's share after store cut
         hasConverted: v.optional(v.boolean()),       // true = first payment received, false = refunded
+        environment: v.optional(v.union(
+            v.literal("PRODUCTION"),
+            v.literal("SANDBOX"),
+        )),
         convertedAt: v.optional(v.number()),
         cancelledAt: v.optional(v.number()),
         uncancelledAt: v.optional(v.number()),

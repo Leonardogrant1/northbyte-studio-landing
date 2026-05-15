@@ -125,8 +125,19 @@ export const handleRevenueCatEvent = mutation({
     price: v.optional(v.number()),              // always USD
     currency: v.optional(v.string()),
     countryCode: v.optional(v.string()),
-    store: v.optional(v.string()),
+    store: v.optional(v.union(
+      v.literal("APP_STORE"),
+      v.literal("PLAY_STORE"),
+      v.literal("AMAZON"),
+      v.literal("STRIPE"),
+      v.literal("MAC_APP_STORE"),
+      v.literal("PROMOTIONAL"),
+    )),
     takehomePercentage: v.optional(v.number()), // developer's share after store cut (e.g. 0.85)
+    environment: v.optional(v.union(
+      v.literal("PRODUCTION"),
+      v.literal("SANDBOX"),
+    )),
   },
   handler: async (ctx, args) => {
     // 1. App lookup — try App Store first, then Play Store
@@ -178,6 +189,7 @@ export const handleRevenueCatEvent = mutation({
         countryCode: args.countryCode,
         store: args.store,
         takehomePercentage: args.takehomePercentage,
+        environment: args.environment,
       });
     } else if (args.event === "RENEWAL") {
       // Only handle the first real payment after a trial — ignore all other renewals
@@ -194,6 +206,7 @@ export const handleRevenueCatEvent = mutation({
         countryCode: args.countryCode,
         store: args.store,
         takehomePercentage: args.takehomePercentage,
+        environment: args.environment,
       });
     } else if (args.event === "CANCELLATION") {
       if (referral.cancelledAt !== undefined) return null; // idempotent

@@ -7,6 +7,7 @@ export const getMyStats = query({
   args: {
     fromMs: v.optional(v.number()),
     toMs: v.optional(v.number()),
+    environment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -29,10 +30,11 @@ export const getMyStats = query({
       .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
       .collect();
 
-    // Filter by createdAt date range
+    // Filter by date range and sandbox/production
     const referrals = allReferrals.filter((r) => {
       if (args.fromMs !== undefined && r.createdAt < args.fromMs) return false;
       if (args.toMs !== undefined && r.createdAt > args.toMs) return false;
+      if (args.environment !== undefined && r.environment !== args.environment) return false;
       return true;
     });
 

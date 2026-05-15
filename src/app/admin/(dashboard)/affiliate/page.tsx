@@ -60,13 +60,14 @@ export default function AffiliateDashboardPage() {
         d.setDate(d.getDate() - 29);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     })();
-    const [from, setFrom] = useState(defaultFrom);
-    const [to, setTo]     = useState(today);
+    const [from, setFrom]         = useState(defaultFrom);
+    const [to, setTo]             = useState(today);
+    const [environment, setEnvironment] = useState<"PRODUCTION" | "SANDBOX">("PRODUCTION");
 
     const fromMs = useMemo(() => isoToStartOfDayMs(from), [from]);
     const toMs   = useMemo(() => isoToEndOfDayMs(to),     [to]);
 
-    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, { fromMs, toMs });
+    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, { fromMs, toMs, environment });
 
     const affiliateCode = profile?.affiliateCode ?? null;
 
@@ -86,7 +87,20 @@ export default function AffiliateDashboardPage() {
                     <h1 className="text-3xl font-bold mb-1">{greeting} 👋</h1>
                     <p className="text-secondary">Dein Affiliate-Dashboard</p>
                 </div>
-                <DateRangePicker from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setEnvironment(e => e === "PRODUCTION" ? "SANDBOX" : "PRODUCTION")}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                            environment === "SANDBOX"
+                                ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                                : "border-border text-secondary hover:border-accent/50"
+                        }`}
+                    >
+                        <span className={`w-1.5 h-1.5 rounded-full ${environment === "SANDBOX" ? "bg-yellow-400" : "bg-green-400"}`} />
+                        {environment === "SANDBOX" ? "Sandbox" : "Production"}
+                    </button>
+                    <DateRangePicker from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />
+                </div>
             </div>
 
             {/* Promo Code + Commission */}
