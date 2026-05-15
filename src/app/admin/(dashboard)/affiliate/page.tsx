@@ -1,20 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Copy, Check, DollarSign, Users, TrendingUp, RefreshCw, XCircle } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { DateRangePicker } from "@/components/admin/DateRangePicker";
 
-// — Mockup data (everything except the promo code) —
-const MOCK = {
-    earned: 1240.5,
-    referredUsers: 87,
-    convertedUsers: 34,
-    conversionRate: 39.1,
-    cancelRate: 12.4,
-    refundRate: 5.2,
-};
+function todayIso() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function isoToStartOfDayMs(iso: string): number {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+}
+
+function isoToEndOfDayMs(iso: string): number {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
+}
 
 function StatCard({
     label,
@@ -48,6 +54,20 @@ export default function AffiliateDashboardPage() {
     const profile = useQuery(api.affiliate_profiles.queries.getMyProfile);
     const [copied, setCopied] = useState(false);
 
+    const today = todayIso();
+    const defaultFrom = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 29);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    const [from, setFrom] = useState(defaultFrom);
+    const [to, setTo]     = useState(today);
+
+    const fromMs = useMemo(() => isoToStartOfDayMs(from), [from]);
+    const toMs   = useMemo(() => isoToEndOfDayMs(to),     [to]);
+
+    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, { fromMs, toMs });
+
     const affiliateCode = profile?.affiliateCode ?? null;
 
     const handleCopy = () => {
@@ -61,9 +81,12 @@ export default function AffiliateDashboardPage() {
 
     return (
         <div className="max-w-4xl space-y-10">
-            <div>
-                <h1 className="text-3xl font-bold mb-1">{greeting} 👋</h1>
-                <p className="text-secondary">Dein Affiliate-Dashboard</p>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <h1 className="text-3xl font-bold mb-1">{greeting} 👋</h1>
+                    <p className="text-secondary">Dein Affiliate-Dashboard</p>
+                </div>
+                <DateRangePicker from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />
             </div>
 
             {/* Promo Code + Commission */}
@@ -107,42 +130,42 @@ export default function AffiliateDashboardPage() {
             <section className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard
                     label="Verdient"
-                    value={`$${MOCK.earned.toLocaleString("de-DE", { minimumFractionDigits: 2 })}`}
+                    value={stats ? `$${stats.earned.toLocaleString("de-DE", { minimumFractionDigits: 2 })}` : "—"}
                     icon={DollarSign}
                     color="bg-green-500/10 text-green-400"
                     sub="Gesamte Provisionen"
                 />
                 <StatCard
                     label="Gebrachte User"
-                    value={MOCK.referredUsers.toString()}
+                    value={stats ? stats.referredUsers.toString() : "—"}
                     icon={Users}
                     color="bg-blue-500/10 text-blue-400"
                     sub="Über deinen Code"
                 />
                 <StatCard
                     label="Konvertierte User"
-                    value={MOCK.convertedUsers.toString()}
+                    value={stats ? stats.convertedUsers.toString() : "—"}
                     icon={TrendingUp}
                     color="bg-purple-500/10 text-purple-400"
                     sub="Zahlende Kunden"
                 />
                 <StatCard
                     label="Conversion Rate"
-                    value={`${MOCK.conversionRate}%`}
+                    value={stats ? `${stats.conversionRate.toFixed(1)}%` : "—"}
                     icon={TrendingUp}
                     color="bg-accent/10 text-accent"
                     sub="Referred → Paid"
                 />
                 <StatCard
                     label="Cancel Rate"
-                    value={`${MOCK.cancelRate}%`}
+                    value={stats ? `${stats.cancelRate.toFixed(1)}%` : "—"}
                     icon={XCircle}
                     color="bg-orange-500/10 text-orange-400"
                     sub="Gekündigte Abos"
                 />
                 <StatCard
                     label="Refund Rate"
-                    value={`${MOCK.refundRate}%`}
+                    value={stats ? `${stats.refundRate.toFixed(1)}%` : "—"}
                     icon={RefreshCw}
                     color="bg-red-500/10 text-red-400"
                     sub="Zurückerstattungen"

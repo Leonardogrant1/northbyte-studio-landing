@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 const eventType = v.union(
   v.literal("INITIAL_PURCHASE"),
+  v.literal("RENEWAL"),
   v.literal("CANCELLATION"),
   v.literal("UNCANCELLATION"),
   v.literal("REFUND"),
@@ -93,7 +94,11 @@ export const handleUpdate = mutation({
       await ctx.db.patch(referral._id, { status: "converted", uncancelledAt: now });
     } else if (args.event === "REFUND") {
       if (referral.refundedAt !== undefined) return null; // idempotent
-      await ctx.db.patch(referral._id, { status: "refunded", refundedAt: now });
+      await ctx.db.patch(referral._id, {
+        status: "refunded",
+        hasConverted: false, // payment reversed — affiliate not owed commission
+        refundedAt: now,
+      });
     }
 
     return referral._id;
@@ -103,17 +108,25 @@ export const handleUpdate = mutation({
 // Called from /api/affiliate/revenue-cat (RevenueCat webhook).
 // Resolves app by RC app_id (App Store or Play Store), finds the affiliate referral
 // by revenueCatUserId, and updates status. Idempotent.
+//
+// Commission is earned only on the first real payment:
+//   - INITIAL_PURCHASE + periodType "NORMAL"  → direct purchase
+//   - RENEWAL + isTrialConversion true         → trial converted to paid (first real charge)
+// RENEWAL without isTrialConversion is ignored (no commission on subsequent renewals).
 export const handleRevenueCatEvent = mutation({
   args: {
     rcAppId: v.string(),
     appUserId: v.string(),
     event: eventType,
+    periodType: v.optional(v.string()),         // "NORMAL" | "TRIAL" | "INTRO"
+    isTrialConversion: v.optional(v.boolean()),
     productId: v.optional(v.string()),
     transactionId: v.optional(v.string()),
-    price: v.optional(v.number()),
+    price: v.optional(v.number()),              // always USD
     currency: v.optional(v.string()),
     countryCode: v.optional(v.string()),
     store: v.optional(v.string()),
+    takehomePercentage: v.optional(v.number()), // developer's share after store cut (e.g. 0.85)
   },
   handler: async (ctx, args) => {
     // 1. App lookup — try App Store first, then Play Store
@@ -151,9 +164,12 @@ export const handleRevenueCatEvent = mutation({
     const now = Date.now();
 
     if (args.event === "INITIAL_PURCHASE") {
+      // Trial starts have price=0 — skip, wait for RENEWAL with isTrialConversion=true
+      if (args.periodType === "TRIAL") return null;
       if (referral.convertedAt !== undefined) return null; // idempotent
       await ctx.db.patch(referral._id, {
         status: "converted",
+        hasConverted: true,
         convertedAt: now,
         productId: args.productId,
         subscriptionId: args.transactionId, // RC transaction_id stored as subscriptionId per schema field name
@@ -161,6 +177,23 @@ export const handleRevenueCatEvent = mutation({
         currency: args.currency,
         countryCode: args.countryCode,
         store: args.store,
+        takehomePercentage: args.takehomePercentage,
+      });
+    } else if (args.event === "RENEWAL") {
+      // Only handle the first real payment after a trial — ignore all other renewals
+      if (!args.isTrialConversion) return null;
+      if (referral.convertedAt !== undefined) return null; // idempotent
+      await ctx.db.patch(referral._id, {
+        status: "converted",
+        hasConverted: true,
+        convertedAt: now,
+        productId: args.productId,
+        subscriptionId: args.transactionId, // RC transaction_id stored as subscriptionId per schema field name
+        price: args.price,
+        currency: args.currency,
+        countryCode: args.countryCode,
+        store: args.store,
+        takehomePercentage: args.takehomePercentage,
       });
     } else if (args.event === "CANCELLATION") {
       if (referral.cancelledAt !== undefined) return null; // idempotent
@@ -174,7 +207,11 @@ export const handleRevenueCatEvent = mutation({
       });
     } else if (args.event === "REFUND") {
       if (referral.refundedAt !== undefined) return null; // idempotent
-      await ctx.db.patch(referral._id, { status: "refunded", refundedAt: now });
+      await ctx.db.patch(referral._id, {
+        status: "refunded",
+        hasConverted: false, // payment reversed — affiliate not owed commission
+        refundedAt: now,
+      });
     }
 
     return referral._id;

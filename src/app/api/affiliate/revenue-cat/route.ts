@@ -7,6 +7,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const HANDLED_EVENTS = [
   "INITIAL_PURCHASE",
+  "RENEWAL",
   "CANCELLATION",
   "UNCANCELLATION",
   "REFUND",
@@ -17,12 +18,15 @@ type RevenueCatEvent = {
   type: string;
   app_id: string;
   app_user_id: string;
+  period_type?: string;
+  is_trial_conversion?: boolean;
   product_id?: string;
   transaction_id?: string;
   price?: number;
   currency?: string;
   country_code?: string;
   store?: string;
+  takehome_percentage?: number;
 };
 
 type RevenueCatWebhookBody = {
@@ -65,12 +69,15 @@ export async function POST(request: NextRequest) {
       rcAppId: event.app_id,
       appUserId: event.app_user_id,
       event: event.type as HandledEvent,
+      periodType: event.period_type,
+      isTrialConversion: event.is_trial_conversion,
       productId: event.product_id,
       transactionId: event.transaction_id,
       price: event.price,
       currency: event.currency,
       countryCode: event.country_code,
       store: event.store,
+      takehomePercentage: event.takehome_percentage,
     });
 
     return NextResponse.json({ received: true }, { status: 200 });
