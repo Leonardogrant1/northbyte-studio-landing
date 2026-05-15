@@ -57,6 +57,8 @@ export const update = mutation({
         thumbnailStorageId: v.optional(v.id("_storage")),
         revenueCatProjectId:       v.optional(v.string()),
         revenueCatApiKeyEncrypted: v.optional(v.string()),
+        revenueCatAppStoreId:      v.optional(v.string()),
+        revenueCatPlayStoreId:     v.optional(v.string()),
         postHogProjectId:          v.optional(v.string()),
         postHogApiKeyEncrypted:    v.optional(v.string()),
         postHogInstallEvent:       v.optional(v.string()),

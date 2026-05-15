@@ -20,6 +20,8 @@ export async function POST(
     const {
         revenueCatProjectId,
         revenueCatApiKey,
+        revenueCatAppStoreId,
+        revenueCatPlayStoreId,
         postHogProjectId,
         postHogApiKey,
         postHogInstallEvent,
@@ -28,8 +30,10 @@ export async function POST(
 
     const updates: Record<string, string> = {};
 
-    if (revenueCatProjectId !== undefined) updates.revenueCatProjectId = revenueCatProjectId;
-    if (revenueCatApiKey)    updates.revenueCatApiKeyEncrypted = encrypt(revenueCatApiKey);
+    if (revenueCatProjectId !== undefined)  updates.revenueCatProjectId  = revenueCatProjectId;
+    if (revenueCatApiKey)                   updates.revenueCatApiKeyEncrypted = encrypt(revenueCatApiKey);
+    if (revenueCatAppStoreId !== undefined) updates.revenueCatAppStoreId  = revenueCatAppStoreId;
+    if (revenueCatPlayStoreId !== undefined) updates.revenueCatPlayStoreId = revenueCatPlayStoreId;
     if (postHogProjectId !== undefined) updates.postHogProjectId = postHogProjectId;
     if (postHogApiKey)       updates.postHogApiKeyEncrypted = encrypt(postHogApiKey);
     if (postHogInstallEvent !== undefined) updates.postHogInstallEvent = postHogInstallEvent;

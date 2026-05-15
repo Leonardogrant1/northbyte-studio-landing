@@ -71,6 +71,8 @@ function AppsContent() {
 type AppDoc = {
     revenueCatProjectId?:       string;
     revenueCatApiKeyEncrypted?: string;
+    revenueCatAppStoreId?:      string;
+    revenueCatPlayStoreId?:     string;
     postHogProjectId?:          string;
     postHogApiKeyEncrypted?:    string;
     postHogInstallEvent?:       string;
@@ -79,12 +81,14 @@ type AppDoc = {
 
 function AnalyticsConfigForm({ appId, app }: { appId: Id<"apps">; app: AppDoc | null | undefined }) {
     const [config, setConfig] = useState({
-        revenueCatProjectId: "",
-        revenueCatApiKey:    "",
-        postHogProjectId:    "",
-        postHogApiKey:       "",
-        postHogInstallEvent: "",
-        postHogTrialEvent:   "",
+        revenueCatProjectId:  "",
+        revenueCatApiKey:     "",
+        revenueCatAppStoreId:  "",
+        revenueCatPlayStoreId: "",
+        postHogProjectId:     "",
+        postHogApiKey:        "",
+        postHogInstallEvent:  "",
+        postHogTrialEvent:    "",
     });
     const [saving, setSaving] = useState(false);
     const [saved,  setSaved]  = useState(false);
@@ -94,10 +98,12 @@ function AnalyticsConfigForm({ appId, app }: { appId: Id<"apps">; app: AppDoc | 
         if (app) {
             setConfig((prev) => ({
                 ...prev,
-                revenueCatProjectId: app.revenueCatProjectId  ?? "",
-                postHogProjectId:    app.postHogProjectId      ?? "",
-                postHogInstallEvent: app.postHogInstallEvent   ?? "",
-                postHogTrialEvent:   app.postHogTrialEvent     ?? "",
+                revenueCatProjectId:  app.revenueCatProjectId  ?? "",
+                revenueCatAppStoreId:  app.revenueCatAppStoreId  ?? "",
+                revenueCatPlayStoreId: app.revenueCatPlayStoreId ?? "",
+                postHogProjectId:     app.postHogProjectId      ?? "",
+                postHogInstallEvent:  app.postHogInstallEvent   ?? "",
+                postHogTrialEvent:    app.postHogTrialEvent     ?? "",
             }));
         }
     }, [app]);
@@ -153,6 +159,19 @@ function AnalyticsConfigForm({ appId, app }: { appId: Id<"apps">; app: AppDoc | 
                             {app?.revenueCatApiKeyEncrypted && !config.revenueCatApiKey && <Configured />}
                         </div>
                         <input type="password" {...field("revenueCatApiKey")} placeholder={app?.revenueCatApiKeyEncrypted ? "Leave blank to keep existing" : "sk_xxxxx"} className="w-full px-4 py-2.5 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm" />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-secondary mb-1.5">RC App Store ID</label>
+                        <input type="text" {...field("revenueCatAppStoreId")} placeholder="appe8898481f5" className="w-full px-4 py-2.5 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm" />
+                        <p className="mt-1 text-xs text-muted">app_id aus dem RC Webhook Event (App Store)</p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-secondary mb-1.5">RC Play Store ID</label>
+                        <input type="text" {...field("revenueCatPlayStoreId")} placeholder="appXXXXXXXXX" className="w-full px-4 py-2.5 bg-surface2 border border-border rounded-xl text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm" />
+                        <p className="mt-1 text-xs text-muted">app_id aus dem RC Webhook Event (Play Store)</p>
                     </div>
                 </div>
 
