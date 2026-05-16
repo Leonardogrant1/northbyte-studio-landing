@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Copy, Check, DollarSign, Users, TrendingUp, RefreshCw, XCircle } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { DateRangePicker } from "@/components/admin/DateRangePicker";
@@ -50,8 +50,10 @@ function StatCard({
 }
 
 export default function AffiliateDashboardPage() {
+    const { isAuthenticated } = useConvexAuth();
+    console.log("isAuthenticated", isAuthenticated);
     const user = useCurrentUser();
-    const profile = useQuery(api.affiliate_profiles.queries.getMyProfile);
+    const profile = useQuery(api.affiliate_profiles.queries.getMyProfile, isAuthenticated ? {} : "skip");
     const [copied, setCopied] = useState(false);
 
     const today = todayIso();
@@ -60,14 +62,14 @@ export default function AffiliateDashboardPage() {
         d.setDate(d.getDate() - 29);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     })();
-    const [from, setFrom]         = useState(defaultFrom);
-    const [to, setTo]             = useState(today);
+    const [from, setFrom] = useState(defaultFrom);
+    const [to, setTo] = useState(today);
     const [environment, setEnvironment] = useState<"PRODUCTION" | "SANDBOX">("PRODUCTION");
 
     const fromMs = useMemo(() => isoToStartOfDayMs(from), [from]);
-    const toMs   = useMemo(() => isoToEndOfDayMs(to),     [to]);
+    const toMs = useMemo(() => isoToEndOfDayMs(to), [to]);
 
-    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, { fromMs, toMs, environment });
+    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, isAuthenticated ? { fromMs, toMs, environment } : "skip");
 
     const affiliateCode = profile?.affiliateCode ?? null;
 
@@ -98,11 +100,10 @@ export default function AffiliateDashboardPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setEnvironment(e => e === "PRODUCTION" ? "SANDBOX" : "PRODUCTION")}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                            environment === "SANDBOX"
-                                ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
-                                : "border-border text-secondary hover:border-accent/50"
-                        }`}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${environment === "SANDBOX"
+                            ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                            : "border-border text-secondary hover:border-accent/50"
+                            }`}
                     >
                         <span className={`w-1.5 h-1.5 rounded-full ${environment === "SANDBOX" ? "bg-yellow-400" : "bg-green-400"}`} />
                         {environment === "SANDBOX" ? "Sandbox" : "Production"}

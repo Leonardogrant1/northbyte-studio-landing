@@ -7,8 +7,10 @@ export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
 
+    console.log("identity", identity);
+
+    if (!identity) return null;
 
     const user = await ctx.db
       .query("users")
