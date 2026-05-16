@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, referralId }, { status: 201 });
     } catch (err) {
         const message = err instanceof Error ? err.message : "Internal server error.";
+        console.log(message)
         const status = message.includes("not found") || message.includes("inactive") ? 404 : 500;
         return NextResponse.json({ error: message }, { status });
     }
