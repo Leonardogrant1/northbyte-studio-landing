@@ -5,8 +5,14 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminLoginRoute = createRouteMatcher(["/admin/login"]);
 const isAdminSignupRoute = createRouteMatcher(["/admin/signup"]);
 const isExpenseRoute = createRouteMatcher(["/api/expenses(.*)"]);
+const isAffiliateWebhookRoute = createRouteMatcher(["/api/affiliate(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
+    // Let affiliate webhook routes pass through — they handle their own auth
+    if (isAffiliateWebhookRoute(req)) {
+        return NextResponse.next();
+    }
+
     // Protect all admin routes
     if (isAdminRoute(req)) {
         const { userId } = await auth();
