@@ -115,6 +115,7 @@ function AdminSidebarInner() {
     ];
 
     const tabs = allTabs.filter((tab) => {
+        if (user === undefined || user === null) return false;
         if (isAffiliate) return tab.affiliateOnly === true;
         return !tab.adminOnly || isAdmin;
     });

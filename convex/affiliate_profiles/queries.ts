@@ -40,7 +40,7 @@ export const getMyStats = query({
 
     const converted = referrals.filter((r) => r.convertedAt !== undefined);
     const cancelled = referrals.filter((r) => r.cancelledAt !== undefined);
-    const refunded  = referrals.filter((r) => r.refundedAt  !== undefined);
+    const refunded = referrals.filter((r) => r.refundedAt !== undefined);
     // hasConverted=true: first payment received and not refunded — affiliate is owed commission
     const earned_referrals = referrals.filter((r) => r.hasConverted === true);
 
@@ -55,16 +55,16 @@ export const getMyStats = query({
       return sum + profile.commissionAmount;
     }, 0);
 
-    const referredCount  = referrals.length;
+    const referredCount = referrals.length;
     const convertedCount = converted.length;
 
     return {
       earned,
-      referredUsers:   referredCount,
-      convertedUsers:  convertedCount,
-      conversionRate:  referredCount  > 0 ? (convertedCount / referredCount)  * 100 : 0,
-      cancelRate:      convertedCount > 0 ? (cancelled.length / convertedCount) * 100 : 0,
-      refundRate:      convertedCount > 0 ? (refunded.length  / convertedCount) * 100 : 0,
+      referredUsers: referredCount,
+      convertedUsers: convertedCount,
+      conversionRate: referredCount > 0 ? (convertedCount / referredCount) * 100 : 0,
+      cancelRate: convertedCount > 0 ? (cancelled.length / convertedCount) * 100 : 0,
+      refundRate: convertedCount > 0 ? (refunded.length / convertedCount) * 100 : 0,
     };
   },
 });

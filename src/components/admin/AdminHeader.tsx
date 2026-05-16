@@ -1,14 +1,19 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useClerk } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 export function AdminHeader() {
     const currentUser = useCurrentUser();
+    const { user: clerkUser } = useUser();
     const { signOut } = useClerk();
     const router = useRouter();
+
+    console.log("currentUser", currentUser);
+    console.log("clerkUser", clerkUser);
+    const email = currentUser?.email ?? clerkUser?.primaryEmailAddress?.emailAddress;
 
     const handleLogout = async () => {
         await signOut();
@@ -22,11 +27,11 @@ export function AdminHeader() {
                 <p className="text-secondary text-sm">NorthByte Studio</p>
             </div>
 
-            {currentUser && (
+            {email && (
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3 px-6 py-3 bg-surface2/50 backdrop-blur-xl border border-border rounded-2xl">
                         <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                        <span className="text-sm text-secondary">{currentUser.email}</span>
+                        <span className="text-sm text-secondary">{email}</span>
                     </div>
                     <button
                         onClick={handleLogout}

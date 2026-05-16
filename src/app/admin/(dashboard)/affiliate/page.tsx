@@ -71,6 +71,14 @@ export default function AffiliateDashboardPage() {
 
     const affiliateCode = profile?.affiliateCode ?? null;
 
+    if (user === undefined || profile === undefined) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
     const handleCopy = () => {
         if (!affiliateCode) return;
         navigator.clipboard.writeText(affiliateCode);
