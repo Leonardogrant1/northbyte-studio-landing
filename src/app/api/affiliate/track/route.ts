@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
+import { ConvexError } from "convex/values";
 import { api } from "@/../convex/_generated/api";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -40,8 +41,10 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, referralId }, { status: 201 });
     } catch (err) {
-        const message = err instanceof Error ? err.message : "Internal server error.";
-        console.log(message)
+        const message =
+            err instanceof ConvexError ? String(err.data) :
+            err instanceof Error ? err.message :
+            "Internal server error.";
         const status = message.includes("not found") || message.includes("inactive") ? 404 : 500;
         return NextResponse.json({ error: message }, { status });
     }

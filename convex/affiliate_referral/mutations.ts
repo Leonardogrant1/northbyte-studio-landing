@@ -1,5 +1,5 @@
 import { mutation } from "../_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 const eventType = v.union(
   v.literal("INITIAL_PURCHASE"),
@@ -23,14 +23,14 @@ export const track = mutation({
       .query("apps")
       .filter((q) => q.eq(q.field("slug"), args.appSlug))
       .first();
-    if (!app) throw new Error(`App with slug "${args.appSlug}" not found.`);
+    if (!app) throw new ConvexError(`App with slug "${args.appSlug}" not found.`);
 
     const profile = await ctx.db
       .query("affiliate_profiles")
       .filter((q) => q.eq(q.field("affiliateCode"), args.affiliateCode))
       .first();
-    if (!profile) throw new Error(`Affiliate code "${args.affiliateCode}" not found.`);
-    if (!profile.isActive) throw new Error(`Affiliate code "${args.affiliateCode}" is inactive.`);
+    if (!profile) throw new ConvexError(`Affiliate code "${args.affiliateCode}" not found.`);
+    if (!profile.isActive) throw new ConvexError(`Affiliate code "${args.affiliateCode}" is inactive.`);
 
     return await ctx.db.insert("affiliate_referral", {
       affiliateId: profile._id,
