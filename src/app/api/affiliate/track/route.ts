@@ -41,12 +41,24 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, referralId }, { status: 201 });
     } catch (err) {
-        const message =
-            err instanceof ConvexError ? String(err.data) :
-                err instanceof Error ? err.message :
-                    "Internal server error.";
-        console.log("WURST");
-        console.log(err, message);
+        const isConvexErr =
+            err instanceof ConvexError ||
+            (err != null && (err as any)[Symbol.for("ConvexError")] === true);
+
+        const message = isConvexErr
+            ? String((err as ConvexError<{}>).data)
+            : err instanceof Error
+                ? err.message
+                : "Internal server error.";
+
+        console.error("[track] caught error:", {
+            name: err?.constructor?.name,
+            isConvexError: err instanceof ConvexError,
+            symbolCheck: (err as any)?.[Symbol.for("ConvexError")],
+            data: (err as any)?.data,
+            message,
+        });
+
         const status = message.includes("not found") || message.includes("inactive") ? 404 : 500;
         return NextResponse.json({ error: message }, { status });
     }
