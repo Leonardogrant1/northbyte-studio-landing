@@ -43,8 +43,9 @@ export async function POST(request: NextRequest) {
     } catch (err) {
         const message =
             err instanceof ConvexError ? String(err.data) :
-            err instanceof Error ? err.message :
-            "Internal server error.";
+                err instanceof Error ? err.message :
+                    "Internal server error.";
+        console.log(message);
         const status = message.includes("not found") || message.includes("inactive") ? 404 : 500;
         return NextResponse.json({ error: message }, { status });
     }
