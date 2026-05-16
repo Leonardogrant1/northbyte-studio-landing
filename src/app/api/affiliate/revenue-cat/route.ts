@@ -51,6 +51,7 @@ function safeCompare(a: string, b: string): boolean {
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   const secret = process.env.REVENUE_CAT_WEBHOOK_SECRET;
+  console.log(authHeader, secret);
   if (!authHeader || !secret || !safeCompare(authHeader, secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
