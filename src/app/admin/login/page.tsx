@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function AdminLoginPage() {
-    const { signIn, fetchStatus } = useSignIn();
+    const { signIn, setActive, isLoaded } = useSignIn();
     const router = useRouter();
 
     const [email, setEmail] = useState("");
@@ -15,11 +16,12 @@ export default function AdminLoginPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [needs2FA, setNeeds2FA] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (fetchStatus === "fetching") return;
+        if (!isLoaded || !signIn) return;
         setError("");
 
 
@@ -27,32 +29,25 @@ export default function AdminLoginPage() {
 
         try {
             if (needs2FA) {
-                const { error } = await signIn.mfa.verifyTOTP({ code });
+                const result = await signIn.attemptSecondFactor({
+                    strategy: "totp",
+                    code,
+                });
 
-                if (error) {
-                    setError(error.message);
-                    return;
-                }
-
-                if (signIn.status === "complete") {
-                    await signIn.finalize();
+                if (result.status === "complete") {
+                    await setActive!({ session: result.createdSessionId });
                     router.push("/admin");
                 }
             } else {
-                const { error } = await signIn.password({
+                const result = await signIn.create({
                     identifier: email,
                     password,
                 });
 
-                if (error) {
-                    setError(error.message);
-                    return;
-                }
-
-                if (signIn.status === "complete") {
-                    await signIn.finalize();
+                if (result.status === "complete") {
+                    await setActive!({ session: result.createdSessionId });
                     router.push("/admin");
-                } else if (signIn.status === "needs_second_factor") {
+                } else if (result.status === "needs_second_factor") {
                     setNeeds2FA(true);
                 }
             }
@@ -114,16 +109,26 @@ export default function AdminLoginPage() {
                                     <label htmlFor="password" className="text-sm font-medium text-secondary">
                                         Passwort
                                     </label>
-                                    <input
-                                        type="password"
-                                        id="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        disabled={loading}
-                                        className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
-                                        placeholder="••••••••"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            id="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            disabled={loading}
+                                            className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 pr-12 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                                            placeholder="••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(v => !v)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-primary transition-colors"
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </>
                         ) : (
@@ -162,7 +167,7 @@ export default function AdminLoginPage() {
 
                         <button
                             type="submit"
-                            disabled={loading || (fetchStatus == "fetching")}
+                            disabled={loading || !isLoaded}
                             className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (needs2FA ? "Wird verifiziert..." : "Wird angemeldet...") : (needs2FA ? "Code verifizieren" : "Anmelden")}

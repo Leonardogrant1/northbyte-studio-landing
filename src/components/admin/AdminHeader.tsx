@@ -11,8 +11,6 @@ export function AdminHeader() {
     const { signOut } = useClerk();
     const router = useRouter();
 
-    console.log("currentUser", currentUser);
-    console.log("clerkUser", clerkUser);
     const email = currentUser?.email ?? clerkUser?.primaryEmailAddress?.emailAddress;
 
     const handleLogout = async () => {
@@ -26,7 +24,6 @@ export function AdminHeader() {
                 <h1 className="text-2xl font-bold">Admin Dashboard</h1>
                 <p className="text-secondary text-sm">NorthByte Studio</p>
             </div>
-
             {email && (
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3 px-6 py-3 bg-surface2/50 backdrop-blur-xl border border-border rounded-2xl">

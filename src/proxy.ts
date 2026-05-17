@@ -55,5 +55,6 @@ export const config = {
         "/((?!_next|api/affiliate|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
         // Always run for API routes (except affiliate webhooks — they handle their own auth)
         "/(api(?!/affiliate)|trpc)(.*)",
+        "/__clerk/(pr.*)",
     ],
 };

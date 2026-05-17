@@ -8,7 +8,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
 function AdminSignUpPage() {
-    const { signUp, fetchStatus } = useSignUp();
+    const { signUp, setActive, isLoaded } = useSignUp();
     const router = useRouter();
     const searchParams = useSearchParams();
     const tokenFromUrl = searchParams.get("token");
@@ -49,7 +49,7 @@ function AdminSignUpPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (fetchStatus === "fetching") return;
+        if (!isLoaded || !signUp) return;
         setError("");
 
         // invite === undefined means query is still loading; null means no invite found
@@ -73,27 +73,23 @@ function AdminSignUpPage() {
 
         setLoading(true);
         try {
-            const { error } = await signUp.password({
+            await signUp.create({
                 emailAddress: email,
                 password,
                 firstName,
                 lastName,
             });
 
-            if (error) {
-                setError(error.message);
-                return;
-            }
-
-            const { error: sendError } = await signUp.verifications.sendEmailCode();
-            if (sendError) {
-                setError(sendError.message);
-                return;
-            }
+            await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
             setPendingVerification(true);
-        } catch {
-            setError("Registrierung fehlgeschlagen.");
+        } catch (err: unknown) {
+            if (err && typeof err === "object" && "errors" in err) {
+                const clerkError = err as { errors: Array<{ message: string }> };
+                setError(clerkError.errors[0]?.message || "Registrierung fehlgeschlagen.");
+            } else {
+                setError("Registrierung fehlgeschlagen.");
+            }
         } finally {
             setLoading(false);
         }
@@ -101,22 +97,17 @@ function AdminSignUpPage() {
 
     const handleVerification = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (fetchStatus === "fetching") return;
+        if (!isLoaded || !signUp) return;
         setError("");
         setLoading(true);
 
         try {
-            const { error } = await signUp.verifications.verifyEmailCode({
+            const result = await signUp.attemptEmailAddressVerification({
                 code: verificationCode,
             });
 
-            if (error) {
-                setError(error.message);
-                return;
-            }
-
-            if (signUp.status === "complete") {
-                await signUp.finalize();
+            if (result.status === "complete") {
+                await setActive!({ session: result.createdSessionId });
                 await createUserFromInvite({
                     inviteId: invite!._id,
                     name: firstName || undefined,
@@ -124,8 +115,13 @@ function AdminSignUpPage() {
                 });
                 router.push("/admin");
             }
-        } catch {
-            setError("Verifizierung fehlgeschlagen.");
+        } catch (err: unknown) {
+            if (err && typeof err === "object" && "errors" in err) {
+                const clerkError = err as { errors: Array<{ message: string }> };
+                setError(clerkError.errors[0]?.message || "Verifizierung fehlgeschlagen.");
+            } else {
+                setError("Verifizierung fehlgeschlagen.");
+            }
         } finally {
             setLoading(false);
         }
@@ -255,7 +251,7 @@ function AdminSignUpPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || fetchStatus === "fetching"}
+                                disabled={loading || !isLoaded}
                                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Wird registriert..." : "Registrieren"}
@@ -302,7 +298,7 @@ function AdminSignUpPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || fetchStatus === "fetching"}
+                                disabled={loading || !isLoaded}
                                 className="w-full py-4 bg-primary text-background font-bold text-lg rounded-xl hover:bg-white hover:scale-[1.01] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Wird verifiziert..." : "Verifizieren"}
