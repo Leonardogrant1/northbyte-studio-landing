@@ -38,6 +38,7 @@ export default defineSchema({
         productId: v.optional(v.string()),
         subscriptionId: v.optional(v.string()),
         price: v.optional(v.number()),
+        priceInPurchasedCurrency: v.optional(v.number()),
         currency: v.optional(v.string()),
         priceUsd: v.optional(v.number()),
         countryCode: v.optional(v.string()),

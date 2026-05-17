@@ -7,6 +7,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const HANDLED_EVENTS = [
   "INITIAL_PURCHASE",
+  "RESUBSCRIBE",
   "RENEWAL",
   "CANCELLATION",
   "UNCANCELLATION",
@@ -26,6 +27,7 @@ type RevenueCatEvent = {
   product_id?: string;
   transaction_id?: string;
   price?: number;
+  price_in_purchased_currency?: number;
   currency?: string;
   country_code?: string;
   store?: RCStore;
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
       productId: event.product_id,
       transactionId: event.transaction_id,
       price: event.price,
+      priceInPurchasedCurrency: event.price_in_purchased_currency,
       currency: event.currency,
       countryCode: event.country_code,
       store: event.store,
