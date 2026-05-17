@@ -9,13 +9,14 @@ type RequestBody = {
     affiliateCode: string;
     appUserId?: string;
     revenueCatUserId?: string;
+    environment: "PRODUCTION" | "SANDBOX";
 };
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json() as RequestBody;
 
-        const { appSlug, affiliateCode, appUserId, revenueCatUserId } = body;
+        const { appSlug, affiliateCode, appUserId, revenueCatUserId, environment } = body;
 
         if (!appSlug || !affiliateCode) {
             return NextResponse.json(
@@ -31,11 +32,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (environment !== "PRODUCTION" && environment !== "SANDBOX") {
+            return NextResponse.json(
+                { error: "environment must be PRODUCTION or SANDBOX." },
+                { status: 400 }
+            );
+        }
+
         const result = await convex.mutation(api.affiliate_referral.mutations.track, {
             appSlug,
             affiliateCode,
             appUserId,
             revenueCatUserId,
+            environment,
         });
 
         if ("error" in result) {

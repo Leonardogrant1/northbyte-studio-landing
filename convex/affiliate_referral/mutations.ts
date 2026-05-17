@@ -17,6 +17,7 @@ export const track = mutation({
     affiliateCode: v.string(),
     appUserId: v.optional(v.string()),
     revenueCatUserId: v.optional(v.string()),
+    environment: v.union(v.literal("PRODUCTION"), v.literal("SANDBOX")),
   },
   handler: async (ctx, args) => {
     const app = await ctx.db
@@ -38,6 +39,7 @@ export const track = mutation({
       appUserId: args.appUserId,
       revenueCatUserId: args.revenueCatUserId,
       status: "pending",
+      environment: args.environment,
       createdAt: Date.now(),
     });
 

@@ -34,7 +34,7 @@ export const getMyStats = query({
     const referrals = allReferrals.filter((r) => {
       if (args.fromMs !== undefined && r.createdAt < args.fromMs) return false;
       if (args.toMs !== undefined && r.createdAt > args.toMs) return false;
-      if (args.environment !== undefined && r.environment !== args.environment) return false;
+      if (args.environment !== undefined && (r.environment ?? "PRODUCTION") !== args.environment) return false;
       return true;
     });
 
