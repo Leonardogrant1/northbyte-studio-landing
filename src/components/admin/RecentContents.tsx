@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { ArrowRight, CheckCircle2, Clock, Send, XCircle, FileText } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Send, XCircle, FileText, Pencil } from "lucide-react";
 import Link from "next/link";
+import { EditContentModal, type EditablePost } from "@/components/admin/EditContentModal";
 
 // ─── Status display helpers ───────────────────────────────────────────────────
 
@@ -73,6 +75,7 @@ export function RecentContents({ showAll = false }: { showAll?: boolean }) {
         api.posts.queries.getRecent,
         isAuthenticated ? (showAll ? {} : { limit: 20 }) : "skip"
     );
+    const [editingPost, setEditingPost] = useState<EditablePost | null>(null);
 
     return (
         <section className="mt-10">
@@ -96,11 +99,12 @@ export function RecentContents({ showAll = false }: { showAll?: boolean }) {
             {/* Table card */}
             <div className="bg-surface2/50 backdrop-blur-xl border border-border rounded-2xl overflow-hidden">
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-border">
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-3 border-b border-border">
                     <span className="text-xs font-semibold uppercase tracking-wide text-secondary">Titel</span>
                     <span className="text-xs font-semibold uppercase tracking-wide text-secondary text-right">Account</span>
                     <span className="text-xs font-semibold uppercase tracking-wide text-secondary text-right">Status</span>
                     <span className="text-xs font-semibold uppercase tracking-wide text-secondary text-right">Erstellt</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-secondary text-right"></span>
                 </div>
 
                 {/* Rows */}
@@ -128,7 +132,7 @@ export function RecentContents({ showAll = false }: { showAll?: boolean }) {
                         return (
                             <div
                                 key={post._id}
-                                className={`grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-5 py-4 transition-colors hover:bg-surface2/80 ${
+                                className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-center px-5 py-4 transition-colors hover:bg-surface2/80 ${
                                     idx !== posts.length - 1 ? "border-b border-border/50" : ""
                                 }`}
                             >
@@ -170,11 +174,43 @@ export function RecentContents({ showAll = false }: { showAll?: boolean }) {
                                         {timeAgo(post.createdAt)}
                                     </span>
                                 </div>
+
+                                {/* Edit action */}
+                                <div className="flex justify-end">
+                                    {post.status === "ready_to_post" ? (
+                                        <button
+                                            onClick={() =>
+                                                setEditingPost({
+                                                    _id: post._id,
+                                                    title: post.title,
+                                                    description: post.description,
+                                                    hashtags: post.hashtags,
+                                                    videoUrl: post.videoUrl,
+                                                    accountId: post.accountId,
+                                                })
+                                            }
+                                            className="p-1.5 rounded-lg text-secondary hover:text-primary hover:bg-surface2 transition-colors"
+                                            aria-label="Bearbeiten"
+                                            title="Bearbeiten"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                    ) : (
+                                        <div className="w-7" />
+                                    )}
+                                </div>
                             </div>
                         );
                     })
                 )}
             </div>
+
+            {editingPost && (
+                <EditContentModal
+                    post={editingPost}
+                    onClose={() => setEditingPost(null)}
+                />
+            )}
         </section>
     );
 }
