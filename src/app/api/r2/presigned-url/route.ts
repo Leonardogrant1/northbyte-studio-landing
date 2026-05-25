@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             key = `videos/${randomUUID()}.${fileExtension}`;
         }
 
-        const uploadUrl = await generatePresignedUploadUrl(key, 600);
+        const uploadUrl = await generatePresignedUploadUrl(key, 600, fileType);
         const downloadUrl = getPublicUrl(key);
 
         return NextResponse.json({ uploadUrl, key, downloadUrl }, { status: 200 });

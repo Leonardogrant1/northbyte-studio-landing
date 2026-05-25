@@ -34,15 +34,20 @@ export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL!;
  * Generate a presigned URL for uploading a file to R2
  * @param key - The object key (path) in the bucket
  * @param expiresIn - URL expiration time in seconds (default: 600 = 10 minutes)
+ * @param contentType - MIME type of the file (e.g. "video/mp4"). When provided,
+ *   it is embedded in the signature — the client MUST send the same Content-Type
+ *   header in the PUT request, and R2 will store it as the object's metadata.
  * @returns Presigned URL for PUT request
  */
 export async function generatePresignedUploadUrl(
     key: string,
-    expiresIn: number = 600
+    expiresIn: number = 600,
+    contentType?: string
 ): Promise<string> {
     const command = new PutObjectCommand({
         Bucket: R2_BUCKET_NAME,
         Key: key,
+        ...(contentType && { ContentType: contentType }),
     });
 
     const presignedUrl = await getSignedUrl(r2Client, command, { expiresIn });
