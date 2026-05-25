@@ -7,6 +7,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { Loader2, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { normalizeVideoFile } from "@/lib/video";
 
 const inputClass =
     "w-full rounded-xl bg-surface2 border border-border px-4 py-3 text-primary text-sm outline-none focus:border-accent transition-colors";
@@ -75,6 +76,9 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
             const videoFile = replaceVideo ? assetDropperRef.current?.getSelectedFile() : null;
 
             if (videoFile) {
+                // Normalize video (patches QuickTime "qt  " brand → "isom" for Postiz compatibility)
+                const uploadFile = await normalizeVideoFile(videoFile);
+
                 // Upload new video to the same R2 key (overwrite)
                 const existingKey = extractR2Key(post.videoUrl);
 
@@ -82,8 +86,8 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        fileName: videoFile.name,
-                        fileType: videoFile.type,
+                        fileName: uploadFile.name,
+                        fileType: uploadFile.type,
                         existingKey,
                     }),
                 });
@@ -106,8 +110,8 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                         reject(new Error("Netzwerkfehler beim Upload"))
                     );
                     xhr.open("PUT", uploadUrl);
-                    xhr.setRequestHeader("Content-Type", videoFile.type);
-                    xhr.send(videoFile);
+                    xhr.setRequestHeader("Content-Type", uploadFile.type);
+                    xhr.send(uploadFile);
                 });
 
                 setUploadProgress(0);

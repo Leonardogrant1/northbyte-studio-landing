@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { Calendar, Loader2, X } from "lucide-react";
+import { normalizeVideoFile } from "@/lib/video";
 import { toast } from "sonner";
 
 const inputClass = "w-full rounded-xl bg-surface2 border border-border px-4 py-3 text-primary text-sm outline-none focus:border-accent transition-colors";
@@ -50,11 +51,14 @@ export default function PostContentPage() {
         setUploadProgress(0);
 
         try {
-            // 1. Get presigned URL
+            // 1. Normalize video (patches QuickTime "qt  " brand → "isom" for Postiz compatibility)
+            const uploadFile = await normalizeVideoFile(videoFile);
+
+            // 2. Get presigned URL
             const presignedRes = await fetch("/api/r2/presigned-url", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fileName: videoFile.name, fileType: videoFile.type }),
+                body: JSON.stringify({ fileName: uploadFile.name, fileType: uploadFile.type }),
             });
             if (!presignedRes.ok) throw new Error("Presigned URL konnte nicht abgerufen werden.");
             const { uploadUrl, downloadUrl } = await presignedRes.json();
@@ -70,8 +74,8 @@ export default function PostContentPage() {
                 );
                 xhr.addEventListener("error", () => reject(new Error("Netzwerkfehler beim Upload")));
                 xhr.open("PUT", uploadUrl);
-                xhr.setRequestHeader("Content-Type", videoFile.type);
-                xhr.send(videoFile);
+                xhr.setRequestHeader("Content-Type", uploadFile.type);
+                xhr.send(uploadFile);
             });
 
             setUploadProgress(0);
