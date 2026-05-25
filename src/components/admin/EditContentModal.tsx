@@ -5,7 +5,7 @@ import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 const inputClass =
@@ -45,6 +45,7 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
     const [hashtags, setHashtags] = useState<string[]>(post.hashtags ?? []);
     const [hashtagInput, setHashtagInput] = useState("");
     const [selectedAccountId, setSelectedAccountId] = useState<Id<"social_accounts">>(post.accountId);
+    const [replaceVideo, setReplaceVideo] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -71,7 +72,7 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
         setUploadProgress(0);
 
         try {
-            const videoFile = assetDropperRef.current?.getSelectedFile();
+            const videoFile = replaceVideo ? assetDropperRef.current?.getSelectedFile() : null;
 
             if (videoFile) {
                 // Upload new video to the same R2 key (overwrite)
@@ -184,17 +185,42 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                         )}
                     </section>
 
-                    {/* Video replacement (optional) */}
+                    {/* Video */}
                     <section className="space-y-3">
-                        <div>
-                            <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary">Video</h3>
-                            <p className="text-xs text-secondary/60 mt-0.5">
-                                Optional — leer lassen um das bestehende Video zu behalten.
-                            </p>
-                        </div>
-                        <div className="bg-surface2 p-6 rounded-2xl border border-border flex justify-center">
-                            <AssetDropper ref={assetDropperRef} aspectRatio="16:9" />
-                        </div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary">Video</h3>
+
+                        {!replaceVideo ? (
+                            <div className="relative rounded-2xl overflow-hidden border border-border bg-black">
+                                <video
+                                    src={post.videoUrl}
+                                    controls
+                                    className="w-full max-h-64 object-contain"
+                                />
+                                <button
+                                    onClick={() => setReplaceVideo(true)}
+                                    aria-label="Video ersetzen"
+                                    className="absolute top-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium hover:bg-black/80 transition-colors"
+                                >
+                                    <RefreshCw size={12} />
+                                    Ersetzen
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <div className="bg-surface2 p-6 rounded-2xl border border-border flex justify-center">
+                                    <AssetDropper ref={assetDropperRef} aspectRatio="16:9" />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setReplaceVideo(false);
+                                        assetDropperRef.current?.clearSelection();
+                                    }}
+                                    className="text-xs text-secondary hover:text-primary transition-colors"
+                                >
+                                    ← Bestehendes Video behalten
+                                </button>
+                            </div>
+                        )}
                     </section>
 
                     {/* Titel */}
