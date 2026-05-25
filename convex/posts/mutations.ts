@@ -35,3 +35,44 @@ export const create = mutation({
         });
     },
 });
+
+export const update = mutation({
+    args: {
+        id: v.id("posts"),
+        title: v.optional(v.string()),
+        description: v.optional(v.string()),
+        hashtags: v.optional(v.array(v.string())),
+        videoUrl: v.optional(v.string()),
+        accountId: v.optional(v.id("social_accounts")),
+        scheduledAt: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!user) throw new Error("User not found.");
+
+        const post = await ctx.db.get(args.id);
+        if (!post) throw new Error("Post not found.");
+
+        if (user.type !== "admin" && post.createdBy !== user._id) {
+            throw new Error("Unauthorized.");
+        }
+
+        if (post.status !== "ready_to_post") {
+            throw new Error("Only ready_to_post posts can be edited.");
+        }
+
+        const { id, ...fields } = args;
+        const patch: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(fields)) {
+            if (value !== undefined) patch[key] = value;
+        }
+
+        await ctx.db.patch(id, patch);
+    },
+});
