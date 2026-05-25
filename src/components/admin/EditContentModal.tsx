@@ -74,13 +74,11 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
 
         try {
             const videoFile = replaceVideo ? assetDropperRef.current?.getSelectedFile() : null;
+            let newVideoUrl: string | undefined;
 
             if (videoFile) {
                 // Normalize video (patches QuickTime "qt  " brand → "isom" for Postiz compatibility)
                 const uploadFile = await normalizeVideoFile(videoFile);
-
-                // Upload new video to the same R2 key (overwrite)
-                const existingKey = extractR2Key(post.videoUrl);
 
                 const presignedRes = await fetch("/api/r2/presigned-url", {
                     method: "POST",
@@ -88,12 +86,11 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                     body: JSON.stringify({
                         fileName: uploadFile.name,
                         fileType: uploadFile.type,
-                        existingKey,
                     }),
                 });
 
                 if (!presignedRes.ok) throw new Error("Presigned URL konnte nicht abgerufen werden.");
-                const { uploadUrl } = await presignedRes.json();
+                const { uploadUrl, downloadUrl } = await presignedRes.json();
 
                 await new Promise<void>((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
@@ -115,15 +112,26 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                 });
 
                 setUploadProgress(0);
+                newVideoUrl = downloadUrl;
+
+                // Delete old R2 object
+                const oldKey = extractR2Key(post.videoUrl);
+                if (oldKey) {
+                    await fetch("/api/r2/delete", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ key: oldKey }),
+                    });
+                }
             }
 
-            // Patch Convex document — videoUrl stays the same (R2 key unchanged)
             await updatePost({
                 id: post._id,
                 title: title.trim(),
                 description: description.trim() || undefined,
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 accountId: selectedAccountId,
+                ...(newVideoUrl && { videoUrl: newVideoUrl }),
             });
 
             toast.success("Content erfolgreich aktualisiert.");

@@ -1,5 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Validate required environment variables
@@ -52,6 +51,18 @@ export async function generatePresignedUploadUrl(
 
     const presignedUrl = await getSignedUrl(r2Client, command, { expiresIn });
     return presignedUrl;
+}
+
+/**
+ * Delete a file from R2
+ * @param key - The object key (path) in the bucket
+ */
+export async function deleteR2Object(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: key,
+    });
+    await r2Client.send(command);
 }
 
 /**
