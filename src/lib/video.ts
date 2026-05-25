@@ -34,6 +34,5 @@ export async function normalizeVideoFile(file: File): Promise<File> {
     patched[10] = 0x6f; // o
     patched[11] = 0x6d; // m
 
-    const mp4Name = file.name.replace(/\.[^.]+$/, ".mp4");
-    return new File([patched], mp4Name, { type: "video/mp4" });
+    return new File([patched], file.name, { type: file.type });
 }
