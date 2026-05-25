@@ -9,6 +9,9 @@
  * The actual video/audio data is untouched — no re-encoding, no quality loss.
  */
 export async function normalizeVideoFile(file: File): Promise<File> {
+    // Only relevant for files that claim to be MP4 — .mov files are QuickTime and stay as-is
+    if (!file.name.toLowerCase().endsWith(".mp4")) return file;
+
     // Read just the first 20 bytes — enough to inspect the ftyp box
     const header = new Uint8Array(await file.slice(0, 20).arrayBuffer());
 
@@ -24,7 +27,7 @@ export async function normalizeVideoFile(file: File): Promise<File> {
     // Read major brand: bytes 8–11
     const brand = String.fromCharCode(header[8], header[9], header[10], header[11]);
 
-    // Only patch QuickTime brand — everything else is fine as-is
+    // Only patch if brand is QuickTime ("qt  ") — CapCut on Mac exports mp4 with this brand
     if (brand !== "qt  ") return file;
 
     // Read full file, patch brand bytes 8–11 from "qt  " to "isom"
