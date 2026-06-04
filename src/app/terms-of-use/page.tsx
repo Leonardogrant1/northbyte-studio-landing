@@ -21,6 +21,10 @@ export default async function TermsOverview() {
                         <h2 className="text-xl font-bold mb-2">General / Website</h2>
                         <p className="text-sm text-secondary">Terms for northbytestudio.com</p>
                     </Link>
+                    <Link href="/terms-of-use/mypostiz" className="block p-6 bg-surface border border-border rounded-xl hover:border-accent hover:bg-surface2 transition-all">
+                        <h2 className="text-xl font-bold mb-2">MyPostiz</h2>
+                        <p className="text-sm text-secondary">Terms of use for the self-hosted Postiz instance</p>
+                    </Link>
                     {apps.map(app => (
                         <Link key={app._id} href={`/terms-of-use/${app.slug}`} className="block p-6 bg-surface border border-border rounded-xl hover:border-accent hover:bg-surface2 transition-all">
                             <h2 className="text-xl font-bold mb-2">{app.name}</h2>

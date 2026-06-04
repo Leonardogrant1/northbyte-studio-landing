@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import { keevioTermsOfUse } from "@/lib/privacy-policies/keevio-terms";
 import { memolibTermsOfUse } from "@/lib/privacy-policies/memolib-terms";
 import { generalTermsOfUse } from "@/lib/privacy-policies/general-terms";
+import { mypostizTermsOfUse } from "@/lib/privacy-policies/mypostiz-terms";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 
@@ -24,6 +25,7 @@ export default async function TermsDetail({ params }: PageProps) {
     const title = isGeneral ? "NorthByte Studio Website" : appData?.name || appSlug;
     const isKeevio = appSlug === "keevio";
     const isMemoLib = appSlug === "memolib";
+    const isMyPostiz = appSlug === "mypostiz";
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -48,6 +50,11 @@ export default async function TermsDetail({ params }: PageProps) {
                     <article
                         className={articleClass}
                         dangerouslySetInnerHTML={{ __html: memolibTermsOfUse }}
+                    />
+                ) : isMyPostiz ? (
+                    <article
+                        className={articleClass}
+                        dangerouslySetInnerHTML={{ __html: mypostizTermsOfUse }}
                     />
                 ) : isGeneral ? (
                     <article

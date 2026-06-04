@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import { keevioPrivacyPolicy } from "@/lib/privacy-policies/keevio";
 import { memolibPrivacyPolicy } from "@/lib/privacy-policies/memolib";
 import { generalPrivacyPolicy } from "@/lib/privacy-policies/general";
+import { mypostizPrivacyPolicy } from "@/lib/privacy-policies/mypostiz";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 
@@ -24,6 +25,7 @@ export default async function PrivacyPolicyDetail({ params }: PageProps) {
     const title = isGeneral ? "NorthByte Studio Website" : appData?.name || appSlug;
     const isKeevio = appSlug === "keevio";
     const isMemoLib = appSlug === "memolib";
+    const isMyPostiz = appSlug === "mypostiz";
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -48,6 +50,11 @@ export default async function PrivacyPolicyDetail({ params }: PageProps) {
                     <article
                         className={articleClass}
                         dangerouslySetInnerHTML={{ __html: memolibPrivacyPolicy }}
+                    />
+                ) : isMyPostiz ? (
+                    <article
+                        className={articleClass}
+                        dangerouslySetInnerHTML={{ __html: mypostizPrivacyPolicy }}
                     />
                 ) : isGeneral ? (
                     <article
