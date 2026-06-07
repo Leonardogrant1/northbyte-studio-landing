@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp } from "lucide-react";
+import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp, LayoutDashboard } from "lucide-react";
 import { Suspense } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -19,6 +19,7 @@ function AdminSidebarInner() {
 
     const isAdmin = user?.type === "admin";
     const isAffiliate = user?.type === "affiliate";
+    const isCreator = user?.type === "creator";
 
     const allTabs = [
         {
@@ -28,6 +29,7 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin",
             adminOnly: true,
             affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Bugs",
@@ -35,6 +37,8 @@ function AdminSidebarInner() {
             href: `/admin/bugs${appQuery}`,
             isActive: pathname === "/admin/bugs",
             adminOnly: true,
+            affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Features",
@@ -42,6 +46,8 @@ function AdminSidebarInner() {
             href: `/admin/features${appQuery}`,
             isActive: pathname === "/admin/features",
             adminOnly: true,
+            affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Apps",
@@ -49,6 +55,8 @@ function AdminSidebarInner() {
             href: `/admin/apps${appQuery}`,
             isActive: pathname === "/admin/apps",
             adminOnly: true,
+            affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Media",
@@ -57,6 +65,7 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin/media",
             adminOnly: false,
             affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "AI-Lab",
@@ -65,6 +74,7 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin/ai-lab",
             adminOnly: false,
             affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Post Content",
@@ -73,6 +83,7 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin/post-content",
             adminOnly: false,
             affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Contents",
@@ -81,6 +92,7 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin/contents",
             adminOnly: false,
             affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Social Accounts",
@@ -88,6 +100,8 @@ function AdminSidebarInner() {
             href: "/admin/social-accounts",
             isActive: pathname === "/admin/social-accounts",
             adminOnly: true,
+            affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "AI Avatars",
@@ -95,6 +109,8 @@ function AdminSidebarInner() {
             href: "/admin/ai-avatars",
             isActive: pathname === "/admin/ai-avatars",
             adminOnly: true,
+            affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "User & Roles",
@@ -103,6 +119,7 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin/users",
             adminOnly: true,
             affiliateOnly: false,
+            creatorOnly: false,
         },
         {
             label: "Dashboard",
@@ -111,13 +128,25 @@ function AdminSidebarInner() {
             isActive: pathname === "/admin/affiliate",
             adminOnly: false,
             affiliateOnly: true,
+            creatorOnly: false,
+        },
+        {
+            label: "Dashboard",
+            icon: LayoutDashboard,
+            href: "/admin/creator-dashboard",
+            isActive: pathname === "/admin/creator-dashboard",
+            adminOnly: false,
+            affiliateOnly: false,
+            creatorOnly: true,
         },
     ];
 
     const tabs = allTabs.filter((tab) => {
         if (user === undefined || user === null) return false;
         if (isAffiliate) return tab.affiliateOnly === true;
-        return !tab.adminOnly || isAdmin;
+        if (isCreator) return !tab.adminOnly && !tab.affiliateOnly;
+        if (isAdmin) return !tab.affiliateOnly && !tab.creatorOnly;
+        return false;
     });
 
     return (
@@ -125,7 +154,7 @@ function AdminSidebarInner() {
             <nav className="space-y-1">
                 {tabs.map(({ label, icon: Icon, href, isActive }) => (
                     <Link
-                        key={label}
+                        key={href}
                         href={href}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                             isActive

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { decrypt } from "@/lib/encryption";
 import { getRangeDates, Range } from "../apps/[appId]/helpers/dates";
 import { rcFetch } from "../apps/[appId]/helpers/revenuecat";
@@ -16,8 +16,17 @@ export interface OverviewResult {
 }
 
 export async function GET(request: NextRequest) {
-    if (!(await getAuthenticatedUserId())) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const { userId, getToken } = await auth();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+    const token = await getToken({ template: "convex" });
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+    const convexAuth = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    convexAuth.setAuth(token);
+    const currentUser = await convexAuth.query(api.users.queries.getCurrentUser, {});
+    if (!currentUser || currentUser.type !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const sp = request.nextUrl.searchParams;

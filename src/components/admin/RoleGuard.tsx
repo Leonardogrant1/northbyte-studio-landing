@@ -36,7 +36,7 @@ export function RoleGuard({ children }: RoleGuardProps) {
         if (user === null) return;
 
         if (user.type === "creator" && isAdminOnlyRoute(pathname)) {
-            router.replace("/admin/media");
+            router.replace("/admin/creator-dashboard");
         }
 
         if (user.type === "affiliate" && !isAffiliateAllowedRoute(pathname)) {

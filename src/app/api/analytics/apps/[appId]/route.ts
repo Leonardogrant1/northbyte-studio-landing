@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
 import { Id } from "@/../convex/_generated/dataModel";
-import { getAuthenticatedUserId } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { decrypt } from "@/lib/encryption";
 import { ltvBadge, rpiBadge, d2tBadge, t2pBadge } from "./helpers/badges";
 import { getRangeDates, Range } from "./helpers/dates";
@@ -32,8 +32,17 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ appId: string }> }
 ) {
-    if (!(await getAuthenticatedUserId())) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const { userId, getToken } = await auth();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+    const token = await getToken({ template: "convex" });
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+    const convexAuth = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    convexAuth.setAuth(token);
+    const currentUser = await convexAuth.query(api.users.queries.getCurrentUser, {});
+    if (!currentUser || currentUser.type !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { appId } = await params;

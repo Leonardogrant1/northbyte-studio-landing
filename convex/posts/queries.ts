@@ -78,3 +78,39 @@ export const getRecent = query({
         );
     },
 });
+
+// Returns post counts grouped by status for the current user.
+// Admin sees counts across all posts; creator sees only their own.
+export const getMyPostStats = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!user) throw new Error("User not found.");
+
+        let posts;
+        if (user.type === "admin") {
+            posts = await ctx.db.query("posts").collect();
+        } else {
+            posts = await ctx.db
+                .query("posts")
+                .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
+                .collect();
+        }
+
+        const stats = { ready_to_post: 0, scheduled: 0, posted: 0, failed: 0, total: 0 };
+        for (const post of posts) {
+            stats.total++;
+            if (post.status === "ready_to_post") stats.ready_to_post++;
+            else if (post.status === "scheduled") stats.scheduled++;
+            else if (post.status === "posted") stats.posted++;
+            else if (post.status === "failed") stats.failed++;
+        }
+        return stats;
+    },
+});
