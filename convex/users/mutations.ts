@@ -7,7 +7,7 @@ export const createUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"))),
+    type: v.optional(v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support"))),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -18,7 +18,7 @@ export const createUser = internalMutation({
     if (existing) return existing._id;
 
     // Determine role: explicit type > northbyte fallback > default creator
-    let type: "admin" | "creator" | "affiliate" = args.type ?? "creator";
+    let type: "admin" | "creator" | "affiliate" | "support" = args.type ?? "creator";
     if (!args.type && args.email?.endsWith("@northbyte.studio")) {
       type = "admin";
     }
