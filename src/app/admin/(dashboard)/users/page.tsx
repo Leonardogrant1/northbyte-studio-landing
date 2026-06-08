@@ -150,6 +150,166 @@ function AffiliateEditModal({ userId, onClose }: AffiliateEditModalProps) {
     );
 }
 
+interface SupportUserRowProps {
+    userId: Id<"users">;
+    email: string;
+    onManage: () => void;
+}
+
+function SupportUserRow({ userId, email, onManage }: SupportUserRowProps) {
+    const assignedApps = useQuery(api.support_assignments.queries.getAppsForUser, { userId });
+
+    return (
+        <tr className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
+            <td className="px-4 py-3 text-primary">{email}</td>
+            <td className="px-4 py-3">
+                {assignedApps === undefined ? (
+                    <Loader2 size={12} className="animate-spin text-secondary" />
+                ) : assignedApps.length === 0 ? (
+                    <span className="text-secondary text-xs">Keine Apps</span>
+                ) : (
+                    <div className="flex flex-wrap gap-1">
+                        {assignedApps.map((app) => app && (
+                            <span
+                                key={app._id}
+                                className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/20 text-green-400"
+                            >
+                                {app.name}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </td>
+            <td className="px-4 py-3 text-right">
+                <button
+                    onClick={onManage}
+                    className="text-secondary hover:text-accent transition-colors p-1"
+                    title="Apps verwalten"
+                >
+                    <Pencil size={16} />
+                </button>
+            </td>
+        </tr>
+    );
+}
+
+interface SupportAppsModalProps {
+    userId: Id<"users">;
+    onClose: () => void;
+}
+
+function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
+    const allApps = useQuery(api.apps.queries.getAll);
+    const assignedApps = useQuery(api.support_assignments.queries.getAppsForUser, { userId });
+    const assignMutation = useMutation(api.support_assignments.mutations.assign);
+    const unassignMutation = useMutation(api.support_assignments.mutations.unassign);
+
+    const [saving, setSaving] = useState(false);
+    // Local selection state: null means "not yet initialised from server"
+    const [selected, setSelected] = useState<Set<string> | null>(null);
+
+    // Initialise once assigned apps are loaded
+    if (assignedApps !== undefined && selected === null) {
+        setSelected(new Set(assignedApps.map((a) => a!._id)));
+    }
+
+    const toggle = (appId: string) => {
+        setSelected((prev) => {
+            if (!prev) return prev;
+            const next = new Set(prev);
+            if (next.has(appId)) next.delete(appId);
+            else next.add(appId);
+            return next;
+        });
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!allApps || !assignedApps || !selected) return;
+        setSaving(true);
+        try {
+            const previousIds = new Set(assignedApps.map((a) => a!._id));
+            const toAssign = [...selected].filter((id) => !previousIds.has(id as Id<"apps">));
+            const toUnassign = [...previousIds].filter((id) => !selected.has(id));
+
+            await Promise.all([
+                ...toAssign.map((appId) => assignMutation({ userId, appId: appId as Id<"apps"> })),
+                ...toUnassign.map((appId) => unassignMutation({ userId, appId: appId as Id<"apps"> })),
+            ]);
+            toast.success("App-Zuweisungen gespeichert.");
+            onClose();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Fehler beim Speichern.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const isLoading = allApps === undefined || assignedApps === undefined || selected === null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-surface2 border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Apps verwalten</h2>
+                    <button onClick={onClose} className="text-secondary hover:text-primary transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {isLoading ? (
+                    <div className="flex items-center gap-2 text-secondary text-sm py-4">
+                        <Loader2 size={14} className="animate-spin" /> Wird geladen…
+                    </div>
+                ) : (
+                    <form onSubmit={handleSave} className="space-y-4">
+                        {allApps.length === 0 ? (
+                            <p className="text-secondary text-sm">Keine Apps vorhanden.</p>
+                        ) : (
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {allApps.map((app) => (
+                                    <label
+                                        key={app._id}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface2/80 cursor-pointer transition-colors"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selected?.has(app._id) ?? false}
+                                            onChange={() => toggle(app._id)}
+                                            disabled={saving}
+                                            className="accent-accent w-4 h-4"
+                                        />
+                                        <span className="text-sm text-primary">{app.name}</span>
+                                        <span className="text-xs text-secondary font-mono ml-auto">{app.slug}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                disabled={saving}
+                                className="flex-1 py-3 border border-border rounded-xl text-secondary hover:text-primary hover:border-accent/50 transition-all disabled:opacity-50"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={saving || allApps.length === 0}
+                                className="flex-1 py-3 bg-accent text-background font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {saving ? "Wird gespeichert…" : "Speichern"}
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export default function UsersPage() {
     const currentUser = useCurrentUser();
     const isAdmin = currentUser?.type === "admin";
@@ -164,13 +324,14 @@ export default function UsersPage() {
     const removeInvite = useMutation(api.user_invites.mutations.remove);
 
     const [inviteEmail, setInviteEmail] = useState("");
-    const [inviteRole, setInviteRole] = useState<"admin" | "creator" | "affiliate">("creator");
+    const [inviteRole, setInviteRole] = useState<"admin" | "creator" | "affiliate" | "support">("creator");
     const [inviteAffiliateCode, setInviteAffiliateCode] = useState("");
     const [inviteCommissionType, setInviteCommissionType] = useState<CommissionType>("percentage");
     const [inviteCommissionAmount, setInviteCommissionAmount] = useState("10");
     const [loading, setLoading] = useState(false);
 
     const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
+    const [managingAppsForUserId, setManagingAppsForUserId] = useState<Id<"users"> | null>(null);
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -238,7 +399,7 @@ export default function UsersPage() {
                         <select
                             value={inviteRole}
                             onChange={(e) => {
-                                setInviteRole(e.target.value as "admin" | "creator" | "affiliate");
+                                setInviteRole(e.target.value as "admin" | "creator" | "affiliate" | "support");
                                 setInviteAffiliateCode("");
                                 setInviteCommissionAmount("10");
                                 setInviteCommissionType("percentage");
@@ -249,6 +410,7 @@ export default function UsersPage() {
                             <option value="creator">Creator</option>
                             <option value="admin">Admin</option>
                             <option value="affiliate">Affiliate</option>
+                            <option value="support">Support</option>
                         </select>
                         <button
                             type="submit"
@@ -317,7 +479,7 @@ export default function UsersPage() {
                                     {openInvites.map((invite: {
                                         _id: Id<"user_invites">;
                                         email: string;
-                                        role: "admin" | "creator" | "affiliate";
+                                        role: "admin" | "creator" | "affiliate" | "support";
                                         affiliateCode?: string;
                                         commissionType?: CommissionType;
                                         commissionAmount?: number;
@@ -331,9 +493,11 @@ export default function UsersPage() {
                                                         ? "bg-accent/20 text-accent"
                                                         : invite.role === "affiliate"
                                                         ? "bg-purple-500/20 text-purple-400"
+                                                        : invite.role === "support"
+                                                        ? "bg-green-500/20 text-green-400"
                                                         : "bg-blue-500/20 text-blue-400"
                                                 }`}>
-                                                    {invite.role === "admin" ? "Admin" : invite.role === "affiliate" ? "Affiliate" : "Creator"}
+                                                    {invite.role === "admin" ? "Admin" : invite.role === "affiliate" ? "Affiliate" : invite.role === "support" ? "Support" : "Creator"}
                                                 </span>
                                                 {invite.role === "affiliate" && (
                                                     <span className="ml-2 text-xs text-secondary font-mono">{invite.affiliateCode}</span>
@@ -396,9 +560,11 @@ export default function UsersPage() {
                                                         ? "bg-accent/20 text-accent"
                                                         : u.type === "affiliate"
                                                         ? "bg-purple-500/20 text-purple-400"
+                                                        : u.type === "support"
+                                                        ? "bg-green-500/20 text-green-400"
                                                         : "bg-blue-500/20 text-blue-400"
                                                 }`}>
-                                                    {u.type === "admin" ? "Admin" : u.type === "affiliate" ? "Affiliate" : "Creator"}
+                                                    {u.type === "admin" ? "Admin" : u.type === "affiliate" ? "Affiliate" : u.type === "support" ? "Support" : "Creator"}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-secondary">{formatDate(u.createdAt)}</td>
@@ -435,10 +601,49 @@ export default function UsersPage() {
                 )}
             </section>
 
+            {/* Support Users */}
+            <section>
+                <h2 className="text-xl font-semibold mb-4">Support Users</h2>
+                {(() => {
+                    const supportUsers = users.filter((u) => u.type === "support");
+                    return supportUsers.length === 0 ? (
+                        <p className="text-secondary text-sm">Keine Support-User vorhanden.</p>
+                    ) : (
+                        <div className="border border-border rounded-2xl overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-surface2/30">
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">Zugewiesene Apps</th>
+                                        <th className="px-4 py-3" />
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {supportUsers.map((u) => (
+                                        <SupportUserRow
+                                            key={u._id}
+                                            userId={u._id}
+                                            email={u.email ?? "—"}
+                                            onManage={() => setManagingAppsForUserId(u._id)}
+                                        />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
+            </section>
+
             {editingUserId && (
                 <AffiliateEditModal
                     userId={editingUserId}
                     onClose={() => setEditingUserId(null)}
+                />
+            )}
+            {managingAppsForUserId && (
+                <SupportAppsModal
+                    userId={managingAppsForUserId}
+                    onClose={() => setManagingAppsForUserId(null)}
                 />
             )}
         </div>
