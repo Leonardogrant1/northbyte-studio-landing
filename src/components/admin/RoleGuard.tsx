@@ -19,6 +19,11 @@ function isAffiliateAllowedRoute(pathname: string): boolean {
     return pathname === "/admin/affiliate" || pathname.startsWith("/admin/affiliate/");
 }
 
+// Support users can only access the support section (admins can too)
+function isSupportAllowedRoute(pathname: string): boolean {
+    return pathname === "/admin/support" || pathname.startsWith("/admin/support/");
+}
+
 interface RoleGuardProps {
     children: React.ReactNode;
 }
@@ -42,11 +47,16 @@ export function RoleGuard({ children }: RoleGuardProps) {
         if (user.type === "affiliate" && !isAffiliateAllowedRoute(pathname)) {
             router.replace("/admin/affiliate");
         }
+
+        if (user.type === "support" && !isSupportAllowedRoute(pathname)) {
+            router.replace("/admin/support");
+        }
     }, [user, pathname, router]);
 
     // Show nothing while redirecting to avoid flash
     if (user?.type === "creator" && isAdminOnlyRoute(pathname)) return null;
     if (user?.type === "affiliate" && !isAffiliateAllowedRoute(pathname)) return null;
+    if (user?.type === "support" && !isSupportAllowedRoute(pathname)) return null;
 
     return <>{children}</>;
 }
