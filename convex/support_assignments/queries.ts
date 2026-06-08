@@ -8,6 +8,13 @@ export const getAppsForUser = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
+    const caller = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    if (!caller) throw new Error("Unauthenticated");
+    if (caller.type !== "admin" && caller._id !== args.userId) throw new Error("Unauthorized");
+
     const assignments = await ctx.db
       .query("support_assignments")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -26,6 +33,12 @@ export const getUsersForApp = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
 
     const assignments = await ctx.db
       .query("support_assignments")

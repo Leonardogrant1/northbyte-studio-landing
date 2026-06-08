@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp, LayoutDashboard } from "lucide-react";
+import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp, LayoutDashboard, Headphones } from "lucide-react";
 import { Suspense } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -20,6 +20,7 @@ function AdminSidebarInner() {
     const isAdmin = user?.type === "admin";
     const isAffiliate = user?.type === "affiliate";
     const isCreator = user?.type === "creator";
+    const isSupport = user?.type === "support";
 
     const allTabs = [
         {
@@ -139,12 +140,22 @@ function AdminSidebarInner() {
             affiliateOnly: false,
             creatorOnly: true,
         },
+        {
+            label: "Support",
+            icon: Headphones,
+            href: "/admin/support",
+            isActive: pathname === "/admin/support",
+            adminOnly: false,
+            affiliateOnly: false,
+            creatorOnly: false,
+        },
     ];
 
     const tabs = allTabs.filter((tab) => {
         if (user === undefined || user === null) return false;
         if (isAffiliate) return tab.affiliateOnly === true;
         if (isCreator) return !tab.adminOnly && !tab.affiliateOnly;
+        if (isSupport) return tab.href === "/admin/support";
         if (isAdmin) return !tab.affiliateOnly && !tab.creatorOnly;
         return false;
     });
