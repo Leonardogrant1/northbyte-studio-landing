@@ -10,7 +10,7 @@ export default defineSchema({
         email: v.optional(v.string()),
         name: v.optional(v.string()),
         lastName: v.optional(v.string()),
-        type: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
+        type: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support")),
         createdAt: v.number(),
         updatedAt: v.number(),
     }).index("by_clerk", ["clerkId"]),
@@ -67,7 +67,7 @@ export default defineSchema({
 
     user_invites: defineTable({
         email: v.string(),
-        role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
+        role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support")),
         invitedBy: v.id("users"),
         createdAt: v.number(),
         usedAt: v.optional(v.number()),
@@ -78,6 +78,13 @@ export default defineSchema({
     })
         .index("by_email", ["email"])
         .index("by_token", ["token"]),
+
+    support_assignments: defineTable({
+        userId: v.id("users"),
+        appId: v.id("apps"),
+    })
+        .index("by_user", ["userId"])
+        .index("by_app", ["appId"]),
 
     media: defineTable({
         title: v.string(),
