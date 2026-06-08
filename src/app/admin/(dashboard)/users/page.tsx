@@ -169,7 +169,7 @@ function SupportUserRow({ userId, email, onManage }: SupportUserRowProps) {
                     <span className="text-secondary text-xs">Keine Apps</span>
                 ) : (
                     <div className="flex flex-wrap gap-1">
-                        {assignedApps.map((app) => app && (
+                        {assignedApps.map((app: any) => app && (
                             <span
                                 key={app._id}
                                 className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/20 text-green-400"
@@ -210,7 +210,7 @@ function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
 
     // Initialise once assigned apps are loaded
     if (assignedApps !== undefined && selected === null) {
-        setSelected(new Set(assignedApps.map((a) => a!._id)));
+        setSelected(new Set(assignedApps.map((a: any) => a!._id)));
     }
 
     const toggle = (appId: string) => {
@@ -228,9 +228,9 @@ function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
         if (!allApps || !assignedApps || !selected) return;
         setSaving(true);
         try {
-            const previousIds = new Set(assignedApps.map((a) => a!._id));
+            const previousIds = new Set(assignedApps.map((a: any) => a!._id));
             const toAssign = [...selected].filter((id) => !previousIds.has(id as Id<"apps">));
-            const toUnassign = [...previousIds].filter((id) => !selected.has(id));
+            const toUnassign = [...previousIds].filter((id: unknown) => !selected.has(id as string));
 
             await Promise.all([
                 ...toAssign.map((appId) => assignMutation({ userId, appId: appId as Id<"apps"> })),
