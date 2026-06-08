@@ -272,4 +272,32 @@ export default defineSchema({
         .index("by_category", ["category_id"])
         .index("by_vendor_invoice", ["vendor_id", "vendor_invoice_id"])
         .index("by_vendor_receipt", ["vendor_id", "vendor_receipt_id"]),
+
+    ticket_counter: defineTable({
+        value: v.number(),
+    }),
+
+    tickets: defineTable({
+        ticketNumber:   v.number(),
+        appId:          v.id("apps"),
+        externalUserId: v.string(),
+        email:          v.optional(v.string()),
+        title:          v.string(),
+        description:    v.string(),
+        status:         v.union(v.literal("open"), v.literal("closed")),
+        waitingOn:      v.union(v.literal("support"), v.literal("user")),
+        createdAt:      v.number(),
+        updatedAt:      v.number(),
+    })
+        .index("by_app",    ["appId"])
+        .index("by_status", ["status"])
+        .index("by_number", ["ticketNumber"]),
+
+    ticket_messages: defineTable({
+        ticketId:  v.id("tickets"),
+        authorId:  v.id("users"),
+        body:      v.string(),
+        createdAt: v.number(),
+    })
+        .index("by_ticket", ["ticketId"]),
 });
