@@ -22,7 +22,7 @@ export const clerkWebhook = httpAction(async (ctx, request) => {
       const email: string | undefined = email_addresses?.[0]?.email_address;
 
       // Look up open invite to determine role
-      let type: "admin" | "creator" | "affiliate" | undefined;
+      let type: "admin" | "creator" | "affiliate" | "support" | undefined;
       if (email) {
         const invite = await ctx.runQuery(internal.user_invites.queries.getOpenInviteByEmailInternal, { email });
         if (invite) {

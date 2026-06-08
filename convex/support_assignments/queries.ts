@@ -16,7 +16,7 @@ export const getAppsForUser = query({
     const apps = await Promise.all(
       assignments.map((a) => ctx.db.get(a.appId))
     );
-    return apps.filter(Boolean);
+    return apps.filter((a): a is NonNullable<typeof a> => a !== null);
   },
 });
 
@@ -35,6 +35,6 @@ export const getUsersForApp = query({
     const users = await Promise.all(
       assignments.map((a) => ctx.db.get(a.userId))
     );
-    return users.filter(Boolean);
+    return users.filter((u): u is NonNullable<typeof u> => u !== null);
   },
 });
