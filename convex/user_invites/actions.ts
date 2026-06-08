@@ -10,7 +10,7 @@ import nodemailer from "nodemailer";
 export const createAndSend = action({
   args: {
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
+    role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support")),
     affiliateCode: v.optional(v.string()),
     commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
     commissionAmount: v.optional(v.number()),
@@ -48,7 +48,7 @@ export const createAndSend = action({
     });
 
     const magicLink = `${appUrl}/admin/signup?token=${token}`;
-    const roleLabel = args.role === "admin" ? "Admin" : args.role === "affiliate" ? "Affiliate" : "Creator";
+    const roleLabel = args.role === "admin" ? "Admin" : args.role === "affiliate" ? "Affiliate" : args.role === "support" ? "Support" : "Creator";
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f0f0f; color: #e0e0e0; padding: 40px 32px; border-radius: 12px;">

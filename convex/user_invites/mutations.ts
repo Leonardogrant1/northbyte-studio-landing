@@ -5,7 +5,7 @@ import { v } from "convex/values";
 export const create = mutation({
   args: {
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate")),
+    role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support")),
     token: v.optional(v.string()),
     affiliateCode: v.optional(v.string()),
     commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
