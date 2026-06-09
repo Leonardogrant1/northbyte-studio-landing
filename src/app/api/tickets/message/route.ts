@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/../convex/_generated/api";
-import { Id } from "@/../convex/_generated/dataModel";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { ticketId, message, assets } = body as {
-      ticketId: string;
-      message:  string;
-      assets?:  string[];
+    const { ticketNumber, message, assets } = body as {
+      ticketNumber: number;
+      message: string;
+      assets?: string[];
     };
 
-    if (!ticketId || !message) {
+    if (!ticketNumber || !message) {
       return NextResponse.json(
-        { error: "Missing required fields: ticketId, message" },
+        { error: "Missing required fields: ticketNumber, message" },
         { status: 400 }
       );
     }
 
     await convex.mutation(api.ticket_messages.mutations.sendFromUser, {
-      ticketId: ticketId as Id<"tickets">,
-      body:     message,
+      ticketNumber: ticketNumber,
+      body: message,
       assets,
     });
 

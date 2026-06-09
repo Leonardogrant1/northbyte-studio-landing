@@ -32,12 +32,15 @@ export const send = mutation({
 // Sets waitingOn back to "support" automatically.
 export const sendFromUser = mutation({
   args: {
-    ticketId: v.id("tickets"),
-    body:     v.string(),
-    assets:   v.optional(v.array(v.string())),
+    ticketNumber: v.number(),
+    body:         v.string(),
+    assets:       v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const ticket = await ctx.db.get(args.ticketId);
+    const ticket = await ctx.db
+      .query("tickets")
+      .withIndex("by_number", (q) => q.eq("ticketNumber", args.ticketNumber))
+      .first();
     if (!ticket) throw new Error("Ticket not found");
     if (ticket.status === "closed") throw new Error("Ticket is closed");
 
