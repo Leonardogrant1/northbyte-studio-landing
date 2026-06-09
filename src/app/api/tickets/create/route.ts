@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `App not found: ${appSlug}` }, { status: 400 });
     }
 
-    const { ticketId, ticketNumber } = await convex.mutation(api.tickets.mutations.create, {
+    const { ticketId, ticketNumber, messageId } = await convex.mutation(api.tickets.mutations.create, {
       appId:          app._id,
       externalUserId: userId,
       email,
@@ -50,9 +50,10 @@ export async function POST(request: NextRequest) {
           auth: { user: emailUser, pass: emailPass },
         });
         await transporter.sendMail({
-          from: emailUser,
-          to: "info@northbyte.studio",
-          subject: `${app.name} - Support [Ticket #${ticketNumber}]`,
+          from:      emailUser,
+          to:        "info@northbyte.studio",
+          messageId,
+          subject:   `${app.name} - Support [Ticket #${ticketNumber}]`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #333; border-bottom: 2px solid #4F46E5; padding-bottom: 10px;">

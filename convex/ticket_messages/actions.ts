@@ -24,6 +24,15 @@ export const sendWithNotification = action({
     });
     if (!ticket || !ticket.email) return;
 
+    // Backfill messageId for old tickets that don't have one yet
+    const messageId = ticket.messageId ?? `<ticket-${ticket.ticketNumber}@northbyte.studio>`;
+    if (!ticket.messageId) {
+      await ctx.runMutation(api.tickets.mutations.setMessageId, {
+        ticketId: args.ticketId,
+        messageId,
+      });
+    }
+
     // 3. Send notification email to the user who filed the ticket
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_PASS;
@@ -38,8 +47,13 @@ export const sendWithNotification = action({
       });
 
       await transporter.sendMail({
-        from: emailUser,
-        to:   ticket.email,
+        from:      emailUser,
+        to:        ticket.email,
+        messageId,
+        headers: {
+          "In-Reply-To": messageId,
+          "References":  messageId,
+        },
         subject: `${ticket.appName} - Support [Ticket #${ticket.ticketNumber}]`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

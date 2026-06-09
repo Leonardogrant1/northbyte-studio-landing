@@ -24,6 +24,7 @@ export const create = mutation({
       await ctx.db.patch(counter._id, { value: ticketNumber });
     }
 
+    const messageId = `<ticket-${ticketNumber}@northbyte.studio>`;
     const now = Date.now();
     const ticketId = await ctx.db.insert("tickets", {
       ticketNumber,
@@ -34,11 +35,20 @@ export const create = mutation({
       description:    args.description,
       status:         "open",
       waitingOn:      "support",
+      messageId,
       createdAt:      now,
       updatedAt:      now,
     });
 
-    return { ticketId, ticketNumber };
+    return { ticketId, ticketNumber, messageId };
+  },
+});
+
+// Internal — backfill messageId for old tickets that were created before email threading was added.
+export const setMessageId = mutation({
+  args: { ticketId: v.id("tickets"), messageId: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.ticketId, { messageId: args.messageId });
   },
 });
 
