@@ -23,7 +23,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Email (unchanged) ---
+    // --- Convex DB insert first (we need ticketNumber for the email subject) ---
+    const app = await convex.query(api.apps.queries.getBySlug, { slug: appSlug });
+    if (!app) {
+      return NextResponse.json({ error: `App not found: ${appSlug}` }, { status: 400 });
+    }
+
+    const { ticketId, ticketNumber } = await convex.mutation(api.tickets.mutations.create, {
+      appId:          app._id,
+      externalUserId: userId,
+      email,
+      title,
+      description,
+    });
+
+    // --- Email ---
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_PASS;
 
@@ -38,12 +52,16 @@ export async function POST(request: NextRequest) {
         await transporter.sendMail({
           from: emailUser,
           to: "info@northbyte.studio",
-          subject: `[Ticket] ${appSlug}: ${title}`,
+          subject: `${app.name} - Support [Ticket #${ticketNumber}]`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #333; border-bottom: 2px solid #4F46E5; padding-bottom: 10px;">
                 New Ticket Created
               </h2>
+              <div style="margin: 20px 0;">
+                <h4 style="color: #555; margin-bottom: 5px;">Ticket:</h4>
+                <p style="margin: 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">#${ticketNumber}</p>
+              </div>
               <div style="margin: 20px 0;">
                 <h4 style="color: #555; margin-bottom: 5px;">User ID:</h4>
                 <p style="margin: 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">${userId}</p>
@@ -54,7 +72,7 @@ export async function POST(request: NextRequest) {
               </div>
               <div style="margin: 20px 0;">
                 <h4 style="color: #555; margin-bottom: 5px;">App:</h4>
-                <p style="margin: 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">${appSlug}</p>
+                <p style="margin: 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">${app.name}</p>
               </div>
               <div style="margin: 20px 0;">
                 <h4 style="color: #555; margin-bottom: 5px;">Title:</h4>
@@ -72,24 +90,9 @@ export async function POST(request: NextRequest) {
         });
       } catch (emailErr) {
         console.error("Failed to send ticket email:", emailErr);
-        // Non-fatal — continue to DB insert
+        // Non-fatal — ticket already saved
       }
     }
-
-    // --- Convex DB insert ---
-    // Resolve appSlug → appId
-    const app = await convex.query(api.apps.queries.getBySlug, { slug: appSlug });
-    if (!app) {
-      return NextResponse.json({ error: `App not found: ${appSlug}` }, { status: 400 });
-    }
-
-    const { ticketId, ticketNumber } = await convex.mutation(api.tickets.mutations.create, {
-      appId:          app._id,
-      externalUserId: userId,
-      email,
-      title,
-      description,
-    });
 
     return NextResponse.json(
       { success: true, ticketId, ticketNumber },

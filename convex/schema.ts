@@ -75,11 +75,12 @@ export default defineSchema({
         affiliateCode: v.optional(v.string()),
         commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
         commissionAmount: v.optional(v.number()),
+        appIds: v.optional(v.array(v.id("apps"))),
     })
         .index("by_email", ["email"])
         .index("by_token", ["token"]),
 
-    support_assignments: defineTable({
+    user_app_assignments: defineTable({
         userId: v.id("users"),
         appId: v.id("apps"),
     })
@@ -294,10 +295,12 @@ export default defineSchema({
         .index("by_number", ["ticketNumber"]),
 
     ticket_messages: defineTable({
-        ticketId:  v.id("tickets"),
-        authorId:  v.id("users"),
-        body:      v.string(),
-        createdAt: v.number(),
+        ticketId:         v.id("tickets"),
+        authorId:         v.optional(v.id("users")),   // set for support/admin replies
+        externalAuthorId: v.optional(v.string()),       // set for app-user replies
+        body:             v.string(),
+        assets:           v.optional(v.array(v.string())),
+        createdAt:        v.number(),
     })
         .index("by_ticket", ["ticketId"]),
 });

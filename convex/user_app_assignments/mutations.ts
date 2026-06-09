@@ -1,7 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 
-// Admin-only — assign an app to a support user (idempotent).
+// Admin-only — assign an app to a user (idempotent).
 export const assign = mutation({
   args: {
     userId: v.id("users"),
@@ -19,20 +19,20 @@ export const assign = mutation({
 
     // Idempotent: skip if already assigned
     const existing = await ctx.db
-      .query("support_assignments")
+      .query("user_app_assignments")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .filter((q) => q.eq(q.field("appId"), args.appId))
       .first();
     if (existing) return existing._id;
 
-    return await ctx.db.insert("support_assignments", {
+    return await ctx.db.insert("user_app_assignments", {
       userId: args.userId,
       appId: args.appId,
     });
   },
 });
 
-// Admin-only — remove an app assignment from a support user (idempotent).
+// Admin-only — remove an app assignment from a user (idempotent).
 export const unassign = mutation({
   args: {
     userId: v.id("users"),
@@ -49,7 +49,7 @@ export const unassign = mutation({
     if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
 
     const existing = await ctx.db
-      .query("support_assignments")
+      .query("user_app_assignments")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .filter((q) => q.eq(q.field("appId"), args.appId))
       .first();

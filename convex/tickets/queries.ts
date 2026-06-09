@@ -23,7 +23,7 @@ export const getForSupportUser = query({
       tickets = await ctx.db.query("tickets").order("desc").collect();
     } else {
       const assignments = await ctx.db
-        .query("support_assignments")
+        .query("user_app_assignments")
         .withIndex("by_user", (q) => q.eq("userId", caller._id))
         .collect();
       const assignedAppIds = new Set(assignments.map((a) => a.appId));

@@ -14,6 +14,7 @@ export const createAndSend = action({
     affiliateCode: v.optional(v.string()),
     commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
     commissionAmount: v.optional(v.number()),
+    appIds: v.optional(v.array(v.id("apps"))),
   },
   handler: async (ctx, args): Promise<{ inviteId: Id<"user_invites">; emailSent: boolean }> => {
     const token = randomUUID();
@@ -26,6 +27,7 @@ export const createAndSend = action({
       affiliateCode: args.affiliateCode,
       commissionType: args.commissionType,
       commissionAmount: args.commissionAmount,
+      appIds: args.appIds,
     })) as Id<"user_invites">;
 
     const emailUser = process.env.EMAIL_USER;

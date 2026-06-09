@@ -96,6 +96,15 @@ export const createUserFromInvite = mutation({
       });
     }
 
+    // If support, create app assignments from the invite
+    if (invite.role === "support" && invite.appIds && invite.appIds.length > 0) {
+      await Promise.all(
+        invite.appIds.map((appId) =>
+          ctx.db.insert("user_app_assignments", { userId, appId })
+        )
+      );
+    }
+
     return userId;
   },
 });

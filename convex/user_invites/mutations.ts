@@ -10,6 +10,7 @@ export const create = mutation({
     affiliateCode: v.optional(v.string()),
     commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
     commissionAmount: v.optional(v.number()),
+    appIds: v.optional(v.array(v.id("apps"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -57,6 +58,7 @@ export const create = mutation({
       affiliateCode: args.affiliateCode,
       commissionType: args.commissionType,
       commissionAmount: args.commissionAmount,
+      appIds: args.appIds,
     });
   },
 });

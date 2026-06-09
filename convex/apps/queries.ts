@@ -9,6 +9,34 @@ export const getAll = query({
     },
 });
 
+// Returns apps the current user can access.
+// Admins see all apps; support users see only their assigned apps.
+export const getAccessibleApps = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+
+        const caller = await ctx.db
+            .query("users")
+            .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+            .first();
+        if (!caller) throw new Error("Unauthenticated");
+
+        if (caller.type === "admin") {
+            return await ctx.db.query("apps").collect();
+        }
+
+        const assignments = await ctx.db
+            .query("user_app_assignments")
+            .withIndex("by_user", (q) => q.eq("userId", caller._id))
+            .collect();
+
+        const apps = await Promise.all(assignments.map((a) => ctx.db.get(a.appId)));
+        return apps.filter((a): a is NonNullable<typeof a> => a !== null);
+    },
+});
+
 // Get all apps with thumbnail URLs for public display
 // Only shows apps with status "live" or "coming soon"
 export const getAllForPublic = query({

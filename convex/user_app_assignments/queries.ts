@@ -1,7 +1,7 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 
-// Returns all app documents assigned to a support user.
+// Returns all app documents assigned to a user.
 export const getAppsForUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -16,7 +16,7 @@ export const getAppsForUser = query({
     if (caller.type !== "admin" && caller._id !== args.userId) throw new Error("Unauthorized");
 
     const assignments = await ctx.db
-      .query("support_assignments")
+      .query("user_app_assignments")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
@@ -41,7 +41,7 @@ export const getUsersForApp = query({
     if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
 
     const assignments = await ctx.db
-      .query("support_assignments")
+      .query("user_app_assignments")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
       .collect();
 

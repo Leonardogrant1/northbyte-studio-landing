@@ -19,7 +19,10 @@ export const getForTicket = query({
 
     return Promise.all(
       messages.map(async (m) => {
-        const author = await ctx.db.get(m.authorId);
+        if (m.externalAuthorId) {
+          return { ...m, authorName: "User" };
+        }
+        const author = m.authorId ? await ctx.db.get(m.authorId) : null;
         const authorName = [author?.name, author?.lastName].filter(Boolean).join(" ") || author?.email || "Support";
         return { ...m, authorName };
       })

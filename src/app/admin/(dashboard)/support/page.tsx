@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type FilterTab = "all" | "waiting_support" | "waiting_user" | "closed";
@@ -16,14 +17,26 @@ const TABS: { key: FilterTab; label: string }[] = [
     { key: "closed",          label: "Geschlossen" },
 ];
 
-export default function SupportPage() {
+function SupportContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const selectedAppId = searchParams.get("app") as Id<"apps"> | null;
+
     const currentUser = useCurrentUser();
     const isAllowed = currentUser?.type === "admin" || currentUser?.type === "support";
     const tickets = useQuery(api.tickets.queries.getForSupportUser, isAllowed ? {} : "skip");
-    const router = useRouter();
+    const apps = useQuery(api.apps.queries.getAccessibleApps, isAllowed ? {} : "skip");
+
     const [activeTab, setActiveTab] = useState<FilterTab>("all");
 
+    // Open ticket count per app, derived from already-fetched tickets
+    const openCountByApp = (tickets ?? []).reduce<Record<string, number>>((acc, t) => {
+        if (t.status === "open") acc[t.appId] = (acc[t.appId] ?? 0) + 1;
+        return acc;
+    }, {});
+
     const filtered = (tickets ?? []).filter((t) => {
+        if (selectedAppId && t.appId !== selectedAppId) return false;
         if (activeTab === "waiting_support") return t.status === "open" && t.waitingOn === "support";
         if (activeTab === "waiting_user")    return t.status === "open" && t.waitingOn === "user";
         if (activeTab === "closed")          return t.status === "closed";
@@ -39,6 +52,40 @@ export default function SupportPage() {
                 <h1 className="text-3xl font-bold mb-1">Support</h1>
                 <p className="text-secondary">Ticket-Anfragen verwalten.</p>
             </div>
+
+            {/* App selector */}
+            {apps && apps.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                    {apps.map((app) => (
+                        <button
+                            key={app._id}
+                            onClick={() =>
+                                router.push(
+                                    selectedAppId === app._id
+                                        ? "/admin/support"
+                                        : `/admin/support?app=${app._id}`
+                                )
+                            }
+                            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                                selectedAppId === app._id
+                                    ? "bg-accent/10 border-accent text-accent"
+                                    : "border-border text-secondary hover:border-accent/50 hover:text-primary"
+                            }`}
+                        >
+                            {app.name}
+                            {(openCountByApp[app._id] ?? 0) > 0 && (
+                                <span className={`ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                                    selectedAppId === app._id
+                                        ? "bg-accent/20 text-accent"
+                                        : "bg-orange-500/20 text-orange-400"
+                                }`}>
+                                    {openCountByApp[app._id]}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* Filter Tabs */}
             <div className="flex gap-1 border-b border-border">
@@ -108,5 +155,13 @@ export default function SupportPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function SupportPage() {
+    return (
+        <Suspense fallback={<div className="text-secondary text-sm">Wird geladen…</div>}>
+            <SupportContent />
+        </Suspense>
     );
 }

@@ -25,7 +25,7 @@ export async function getCallerAndTicket(
   if (caller.type !== "support") throw new Error("Unauthorized");
 
   const assignment = await db
-    .query("support_assignments")
+    .query("user_app_assignments")
     .withIndex("by_user", (q) => q.eq("userId", caller._id))
     .filter((q) => q.eq(q.field("appId"), ticket.appId))
     .first();

@@ -157,7 +157,7 @@ interface SupportUserRowProps {
 }
 
 function SupportUserRow({ userId, email, onManage }: SupportUserRowProps) {
-    const assignedApps = useQuery(api.support_assignments.queries.getAppsForUser, { userId });
+    const assignedApps = useQuery(api.user_app_assignments.queries.getAppsForUser, { userId });
 
     return (
         <tr className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
@@ -200,9 +200,9 @@ interface SupportAppsModalProps {
 
 function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
     const allApps = useQuery(api.apps.queries.getAll);
-    const assignedApps = useQuery(api.support_assignments.queries.getAppsForUser, { userId });
-    const assignMutation = useMutation(api.support_assignments.mutations.assign);
-    const unassignMutation = useMutation(api.support_assignments.mutations.unassign);
+    const assignedApps = useQuery(api.user_app_assignments.queries.getAppsForUser, { userId });
+    const assignMutation = useMutation(api.user_app_assignments.mutations.assign);
+    const unassignMutation = useMutation(api.user_app_assignments.mutations.unassign);
 
     const [saving, setSaving] = useState(false);
     // Local selection state: null means "not yet initialised from server"
@@ -323,11 +323,14 @@ export default function UsersPage() {
     const createAndSend = useAction(api.user_invites.actions.createAndSend);
     const removeInvite = useMutation(api.user_invites.mutations.remove);
 
+    const allApps = useQuery(api.apps.queries.getAll, isAdmin ? {} : "skip");
+
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState<"admin" | "creator" | "affiliate" | "support">("creator");
     const [inviteAffiliateCode, setInviteAffiliateCode] = useState("");
     const [inviteCommissionType, setInviteCommissionType] = useState<CommissionType>("percentage");
     const [inviteCommissionAmount, setInviteCommissionAmount] = useState("10");
+    const [inviteAppIds, setInviteAppIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
 
     const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
@@ -343,11 +346,15 @@ export default function UsersPage() {
                 affiliateCode: inviteRole === "affiliate" ? inviteAffiliateCode : undefined,
                 commissionType: inviteRole === "affiliate" ? inviteCommissionType : undefined,
                 commissionAmount: inviteRole === "affiliate" ? parseFloat(inviteCommissionAmount) : undefined,
+                appIds: inviteRole === "support" && inviteAppIds.size > 0
+                    ? ([...inviteAppIds] as Id<"apps">[])
+                    : undefined,
             });
             setInviteEmail("");
             setInviteAffiliateCode("");
             setInviteCommissionAmount("10");
             setInviteCommissionType("percentage");
+            setInviteAppIds(new Set());
             if (result.emailSent) {
                 toast.success(`Einladung an ${inviteEmail} gesendet.`);
             } else {
@@ -403,6 +410,7 @@ export default function UsersPage() {
                                 setInviteAffiliateCode("");
                                 setInviteCommissionAmount("10");
                                 setInviteCommissionType("percentage");
+                                setInviteAppIds(new Set());
                             }}
                             disabled={loading}
                             className="bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
@@ -420,6 +428,47 @@ export default function UsersPage() {
                             {loading ? "Wird eingeladen…" : "Einladen"}
                         </button>
                     </div>
+
+                    {inviteRole === "support" && (
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium text-secondary">App-Zugriff</p>
+                            {!allApps ? (
+                                <div className="flex items-center gap-2 text-secondary text-xs">
+                                    <Loader2 size={12} className="animate-spin" /> Wird geladen…
+                                </div>
+                            ) : allApps.length === 0 ? (
+                                <p className="text-secondary text-xs">Keine Apps vorhanden.</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {allApps.map((app) => {
+                                        const selected = inviteAppIds.has(app._id);
+                                        return (
+                                            <button
+                                                key={app._id}
+                                                type="button"
+                                                disabled={loading}
+                                                onClick={() =>
+                                                    setInviteAppIds((prev) => {
+                                                        const next = new Set(prev);
+                                                        if (next.has(app._id)) next.delete(app._id);
+                                                        else next.add(app._id);
+                                                        return next;
+                                                    })
+                                                }
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all disabled:opacity-50 ${
+                                                    selected
+                                                        ? "bg-accent/10 border-accent text-accent"
+                                                        : "border-border text-secondary hover:border-accent/50 hover:text-primary"
+                                                }`}
+                                            >
+                                                {app.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {inviteRole === "affiliate" && (
                         <div className="flex flex-col sm:flex-row gap-3">
@@ -483,6 +532,7 @@ export default function UsersPage() {
                                         affiliateCode?: string;
                                         commissionType?: CommissionType;
                                         commissionAmount?: number;
+                                        appIds?: Id<"apps">[];
                                         createdAt: number;
                                     }) => (
                                         <tr key={invite._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
@@ -508,6 +558,18 @@ export default function UsersPage() {
                                                             ? `${invite.commissionAmount}%`
                                                             : `$${invite.commissionAmount}`}
                                                     </span>
+                                                )}
+                                                {invite.role === "support" && invite.appIds && invite.appIds.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {invite.appIds.map((appId) => {
+                                                            const app = allApps?.find((a) => a._id === appId);
+                                                            return app ? (
+                                                                <span key={appId} className="text-xs px-1.5 py-0.5 rounded-md bg-green-500/10 text-green-400">
+                                                                    {app.name}
+                                                                </span>
+                                                            ) : null;
+                                                        })}
+                                                    </div>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 text-secondary">{formatDate(invite.createdAt)}</td>

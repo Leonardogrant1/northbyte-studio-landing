@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { Loader2, ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
@@ -21,7 +21,7 @@ export default function TicketDetailPage() {
     const messages = useQuery(api.ticket_messages.queries.getForTicket, isAllowed ? { ticketId } : "skip");
     const closeMutation  = useMutation(api.tickets.mutations.close);
     const reopenMutation = useMutation(api.tickets.mutations.reopen);
-    const sendMutation   = useMutation(api.ticket_messages.mutations.send);
+    const sendAction     = useAction(api.ticket_messages.actions.sendWithNotification);
 
     const [body, setBody] = useState("");
     const [sending, setSending] = useState(false);
@@ -38,7 +38,7 @@ export default function TicketDetailPage() {
         if (!body.trim()) return;
         setSending(true);
         try {
-            await sendMutation({ ticketId, body: body.trim() });
+            await sendAction({ ticketId, body: body.trim() });
             setBody("");
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "Fehler beim Senden.");
