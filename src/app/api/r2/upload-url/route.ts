@@ -18,13 +18,9 @@ const VALID_BUCKETS = new Set<string>(Object.values(R2_BUCKETS));
 export async function POST(request: NextRequest) {
   const clerkUserId = await getAuthenticatedUserId();
   if (!clerkUserId) {
-    console.log("No clerk user id")
     const apiKey = request.headers.get("Authorization")?.replace("Bearer ", "");
-    console.log("API KEY", apiKey)
-    console.log("NORTHBYTE_API_KEY", process.env.NORTHBYTE_API_KEY)
 
     if (!apiKey || apiKey !== process.env.NORTHBYTE_API_KEY) {
-      console.log("Unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
@@ -63,7 +59,9 @@ export async function POST(request: NextRequest) {
     console.log("File type:", fileType);
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const key = customKey ?? `${randomUUID()}_${safeName}`;
-
+    console.log("Key:", key);
+    console.log("Custom key:", customKey);
+    console.log("Safe name:", safeName);
     const uploadUrl = await generatePresignedUploadUrl(r2Bucket, key, 600, fileType);
     const downloadUrl = getPublicUrl(r2Bucket, key);
 
