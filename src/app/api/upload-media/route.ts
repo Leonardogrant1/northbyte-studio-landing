@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { generatePresignedUploadUrl, getPublicUrl } from "@/lib/r2";
+import { generatePresignedUploadUrl, getPublicUrl, R2_BUCKETS } from "@/lib/r2";
 
 const ACCEPTED_TYPES = [
     "video/mp4",
@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
         const ext = fileName.split(".").pop() || (isVideo ? "mp4" : "jpg");
         const key = `${folder}/${randomUUID()}.${ext}`;
 
-        const uploadUrl = await generatePresignedUploadUrl(key, 600);
-        const fileUrl = getPublicUrl(key);
+        const uploadUrl = await generatePresignedUploadUrl(R2_BUCKETS.n8n, key, 600);
+        const fileUrl = getPublicUrl(R2_BUCKETS.n8n, key);
 
         return NextResponse.json({ uploadUrl, key, fileUrl }, { status: 200 });
     } catch (error) {

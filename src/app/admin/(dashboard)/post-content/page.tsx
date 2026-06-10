@@ -8,6 +8,7 @@ import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { Calendar, Loader2, X } from "lucide-react";
 import { normalizeVideoFile } from "@/lib/video";
 import { toast } from "sonner";
+import { R2_BUCKETS } from "@/lib/r2";
 
 const inputClass = "w-full rounded-xl bg-surface2 border border-border px-4 py-3 text-primary text-sm outline-none focus:border-accent transition-colors";
 
@@ -55,10 +56,10 @@ export default function PostContentPage() {
             const uploadFile = await normalizeVideoFile(videoFile);
 
             // 2. Get presigned URL
-            const presignedRes = await fetch("/api/r2/presigned-url", {
+            const presignedRes = await fetch("/api/r2/upload-url", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fileName: uploadFile.name, fileType: uploadFile.type }),
+                body: JSON.stringify({ bucket: R2_BUCKETS.n8n, fileName: uploadFile.name, fileType: uploadFile.type }),
             });
             if (!presignedRes.ok) throw new Error("Presigned URL konnte nicht abgerufen werden.");
             const { uploadUrl, downloadUrl } = await presignedRes.json();
@@ -128,11 +129,10 @@ export default function PostContentPage() {
                                 <button
                                     key={acc._id}
                                     onClick={() => selectAccount(acc._id)}
-                                    className={`px-4 py-1.5 rounded-full border text-sm transition-all capitalize ${
-                                        selected
+                                    className={`px-4 py-1.5 rounded-full border text-sm transition-all capitalize ${selected
                                             ? "bg-accent border-accent text-background font-medium"
                                             : "bg-surface2 border-border text-secondary hover:border-accent/50"
-                                    }`}
+                                        }`}
                                 >
                                     {acc.platform}: @{acc.username}
                                 </button>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
-import { r2Client, R2_BUCKET_NAME, getPublicUrl } from "@/lib/r2";
+import { r2Client, getPublicUrl, R2_BUCKETS } from "@/lib/r2";
 
 export async function POST(request: NextRequest) {
     try {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         try {
             await r2Client.send(
                 new HeadObjectCommand({
-                    Bucket: R2_BUCKET_NAME,
+                    Bucket: R2_BUCKETS.n8n,
                     Key: key,
                 })
             );
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the public download URL
-        const downloadUrl = getPublicUrl(key);
+        const downloadUrl = getPublicUrl(R2_BUCKETS.n8n, key);
 
         return NextResponse.json(
             {

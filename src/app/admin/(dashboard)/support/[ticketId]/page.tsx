@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useAction } from "convex/react";
-import { Loader2, ArrowLeft, Send } from "lucide-react";
+import { Loader2, ArrowLeft, Send, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -186,6 +186,25 @@ export default function TicketDetailPage() {
                                 <p className="text-sm text-primary bg-surface2/50 rounded-xl px-3 py-2 whitespace-pre-wrap">
                                     {msg.body}
                                 </p>
+                                {msg.assets && msg.assets.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                        {msg.assets.map((asset) => {
+                                            const fileName = asset.split("/").pop() ?? asset;
+                                            const href = `/api/tickets/asset?key=${encodeURIComponent(asset)}`;
+                                            return (
+                                                <a
+                                                    key={asset}
+                                                    href={href}
+                                                    download
+                                                    className="flex items-center gap-1.5 text-xs text-accent hover:underline bg-surface2/50 border border-border rounded-lg px-2.5 py-1.5 transition-colors hover:border-accent/50"
+                                                >
+                                                    <Paperclip size={11} />
+                                                    {fileName}
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}

@@ -8,6 +8,7 @@ import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { ContentDropdown } from "@/components/admin/ContentDropdown";
 import { VideoPlayer } from "@/components/admin/VideoPlayer";
 import { Content } from "@/types";
+import { R2_BUCKETS } from "@/lib/r2";
 
 
 export default function ApproveVideosPage() {
@@ -36,12 +37,13 @@ export default function ApproveVideosPage() {
             setUploadProgress(0);
 
             // Step 1: Request presigned URL from backend
-            const presignedResponse = await fetch("/api/r2/presigned-url", {
+            const presignedResponse = await fetch("/api/r2/upload-url", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                    bucket: R2_BUCKETS.n8n,
                     fileName: file.name,
                     fileType: file.type,
                 }),

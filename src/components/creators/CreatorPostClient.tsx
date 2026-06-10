@@ -5,6 +5,7 @@ import { Creator, SocialMediaAccount } from "@/types";
 import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { Loader2, Plus, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { R2_BUCKETS } from "@/lib/r2";
 
 export default function CreatorPostClient({ creatorId }: { creatorId: string }) {
     const [creator, setCreator] = useState<Creator | null>(null);
@@ -93,12 +94,13 @@ export default function CreatorPostClient({ creatorId }: { creatorId: string }) 
 
         try {
             // 1. Upload Video via Presigned URL (avoids Next.js 4MB/10MB limits)
-            const presignedRes = await fetch("/api/r2/presigned-url", {
+            const presignedRes = await fetch("/api/r2/upload-url", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                    bucket: R2_BUCKETS.n8n,
                     fileName: videoFile.name,
                     fileType: videoFile.type,
                 }),

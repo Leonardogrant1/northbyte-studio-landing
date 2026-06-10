@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Validate required environment variables
@@ -6,9 +6,15 @@ const requiredEnvVars = [
     "R2_ACCOUNT_ID",
     "R2_ACCESS_KEY_ID",
     "R2_SECRET_ACCESS_KEY",
-    "R2_BUCKET_NAME",
     "R2_PUBLIC_URL",
 ] as const;
+
+
+export enum R2_BUCKETS {
+    n8n = "n8n-media",
+    support = "support-media",
+}
+
 
 for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
@@ -26,8 +32,10 @@ export const r2Client = new S3Client({
     },
 });
 
-export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
-export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL!;
+export const R2_PUBLIC_URLS = {
+    [R2_BUCKETS.n8n]: process.env.R2_N8N_PUBLIC_URL!,
+    [R2_BUCKETS.support]: process.env.R2_SUPPORT_PUBLIC_URL!,
+};
 
 /**
  * Generate a presigned URL for uploading a file to R2
@@ -39,12 +47,13 @@ export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL!;
  * @returns Presigned URL for PUT request
  */
 export async function generatePresignedUploadUrl(
+    bucket: R2_BUCKETS,
     key: string,
     expiresIn: number = 600,
     contentType?: string
 ): Promise<string> {
     const command = new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
+        Bucket: bucket,
         Key: key,
         ...(contentType && { ContentType: contentType }),
     });
@@ -54,12 +63,36 @@ export async function generatePresignedUploadUrl(
 }
 
 /**
+ * Generate a presigned URL for downloading a file from R2
+ * @param bucket - The R2 bucket
+ * @param key - The object key (path) in the bucket
+ * @param expiresIn - URL expiration time in seconds (default: 300 = 5 minutes)
+ * @param fileName - If provided, sets Content-Disposition to force download with this name
+ */
+export async function generatePresignedDownloadUrl(
+    bucket: R2_BUCKETS,
+    key: string,
+    expiresIn: number = 300,
+    fileName?: string
+): Promise<string> {
+    const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        ...(fileName && { ResponseContentDisposition: `attachment; filename="${fileName}"` }),
+    });
+
+    return getSignedUrl(r2Client, command, { expiresIn });
+}
+
+/**
  * Delete a file from R2
  * @param key - The object key (path) in the bucket
  */
-export async function deleteR2Object(key: string): Promise<void> {
+export async function deleteR2Object(
+    bucket: R2_BUCKETS,
+    key: string): Promise<void> {
     const command = new DeleteObjectCommand({
-        Bucket: R2_BUCKET_NAME,
+        Bucket: bucket,
         Key: key,
     });
     await r2Client.send(command);
@@ -70,9 +103,9 @@ export async function deleteR2Object(key: string): Promise<void> {
  * @param key - The object key (path) in the bucket
  * @returns Public download URL
  */
-export function getPublicUrl(key: string): string {
+export function getPublicUrl(bucket: R2_BUCKETS, key: string): string {
     // Ensure R2_PUBLIC_URL doesn't end with a slash and key doesn't start with one
-    const baseUrl = R2_PUBLIC_URL.replace(/\/$/, "");
+    const baseUrl = R2_PUBLIC_URLS[bucket].replace(/\/$/, "");
     const cleanKey = key.replace(/^\//, "");
-    return `${baseUrl}/${cleanKey}`;
+    return `${baseUrl}/${bucket}/${cleanKey}`;
 }

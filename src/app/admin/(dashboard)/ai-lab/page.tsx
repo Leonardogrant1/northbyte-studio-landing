@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import type { AspectRatio, ImageSize } from "@/lib/nanobana";
 import type { KlingTaskStatus, KlingModelName, KlingMode } from "@/lib/kling";
+import { R2_BUCKETS } from "@/lib/r2";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -422,10 +423,10 @@ function MotionControlForm({
         onChange({ mcVideoUploading: true, mcVideoProgress: 0, mcVideoName: file.name, mcVideoUrl: null });
 
         try {
-            const presignRes = await fetch("/api/r2/presigned-url", {
+            const presignRes = await fetch("/api/r2/upload-url", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+                body: JSON.stringify({ bucket: R2_BUCKETS.n8n, fileName: file.name, fileType: file.type }),
             });
             if (!presignRes.ok) throw new Error("Fehler beim Generieren der Upload-URL.");
             const { uploadUrl, downloadUrl } = await presignRes.json();

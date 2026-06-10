@@ -80,10 +80,11 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                 // Normalize video (patches QuickTime "qt  " brand → "isom" for Postiz compatibility)
                 const uploadFile = await normalizeVideoFile(videoFile);
 
-                const presignedRes = await fetch("/api/r2/presigned-url", {
+                const presignedRes = await fetch("/api/r2/upload-url", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        bucket: "n8n-media",
                         fileName: uploadFile.name,
                         fileType: uploadFile.type,
                     }),
