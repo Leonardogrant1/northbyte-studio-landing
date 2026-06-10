@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteR2Object } from "@/lib/r2";
+import { deleteR2Object, R2_BUCKETS } from "@/lib/r2";
 
 export async function DELETE(request: NextRequest) {
     try {
@@ -14,7 +14,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: "Invalid key" }, { status: 400 });
         }
 
-        await deleteR2Object(key);
+        await deleteR2Object(R2_BUCKETS.n8n, key);
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         console.error("Error deleting R2 object:", error);
