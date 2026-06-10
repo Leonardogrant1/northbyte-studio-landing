@@ -288,6 +288,7 @@ export default defineSchema({
         status:         v.union(v.literal("open"), v.literal("closed")),
         waitingOn:      v.union(v.literal("support"), v.literal("user")),
         messageId:      v.optional(v.string()),
+        assets:         v.optional(v.array(v.string())),
         createdAt:      v.number(),
         updatedAt:      v.number(),
     })

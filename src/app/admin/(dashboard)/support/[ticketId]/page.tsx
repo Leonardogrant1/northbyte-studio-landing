@@ -207,6 +207,11 @@ export default function TicketDetailPage() {
                 <div className="pt-2 border-t border-border">
                     <p className="text-xs text-secondary mb-1">Beschreibung</p>
                     <p className="text-sm text-primary whitespace-pre-wrap">{ticket.description}</p>
+                    {ticket.assets && ticket.assets.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-border/50">
+                            {ticket.assets.map(renderAsset)}
+                        </div>
+                    )}
                 </div>
             </div>
 

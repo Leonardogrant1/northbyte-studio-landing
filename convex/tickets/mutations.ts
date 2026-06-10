@@ -11,6 +11,7 @@ export const create = mutation({
     email:          v.optional(v.string()),
     title:          v.string(),
     description:    v.string(),
+    assets:         v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     // Atomic counter increment
@@ -36,6 +37,7 @@ export const create = mutation({
       status:         "open",
       waitingOn:      "support",
       messageId,
+      assets:         args.assets,
       createdAt:      now,
       updatedAt:      now,
     });
@@ -71,5 +73,29 @@ export const reopen = mutation({
     if (!identity) throw new Error("Unauthenticated");
     const { ticket } = await getCallerAndTicket(ctx.db, identity.subject, args.ticketId);
     await ctx.db.patch(ticket._id, { status: "open", waitingOn: "support", updatedAt: Date.now() });
+  },
+});
+
+// Public-facing or admin — append assets to a ticket.
+export const addAssets = mutation({
+  args: {
+    ticketNumber: v.number(),
+    assets:       v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const ticket = await ctx.db
+      .query("tickets")
+      .withIndex("by_number", (q) => q.eq("ticketNumber", args.ticketNumber))
+      .first();
+    if (!ticket) throw new Error("Ticket not found");
+    if (ticket.status === "closed") throw new Error("Ticket is closed");
+
+    const currentAssets = ticket.assets ?? [];
+    const newAssets = Array.from(new Set([...currentAssets, ...args.assets]));
+
+    await ctx.db.patch(ticket._id, {
+      assets: newAssets,
+      updatedAt: Date.now(),
+    });
   },
 });

@@ -8,12 +8,13 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, appSlug, title, description, email } = body as {
+    const { userId, appSlug, title, description, email, assets } = body as {
       userId:      string;
       appSlug:     string;
       title:       string;
       description: string;
       email?:      string;
+      assets?:     string[];
     };
 
     if (!userId || !appSlug || !title || !description) {
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
       email,
       title,
       description,
+      assets,
     });
 
     // --- Email ---
