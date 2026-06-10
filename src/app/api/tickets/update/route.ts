@@ -12,9 +12,6 @@ export async function POST(request: NextRequest) {
       assets?: string[];
     };
 
-    console.log("Ticket number:", ticketNumber);
-    console.log("Assets:", assets);
-
     if (!ticketNumber || !assets || !Array.isArray(assets)) {
       return NextResponse.json(
         { error: "Missing or invalid required fields: ticketNumber, assets (array)" },

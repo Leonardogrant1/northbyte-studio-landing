@@ -54,16 +54,9 @@ export async function POST(request: NextRequest) {
     }
 
     const r2Bucket = bucket as R2_BUCKETS;
-    console.log("Bucket:", r2Bucket);
-    console.log("File name:", fileName);
-    console.log("File type:", fileType);
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const key = customKey ?? `${randomUUID()}_${safeName}`;
-    console.log("Key:", key);
-    console.log("Custom key:", customKey);
-    console.log("Safe name:", safeName);
     const uploadUrl = await generatePresignedUploadUrl(r2Bucket, key, 600, fileType);
-    console.log("Upload URL:", uploadUrl);
     const downloadUrl = getPublicUrl(r2Bucket, key);
 
     return NextResponse.json({ uploadUrl, key, downloadUrl }, { status: 200 });
