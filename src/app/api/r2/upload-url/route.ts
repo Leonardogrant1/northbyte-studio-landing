@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     console.log("Custom key:", customKey);
     console.log("Safe name:", safeName);
     const uploadUrl = await generatePresignedUploadUrl(r2Bucket, key, 600, fileType);
+    console.log("Upload URL:", uploadUrl);
     const downloadUrl = getPublicUrl(r2Bucket, key);
 
     return NextResponse.json({ uploadUrl, key, downloadUrl }, { status: 200 });
