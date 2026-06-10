@@ -11,18 +11,21 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const key = request.nextUrl.searchParams.get("key");
+  const { searchParams } = request.nextUrl;
+  const key    = searchParams.get("key");
+  const inline = searchParams.get("inline") === "true";
+
   if (!key) {
     return NextResponse.json({ error: "key is required" }, { status: 400 });
   }
 
   try {
-    const fileName = key.split("/").pop();
+    const fileName   = key.split("/").pop();
     const downloadUrl = await generatePresignedDownloadUrl(
       R2_BUCKETS.support,
       key,
       300,
-      fileName
+      inline ? undefined : fileName
     );
 
     return NextResponse.redirect(downloadUrl);

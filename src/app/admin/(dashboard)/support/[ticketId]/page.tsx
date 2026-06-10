@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useAction } from "convex/react";
-import { Loader2, ArrowLeft, Send, Paperclip } from "lucide-react";
+import { Loader2, ArrowLeft, Send, Download } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -69,6 +69,50 @@ export default function TicketDetailPage() {
         } finally {
             setClosing(false);
         }
+    };
+
+    const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
+    const VIDEO_EXTS = new Set(["mp4", "mov", "webm"]);
+
+    const assetUrl = (key: string, inline = false) =>
+        `/api/tickets/asset?key=${encodeURIComponent(key)}${inline ? "&inline=true" : ""}`;
+
+    const renderAsset = (asset: string) => {
+        const ext = (asset.split(".").pop() ?? "").toLowerCase();
+        if (IMAGE_EXTS.has(ext)) {
+            return (
+                <a key={asset} href={assetUrl(asset, true)} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={assetUrl(asset, true)}
+                        alt={asset.split("/").pop()}
+                        className="max-h-48 max-w-xs rounded-xl border border-border object-cover hover:opacity-90 transition-opacity"
+                    />
+                </a>
+            );
+        }
+        if (VIDEO_EXTS.has(ext)) {
+            return (
+                <video
+                    key={asset}
+                    src={assetUrl(asset, true)}
+                    controls
+                    className="max-h-48 max-w-xs rounded-xl border border-border"
+                />
+            );
+        }
+        const fileName = asset.split("/").pop() ?? asset;
+        return (
+            <a
+                key={asset}
+                href={assetUrl(asset)}
+                download
+                className="flex items-center gap-1.5 text-xs text-accent hover:underline bg-surface2/50 border border-border rounded-lg px-2.5 py-1.5 transition-colors hover:border-accent/50"
+            >
+                <Download size={11} />
+                {fileName}
+            </a>
+        );
     };
 
     const formatTime = (ts: number) =>
@@ -188,21 +232,7 @@ export default function TicketDetailPage() {
                                 </p>
                                 {msg.assets && msg.assets.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-1">
-                                        {msg.assets.map((asset) => {
-                                            const fileName = asset.split("/").pop() ?? asset;
-                                            const href = `/api/tickets/asset?key=${encodeURIComponent(asset)}`;
-                                            return (
-                                                <a
-                                                    key={asset}
-                                                    href={href}
-                                                    download
-                                                    className="flex items-center gap-1.5 text-xs text-accent hover:underline bg-surface2/50 border border-border rounded-lg px-2.5 py-1.5 transition-colors hover:border-accent/50"
-                                                >
-                                                    <Paperclip size={11} />
-                                                    {fileName}
-                                                </a>
-                                            );
-                                        })}
+                                        {msg.assets.map(renderAsset)}
                                     </div>
                                 )}
                             </div>
