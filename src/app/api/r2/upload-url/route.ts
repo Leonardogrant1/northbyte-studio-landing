@@ -58,6 +58,9 @@ export async function POST(request: NextRequest) {
     }
 
     const r2Bucket = bucket as R2_BUCKETS;
+    console.log("Bucket:", r2Bucket);
+    console.log("File name:", fileName);
+    console.log("File type:", fileType);
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const key = customKey ?? `${randomUUID()}_${safeName}`;
 
