@@ -18,8 +18,13 @@ const VALID_BUCKETS = new Set<string>(Object.values(R2_BUCKETS));
 export async function POST(request: NextRequest) {
   const clerkUserId = await getAuthenticatedUserId();
   if (!clerkUserId) {
+    console.log("No clerk user id")
     const apiKey = request.headers.get("Authorization")?.replace("Bearer ", "");
+    console.log("API KEY", apiKey)
+    console.log("NORTHBYTE_API_KEY", process.env.NORTHBYTE_API_KEY)
+
     if (!apiKey || apiKey !== process.env.NORTHBYTE_API_KEY) {
+      console.log("Unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
