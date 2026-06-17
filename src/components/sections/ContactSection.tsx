@@ -2,7 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { apps } from "@/lib/apps";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 
 function ContactFormContent() {
@@ -11,6 +12,8 @@ function ContactFormContent() {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>("");
+
+    const apps = useQuery(api.apps.queries.getByStatus, { status: "live" }) || [];
 
     useEffect(() => {
         const slug = searchParams.get("app");
