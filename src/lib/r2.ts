@@ -2,21 +2,6 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } fro
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { R2_BUCKETS } from "./r2-constants";
 
-// Validate required environment variables
-const requiredEnvVars = [
-    "R2_ACCOUNT_ID",
-    "R2_ACCESS_KEY_ID",
-    "R2_SECRET_ACCESS_KEY"
-] as const;
-
-
-for (const envVar of requiredEnvVars) {
-    console.log(envVar, "=", process.env[envVar])
-    if (!process.env[envVar]) {
-        throw new Error(`Missing required environment variable: ${envVar}`);
-    }
-}
-
 // Initialize R2 client (S3-compatible)
 export const r2Client = new S3Client({
     region: "auto",
