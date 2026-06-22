@@ -16,6 +16,7 @@ export enum R2_BUCKETS {
 
 
 for (const envVar of requiredEnvVars) {
+    console.log(envVar, "=", process.env[envVar])
     if (!process.env[envVar]) {
         throw new Error(`Missing required environment variable: ${envVar}`);
     }
