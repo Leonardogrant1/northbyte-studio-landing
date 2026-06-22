@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generatePresignedDownloadUrl, R2_BUCKETS } from "@/lib/r2";
+import { generatePresignedDownloadUrl } from "@/lib/r2";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 export async function GET(request: NextRequest) {
   const clerkUserId = await getAuthenticatedUserId();
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = request.nextUrl;
-  const key    = searchParams.get("key");
+  const key = searchParams.get("key");
   const inline = searchParams.get("inline") === "true";
 
   if (!key) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const fileName   = key.split("/").pop();
+    const fileName = key.split("/").pop();
     const downloadUrl = await generatePresignedDownloadUrl(
       R2_BUCKETS.support,
       key,

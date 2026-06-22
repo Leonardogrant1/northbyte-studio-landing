@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import type { AspectRatio, ImageSize } from "@/lib/nanobana";
 import type { KlingTaskStatus, KlingModelName, KlingMode } from "@/lib/kling";
-import { R2_BUCKETS } from "@/lib/r2";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

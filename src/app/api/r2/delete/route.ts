@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteR2Object, R2_BUCKETS } from "@/lib/r2";
+import { deleteR2Object } from "@/lib/r2";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 export async function DELETE(request: NextRequest) {
     try {

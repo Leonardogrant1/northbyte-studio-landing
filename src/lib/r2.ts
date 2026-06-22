@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { R2_BUCKETS } from "./r2-constants";
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -7,12 +8,6 @@ const requiredEnvVars = [
     "R2_ACCESS_KEY_ID",
     "R2_SECRET_ACCESS_KEY"
 ] as const;
-
-
-export enum R2_BUCKETS {
-    n8n = "n8n-media",
-    support = "support-media",
-}
 
 
 for (const envVar of requiredEnvVars) {

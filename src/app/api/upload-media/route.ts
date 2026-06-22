@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { generatePresignedUploadUrl, getPublicUrl, R2_BUCKETS } from "@/lib/r2";
+import { generatePresignedUploadUrl, getPublicUrl } from "@/lib/r2";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 const ACCEPTED_TYPES = [
     "video/mp4",

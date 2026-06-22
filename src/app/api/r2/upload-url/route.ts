@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { generatePresignedUploadUrl, getPublicUrl, R2_BUCKETS } from "@/lib/r2";
+import { generatePresignedUploadUrl, getPublicUrl } from "@/lib/r2";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { R2_BUCKETS } from "@/lib/r2-constants";
+
+
 
 const ALLOWED_TYPES = [
   "image/jpeg",

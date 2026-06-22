@@ -5,7 +5,7 @@ import { Creator, SocialMediaAccount } from "@/types";
 import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { Loader2, Plus, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { R2_BUCKETS } from "@/lib/r2";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 export default function CreatorPostClient({ creatorId }: { creatorId: string }) {
     const [creator, setCreator] = useState<Creator | null>(null);

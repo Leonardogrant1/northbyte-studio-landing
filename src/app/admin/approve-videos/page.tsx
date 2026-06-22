@@ -8,7 +8,7 @@ import { AssetDropper, AssetDropperRef } from "@/components/admin/AssetDropper";
 import { ContentDropdown } from "@/components/admin/ContentDropdown";
 import { VideoPlayer } from "@/components/admin/VideoPlayer";
 import { Content } from "@/types";
-import { R2_BUCKETS } from "@/lib/r2";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 
 export default function ApproveVideosPage() {

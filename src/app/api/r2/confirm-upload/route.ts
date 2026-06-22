@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
-import { r2Client, getPublicUrl, R2_BUCKETS } from "@/lib/r2";
+import { r2Client, getPublicUrl } from "@/lib/r2";
+import { R2_BUCKETS } from "@/lib/r2-constants";
 
 export async function POST(request: NextRequest) {
     try {
