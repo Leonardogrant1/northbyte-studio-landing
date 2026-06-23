@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus, Loader2, Users, Bot, Pencil, Trash2, Clock } from "lucide-react";
+import { X, Plus, Loader2, Users, Bot, Pencil, Trash2, Clock, Globe, Instagram } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -432,76 +432,184 @@ function DeleteConfirmModal({ account, onClose, onConfirm }: { account: SocialAc
     );
 }
 
+// ── Helper for Stat Formatting ────────────────────────────────────────────────
+const formatStat = (num?: number) => {
+    if (num === undefined || num === null) return "—";
+    if (num >= 1_000_000) {
+        return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    }
+    if (num >= 1_000) {
+        return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return num.toLocaleString("de-DE");
+};
+
 // ── Account Card ───────────────────────────────────────────────────────────────
 
 function AccountCard({ account, creatorEmail, onEdit, onDelete }: { account: SocialAccount; creatorEmail?: string; onEdit: () => void; onDelete: () => void }) {
+    const isInstagram = account.platform === "instagram";
+    const isTikTok = account.platform === "tiktok";
+
+    // Platform-specific gradient styles for the avatar border
+    const borderGradientClass = isInstagram
+        ? "bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]"
+        : isTikTok
+        ? "bg-gradient-to-tr from-[#00f2fe] via-[#fe2c55] to-[#f63a79]"
+        : "bg-gradient-to-tr from-accent-blue to-accent";
+
+    const platformBadgeClass = isInstagram
+        ? "text-pink-400 bg-pink-500/10 border border-pink-500/20"
+        : "text-cyan-400 bg-cyan-500/10 border border-cyan-500/20";
+
     return (
-        <div className="bg-surface2 border border-border rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-3">
-                {account.profileImageUrl ? (
-                    <img src={account.profileImageUrl} alt={account.username} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                ) : (
-                    <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shrink-0">
-                        <Users size={18} className="text-secondary" />
+        <div className="group relative overflow-hidden bg-surface2/40 hover:bg-surface2/70 border border-border hover:border-accent/30 rounded-2xl p-5 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:shadow-accent/5 flex flex-col justify-between h-full min-h-[260px]">
+            {/* Hover aura light effect */}
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-accent/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            
+            <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        {/* Profile Image with platform gradient ring */}
+                        <div className={`p-[2px] rounded-full ${borderGradientClass} transition-transform duration-300 group-hover:scale-105 shrink-0 shadow-lg`}>
+                            {account.profileImageUrl ? (
+                                <img 
+                                    src={account.profileImageUrl} 
+                                    alt={account.username} 
+                                    className="w-11 h-11 rounded-full object-cover border-2 border-[#0B1220] shrink-0" 
+                                />
+                            ) : (
+                                <div className="w-11 h-11 rounded-full bg-[#0B1220] flex items-center justify-center shrink-0 border-2 border-transparent">
+                                    <Users size={18} className="text-secondary" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Title & Platform badges */}
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-sm sm:text-base text-primary tracking-tight group-hover:text-accent transition-colors duration-200 truncate" title={`@${account.username}`}>
+                                @{account.username}
+                            </h3>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                {/* Platform Badge */}
+                                <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 ${platformBadgeClass}`}>
+                                    {isInstagram && <Instagram size={10} />}
+                                    {isTikTok && (
+                                        <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                                            <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.89-.74-3.94-1.78-.22-.22-.41-.47-.58-.73v7.02c0 3.76-2.13 7.07-5.69 8.28-3.93 1.34-8.4-.73-9.74-4.66-1.34-3.93.73-8.4 4.66-9.74 1.45-.49 3.02-.45 4.45.1v4.28c-1.28-.6-2.86-.4-3.94.52-.97.82-1.36 2.19-.97 3.39.39 1.2 1.62 1.95 2.87 1.8 1.42-.17 2.45-1.47 2.37-2.9v-11.75c-.01-1.32.02-2.64-.02-3.96z" />
+                                        </svg>
+                                    )}
+                                    {account.platform}
+                                </span>
+
+                                {/* AI Badge */}
+                                {account.isAI && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1 shadow-[0_0_8px_rgba(168,85,247,0.15)]">
+                                        <Bot size={10} className="text-purple-400" /> AI
+                                    </span>
+                                )}
+
+                                {/* Automation status */}
+                                {account.postizId ? (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                        Auto
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1" title="Dieser Account muss manuell bespielt werden.">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                        Manual
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                )}
-                <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-primary truncate">@{account.username}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <span className="text-xs text-secondary capitalize">{account.platform}</span>
-                        {account.isAI && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 flex items-center gap-1">
-                                <Bot size={10} /> AI
-                            </span>
-                        )}
-                        {!account.postizId && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400">
-                                Not automated
-                            </span>
-                        )}
+
+                    {/* Actions */}
+                    <div className="flex gap-0.5 bg-[#0B1220]/50 border border-border/40 rounded-xl p-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <button 
+                            onClick={onEdit} 
+                            className="p-2 rounded-lg text-secondary hover:text-accent hover:bg-[#0B1220]/80 border border-transparent hover:border-border transition-all duration-200"
+                            title="Account bearbeiten"
+                        >
+                            <Pencil size={13} />
+                        </button>
+                        <button 
+                            onClick={onDelete} 
+                            className="p-2 rounded-lg text-secondary hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-200"
+                            title="Account löschen"
+                        >
+                            <Trash2 size={13} />
+                        </button>
                     </div>
                 </div>
-                <div className="flex gap-1 shrink-0">
-                    <button onClick={onEdit} className="p-1.5 rounded-lg text-secondary hover:text-primary hover:bg-surface transition-all">
-                        <Pencil size={14} />
-                    </button>
-                    <button onClick={onDelete} className="p-1.5 rounded-lg text-secondary hover:text-red-400 hover:bg-red-500/10 transition-all">
-                        <Trash2 size={14} />
-                    </button>
+
+                {/* Bio text */}
+                {account.bio && (
+                    <p className="text-xs text-secondary/80 leading-relaxed font-light line-clamp-2 px-3 border-l-2 border-border/80 pl-3 italic">
+                        "{account.bio}"
+                    </p>
+                )}
+
+                {/* Details Section (Creator and Times) */}
+                <div className="space-y-2 pt-1">
+                    {/* Creator Assignment */}
+                    {creatorEmail && (
+                        <div className="flex items-center justify-between text-xs py-2 px-3 bg-[#0B1220]/30 border border-border/40 rounded-xl hover:bg-[#0B1220]/50 transition-colors">
+                            <span className="text-secondary flex items-center gap-1.5 shrink-0">
+                                <Users size={12} className="text-accent/80" /> Assigned
+                            </span>
+                            <span className="font-medium text-primary max-w-[160px] truncate" title={creatorEmail}>
+                                {creatorEmail}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Schedule / Timezone & Times */}
+                    {(account.timezone || (account.postingTimes && account.postingTimes.length > 0)) && (
+                        <div className="py-2.5 px-3 bg-[#0B1220]/30 border border-border/40 rounded-xl hover:bg-[#0B1220]/50 transition-colors space-y-1.5">
+                            <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-secondary flex items-center gap-1.5">
+                                    <Clock size={12} className="text-accent/80" /> Schedule
+                                </span>
+                                {account.timezone && (
+                                    <span className="text-muted flex items-center gap-1 font-mono text-[9px] uppercase tracking-tight" title={`Zeitzone: ${account.timezone}`}>
+                                        <Globe size={10} className="inline opacity-80" /> {account.timezone.split("/")[1]?.replace("_", " ") || account.timezone}
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {account.postingTimes && account.postingTimes.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                    {account.postingTimes.sort().map((time, idx) => (
+                                        <span key={idx} className="text-[10px] font-bold text-accent bg-accent/5 border border-accent/15 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                            {time}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <span className="text-[11px] text-muted block italic">Keine Posting-Zeiten</span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {account.bio && <p className="text-xs text-secondary leading-relaxed line-clamp-2">{account.bio}</p>}
-
-            {creatorEmail && (
-                <div className="flex items-center gap-1.5 text-xs">
-                    <Users size={11} className="text-secondary shrink-0" />
-                    <span className="text-secondary truncate">{creatorEmail}</span>
-                </div>
-            )}
-
-            {(account.timezone || (account.postingTimes && account.postingTimes.length > 0)) && (
-                <div className="flex items-start gap-1.5 text-xs text-secondary">
-                    <Clock size={12} className="mt-0.5 shrink-0" />
-                    <div>
-                        {account.timezone && <span className="block">{account.timezone}</span>}
-                        {account.postingTimes && account.postingTimes.length > 0 && (
-                            <span className="text-primary font-medium">{account.postingTimes.sort().join(", ")}</span>
-                        )}
-                    </div>
-                </div>
-            )}
-
+            {/* Stats Section */}
             {account.followers !== undefined && (
-                <div className="flex gap-3 text-center pt-1 border-t border-border">
+                <div className="grid grid-cols-3 gap-1 bg-[#0B1220]/40 border border-border/40 rounded-xl p-2.5 text-center mt-4 group-hover:bg-[#0B1220]/60 transition-colors">
                     {[
-                        { label: "Follower", value: account.followers },
+                        { label: "Followers", value: account.followers },
                         { label: "Following", value: account.following },
                         { label: "Likes", value: account.likes },
                     ].map(({ label, value }) => (
-                        <div key={label} className="flex-1">
-                            <p className="text-xs font-semibold text-primary">{value?.toLocaleString("de-DE") ?? "—"}</p>
-                            <p className="text-xs text-secondary">{label}</p>
+                        <div key={label} className="min-w-0" title={value?.toLocaleString("de-DE") ?? "—"}>
+                            <p className="text-xs font-bold text-primary truncate">
+                                {formatStat(value)}
+                            </p>
+                            <p className="text-[9px] uppercase font-bold tracking-wider text-muted mt-0.5">
+                                {label}
+                            </p>
                         </div>
                     ))}
                 </div>
