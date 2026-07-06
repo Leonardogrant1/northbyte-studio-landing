@@ -79,6 +79,18 @@ export const getRecent = query({
     },
 });
 
+export const getLastScheduledByAccount = query({
+    args: { accountId: v.id("social_accounts"), limit: v.optional(v.number()) },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("posts")
+            .withIndex("by_account", (q) => q.eq("accountId", args.accountId))
+            .order("desc")
+            .filter((q) => q.neq(q.field("scheduledAt"), undefined))
+            .take(args.limit ?? 10);
+    },
+});
+
 // Returns post counts grouped by status for the current user.
 // Admin sees counts across all posts; creator sees only their own.
 export const getMyPostStats = query({

@@ -23,6 +23,21 @@ export default defineSchema({
         isActive: v.boolean(),
     }).index("by_user", ["userId"]),
 
+    creator_application: defineTable({
+        name: v.string(),
+        email: v.string(),
+        phone: v.string(),
+        social_accounts: v.optional(v.array(v.string())),
+        app_id: v.id("apps"),
+        video_link: v.optional(v.string()),
+        description: v.optional(v.string()),
+        country: v.string(),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("contacted"),
+            v.literal("rejected"),
+        ),
+    }),
 
     affiliate_referral: defineTable({
         affiliateId: v.id("affiliate_profiles"),
@@ -229,9 +244,11 @@ export default defineSchema({
 
     posts: defineTable({
         title: v.string(),
+        platform: v.optional(v.union(v.literal("tiktok"), v.literal("instagram"), v.literal("facebook"), v.literal("youtube"), v.literal("linkedin"), v.literal("x"))),
         description: v.optional(v.string()),
         hashtags: v.optional(v.array(v.string())),
-        videoUrl: v.string(),
+        videoUrl: v.optional(v.string()),
+        mediaUrls: v.optional(v.array(v.string())),
         accountId: v.id("social_accounts"),
         status: v.union(v.literal("scheduled"), v.literal("posted"), v.literal("failed"), v.literal("ready_to_post")),
         scheduledAt: v.optional(v.number()),
@@ -246,7 +263,8 @@ export default defineSchema({
         createdAt: v.number(),
     })
         .index("by_creator", ["createdBy"])
-        .index("by_status", ["status"]),
+        .index("by_status", ["status"])
+        .index("by_account", ["accountId"]),
 
     vendors: defineTable({
         name: v.string(),
@@ -279,30 +297,30 @@ export default defineSchema({
     }),
 
     tickets: defineTable({
-        ticketNumber:   v.number(),
-        appId:          v.id("apps"),
+        ticketNumber: v.number(),
+        appId: v.id("apps"),
         externalUserId: v.string(),
-        email:          v.optional(v.string()),
-        title:          v.string(),
-        description:    v.string(),
-        status:         v.union(v.literal("open"), v.literal("closed")),
-        waitingOn:      v.union(v.literal("support"), v.literal("user")),
-        messageId:      v.optional(v.string()),
-        assets:         v.optional(v.array(v.string())),
-        createdAt:      v.number(),
-        updatedAt:      v.number(),
+        email: v.optional(v.string()),
+        title: v.string(),
+        description: v.string(),
+        status: v.union(v.literal("open"), v.literal("closed")),
+        waitingOn: v.union(v.literal("support"), v.literal("user")),
+        messageId: v.optional(v.string()),
+        assets: v.optional(v.array(v.string())),
+        createdAt: v.number(),
+        updatedAt: v.number(),
     })
-        .index("by_app",    ["appId"])
+        .index("by_app", ["appId"])
         .index("by_status", ["status"])
         .index("by_number", ["ticketNumber"]),
 
     ticket_messages: defineTable({
-        ticketId:         v.id("tickets"),
-        authorId:         v.optional(v.id("users")),   // set for support/admin replies
+        ticketId: v.id("tickets"),
+        authorId: v.optional(v.id("users")),   // set for support/admin replies
         externalAuthorId: v.optional(v.string()),       // set for app-user replies
-        body:             v.string(),
-        assets:           v.optional(v.array(v.string())),
-        createdAt:        v.number(),
+        body: v.string(),
+        assets: v.optional(v.array(v.string())),
+        createdAt: v.number(),
     })
         .index("by_ticket", ["ticketId"]),
 });

@@ -84,8 +84,7 @@ export async function deleteR2Object(
  * @returns Public download URL
  */
 export function getPublicUrl(bucket: R2_BUCKETS, key: string): string {
-    // Ensure R2_PUBLIC_URL doesn't end with a slash and key doesn't start with one
-    const baseUrl = R2_PUBLIC_URLS[bucket].replace(/\/$/, "");
+    const baseUrl = R2_PUBLIC_URLS[bucket]?.replace(/\/$/, "") || "https://n8n-media.northbyte.studio";
     const cleanKey = key.replace(/^\//, "");
-    return `${baseUrl}/${bucket}/${cleanKey}`;
+    return `${baseUrl}/${cleanKey}`;
 }

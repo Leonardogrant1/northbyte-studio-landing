@@ -18,7 +18,8 @@ export type EditablePost = {
     title: string;
     description?: string;
     hashtags?: string[];
-    videoUrl: string;
+    videoUrl?: string;
+    mediaUrls?: string[];
     accountId: Id<"social_accounts">;
 };
 
@@ -46,6 +47,7 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
     const [hashtags, setHashtags] = useState<string[]>(post.hashtags ?? []);
     const [hashtagInput, setHashtagInput] = useState("");
     const [selectedAccountId, setSelectedAccountId] = useState<Id<"social_accounts">>(post.accountId);
+    const currentMediaUrls = post.mediaUrls ?? (post.videoUrl ? [post.videoUrl] : []);
     const [replaceVideo, setReplaceVideo] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -115,14 +117,16 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                 setUploadProgress(0);
                 newVideoUrl = downloadUrl;
 
-                // Delete old R2 object
-                const oldKey = extractR2Key(post.videoUrl);
-                if (oldKey) {
-                    await fetch("/api/r2/delete", {
-                        method: "DELETE",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ key: oldKey }),
-                    });
+                // Delete old R2 objects
+                for (const oldUrl of currentMediaUrls) {
+                    const oldKey = extractR2Key(oldUrl);
+                    if (oldKey) {
+                        await fetch("/api/r2/delete", {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ key: oldKey }),
+                        });
+                    }
                 }
             }
 
@@ -132,7 +136,7 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                 description: description.trim() || undefined,
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 accountId: selectedAccountId,
-                ...(newVideoUrl && { videoUrl: newVideoUrl }),
+                ...(newVideoUrl && { mediaUrls: [newVideoUrl] }),
             });
 
             toast.success("Content erfolgreich aktualisiert.");
@@ -203,19 +207,31 @@ export function EditContentModal({ post, onClose }: EditContentModalProps) {
                         <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary">Video</h3>
 
                         {!replaceVideo ? (
-                            <div className="relative rounded-2xl overflow-hidden border border-border bg-black">
-                                <video
-                                    src={post.videoUrl}
-                                    controls
-                                    className="w-full max-h-64 object-contain"
-                                />
+                            <div className="space-y-2">
+                                <div className="flex gap-2 overflow-x-auto pb-1">
+                                    {currentMediaUrls.map((url, i) => (
+                                        <div
+                                            key={i}
+                                            className="relative flex-shrink-0 w-20 h-32 rounded-lg overflow-hidden border border-border bg-black"
+                                        >
+                                            {url.match(/\.(mp4|mov|webm|avi)(\?|$)/i) ? (
+                                                <video src={url} className="w-full h-full object-cover" muted />
+                                            ) : (
+                                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                            )}
+                                        </div>
+                                    ))}
+                                    {currentMediaUrls.length === 0 && (
+                                        <p className="text-xs text-secondary">Kein Medium vorhanden.</p>
+                                    )}
+                                </div>
                                 <button
                                     onClick={() => setReplaceVideo(true)}
-                                    aria-label="Video ersetzen"
-                                    className="absolute top-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium hover:bg-black/80 transition-colors"
+                                    aria-label="Medien ersetzen"
+                                    className="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors"
                                 >
                                     <RefreshCw size={12} />
-                                    Ersetzen
+                                    Medien ersetzen
                                 </button>
                             </div>
                         ) : (
