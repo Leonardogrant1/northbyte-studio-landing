@@ -59,13 +59,11 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
         <button
             type="button"
             onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
-                checked ? "bg-accent" : "bg-border"
-            }`}
+            className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${checked ? "bg-accent" : "bg-border"
+                }`}
         >
-            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                checked ? "translate-x-[18px]" : "translate-x-1"
-            }`} />
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${checked ? "translate-x-[18px]" : "translate-x-1"
+                }`} />
         </button>
     );
 }
@@ -183,6 +181,7 @@ export default function PostContentPage() {
     };
 
     const handleSchedule = async () => {
+        console.log("postNow", postNow);
         if (mediaFiles.length === 0) {
             toast.error("Bitte mindestens eine Datei auswählen.");
             return;
@@ -363,11 +362,10 @@ export default function PostContentPage() {
                                         <button
                                             key={acc._id}
                                             onClick={() => toggleAccount(acc._id)}
-                                            className={`px-3 py-1 rounded-full border text-xs transition-all capitalize ${
-                                                selected
+                                            className={`px-3 py-1 rounded-full border text-xs transition-all capitalize ${selected
                                                     ? "bg-accent border-accent text-background font-medium"
                                                     : "bg-surface2 border-border text-secondary hover:border-accent/50"
-                                            }`}
+                                                }`}
                                         >
                                             {acc.platform}: @{acc.username}
                                         </button>
