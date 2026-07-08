@@ -1,38 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { nanobana } from "@/lib/nanobana";
-import type { AspectRatio, ImageSize } from "@/lib/nanobana";
+import { generateImageWithGeminiVertex } from "@/lib/gemini";
+import type { GeminiAspectRatio } from "@/lib/gemini";
 
-async function fetchAsBase64(url: string): Promise<{ data: string; mimeType: string }> {
+async function fetchAsBase64(url: string): Promise<{ base64: string; mimeType: string }> {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Failed to fetch avatar image: ${res.status}`);
     const contentType = res.headers.get("content-type") ?? "image/jpeg";
     const buffer = await res.arrayBuffer();
-    const data = Buffer.from(buffer).toString("base64");
-    return { data, mimeType: contentType.split(";")[0] };
+    return {
+        base64: Buffer.from(buffer).toString("base64"),
+        mimeType: contentType.split(";")[0],
+    };
 }
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { prompt, referenceImages, avatarImageUrl, aspectRatio, imageSize } = body;
+        const { prompt, referenceImages, avatarImageUrl, aspectRatio } = body;
 
         if (!prompt?.trim()) {
             return NextResponse.json({ error: "Prompt is required." }, { status: 400 });
         }
 
-        const avatarImage = avatarImageUrl
-            ? await fetchAsBase64(avatarImageUrl)
-            : undefined;
+        const allReferenceImages: Array<{ base64: string; mimeType: string }> = [];
 
-        const result = await nanobana.generateImage({
-            prompt: prompt.trim(),
-            referenceImages: referenceImages ?? [],
-            avatarImage,
-            aspectRatio: aspectRatio as AspectRatio,
-            imageSize: imageSize as ImageSize,
+        if (avatarImageUrl) {
+            const avatar = await fetchAsBase64(avatarImageUrl);
+            allReferenceImages.push(avatar);
+        }
+
+        for (const img of referenceImages ?? []) {
+            allReferenceImages.push({ base64: img.data, mimeType: img.mimeType });
+        }
+
+        const imageData = await generateImageWithGeminiVertex(
+            prompt.trim(),
+            "",
+            allReferenceImages,
+            (aspectRatio as GeminiAspectRatio) ?? "9:16",
+        );
+
+        return NextResponse.json({
+            data: imageData,
+            mimeType: "image/png",
+            dataUrl: `data:image/png;base64,${imageData}`,
         });
-
-        return NextResponse.json(result);
     } catch (err) {
         console.error("[generate-image]", err);
         return NextResponse.json(

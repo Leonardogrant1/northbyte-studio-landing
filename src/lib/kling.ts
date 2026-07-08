@@ -1,44 +1,9 @@
-const JWT_ENDPOINT = "https://n8n-helpers-38873740272.europe-west3.run.app/kling/create-jwt";
-const BASE_URL = "https://api-singapore.klingai.com/v1/videos/motion-control";
+const API_BASE = "https://api-singapore.klingai.com/v1/videos";
 
-// ── JWT cache (server-side in-memory) ─────────────────────────────────────────
-
-let cachedToken: string | null = null;
-let tokenExpiresAt: number = 0;
-
-async function fetchJwt(): Promise<string> {
-    const password = process.env.KLING_JWT_PASSWORD;
-    if (!password) throw new Error("KLING_JWT_PASSWORD is not set.");
-
-    const res = await fetch(JWT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-    });
-
-    if (!res.ok) {
-        const text = await res.text().catch(() => res.statusText);
-        throw new Error(`Kling JWT error ${res.status}: ${text}`);
-    }
-
-    const data = await res.json();
-
-    console.log(data)
-    const token: string = data.authorization;
-    if (!token) throw new Error("No token returned from Kling JWT endpoint.");
-    return token;
-}
-
-/** Returns a valid JWT, re-fetching only when expired or missing. */
-export async function getKlingJwt(): Promise<string> {
-    const now = Date.now();
-    if (cachedToken && now < tokenExpiresAt) return cachedToken;
-
-    const token = await fetchJwt();
-    cachedToken = token;
-    // Cache for 50 minutes (JWTs typically valid 1h)
-    tokenExpiresAt = now + 50 * 60 * 1000;
-    return token;
+function getKlingApiKey(): string {
+    const key = process.env.KLING_API_KEY;
+    if (!key) throw new Error("KLING_API_KEY is not set.");
+    return key;
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -86,12 +51,12 @@ async function klingRequest<T>(
     path: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const jwt = await getKlingJwt();
-    const res = await fetch(`${BASE_URL}${path}`, {
+    const key = getKlingApiKey();
+    const res = await fetch(`${API_BASE}${path}`, {
         ...options,
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${jwt}`,
+            Authorization: `Bearer ${key}`,
             ...(options.headers ?? {}),
         },
     });
@@ -110,7 +75,7 @@ async function klingRequest<T>(
 export async function createMotionControlTask(
     params: KlingMotionControlParams
 ): Promise<KlingTaskData> {
-    return klingRequest<KlingTaskData>("", {
+    return klingRequest<KlingTaskData>("/motion-control", {
         method: "POST",
         body: JSON.stringify({
             model_name: params.model_name ?? "kling-v2-6",
@@ -125,5 +90,73 @@ export async function createMotionControlTask(
 }
 
 export async function getMotionControlTask(taskId: string): Promise<KlingTaskData> {
-    return klingRequest<KlingTaskData>(`/${taskId}`);
+    return klingRequest<KlingTaskData>(`/motion-control/${taskId}`);
+}
+
+// ── Video Generation ───────────────────────────────────────────────────────────
+
+export type KlingVgDuration = "5" | "10";
+export type KlingVgAspectRatio = "9:16" | "16:9" | "1:1";
+export type KlingVgSound = "on" | "off";
+export type KlingVgType = "text" | "image";
+
+export interface KlingText2VideoParams {
+    model_name?: KlingModelName;
+    prompt: string;
+    negative_prompt?: string;
+    duration?: KlingVgDuration;
+    mode?: KlingMode;
+    sound?: KlingVgSound;
+    aspect_ratio?: KlingVgAspectRatio;
+}
+
+export interface KlingImage2VideoParams {
+    model_name?: KlingModelName;
+    prompt?: string;
+    negative_prompt?: string;
+    image?: string;       // raw base64 (no data: prefix) or URL
+    image_tail?: string;  // optional end frame
+    duration?: KlingVgDuration;
+    mode?: KlingMode;
+    sound?: KlingVgSound;
+}
+
+export async function createText2VideoTask(params: KlingText2VideoParams): Promise<KlingTaskData> {
+    return klingRequest<KlingTaskData>("/text2video", {
+        method: "POST",
+        body: JSON.stringify({
+            model_name: params.model_name ?? "kling-v2-6",
+            prompt: params.prompt,
+            negative_prompt: params.negative_prompt ?? "",
+            duration: params.duration ?? "5",
+            mode: params.mode ?? "std",
+            sound: params.sound ?? "on",
+            aspect_ratio: params.aspect_ratio ?? "9:16",
+            callback_url: "",
+            external_task_id: "",
+        }),
+    });
+}
+
+export async function createImage2VideoTask(params: KlingImage2VideoParams): Promise<KlingTaskData> {
+    return klingRequest<KlingTaskData>("/image2video", {
+        method: "POST",
+        body: JSON.stringify({
+            model_name: params.model_name ?? "kling-v2-6",
+            prompt: params.prompt ?? "",
+            negative_prompt: params.negative_prompt ?? "",
+            image: params.image,
+            image_tail: params.image_tail,
+            duration: params.duration ?? "5",
+            mode: params.mode ?? "std",
+            sound: params.sound ?? "on",
+            callback_url: "",
+            external_task_id: "",
+        }),
+    });
+}
+
+export async function getVideoGenTask(taskId: string, type: KlingVgType): Promise<KlingTaskData> {
+    const path = type === "text" ? "/text2video" : "/image2video";
+    return klingRequest<KlingTaskData>(`${path}/${taskId}`);
 }

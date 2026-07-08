@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, useRef, useCallback, DragEvent } from "react";
-import { Plus, X, Loader2, Upload, Download, Trash2, ChevronDown, RefreshCw, ImageIcon, Film } from "lucide-react";
+import { Plus, X, Loader2, Upload, Download, Trash2, ChevronDown, RefreshCw, ImageIcon, Film, Video } from "lucide-react";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import type { AspectRatio, ImageSize } from "@/lib/nanobana";
-import type { KlingTaskStatus, KlingModelName, KlingMode } from "@/lib/kling";
+import type { KlingTaskStatus, KlingModelName, KlingMode, KlingVgDuration, KlingVgAspectRatio, KlingVgSound, KlingVgType } from "@/lib/kling";
 import { R2_BUCKETS } from "@/lib/r2-constants";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type Tool = "image-generation" | "motion-control";
+type Tool = "image-generation" | "motion-control" | "video-generation";
 
 const TOOL_LABELS: Record<Tool, string> = {
     "image-generation": "Image Generation",
     "motion-control": "Motion Control",
+    "video-generation": "Video Generation",
 };
 
 interface ReferenceImage {
@@ -54,6 +55,25 @@ interface PanelState {
     mcTaskId: string | null;
     mcStatus: KlingTaskStatus | null;
     mcResultUrl: string | null;
+    // Video Generation
+    vgMode: KlingVgType;
+    vgPrompt: string;
+    vgNegativePrompt: string;
+    vgModel: KlingModelName;
+    vgVgMode: KlingMode;
+    vgDuration: KlingVgDuration;
+    vgAspectRatio: KlingVgAspectRatio;
+    vgSound: KlingVgSound;
+    vgImageB64: string | null;
+    vgImagePreview: string | null;
+    vgImageName: string | null;
+    vgImageTailB64: string | null;
+    vgImageTailPreview: string | null;
+    vgImageTailName: string | null;
+    vgTaskId: string | null;
+    vgTaskType: KlingVgType | null;
+    vgStatus: KlingTaskStatus | null;
+    vgResultUrl: string | null;
 }
 
 function createPanel(id: string): PanelState {
@@ -83,6 +103,24 @@ function createPanel(id: string): PanelState {
         mcTaskId: null,
         mcStatus: null,
         mcResultUrl: null,
+        vgMode: "text",
+        vgPrompt: "",
+        vgNegativePrompt: "",
+        vgModel: "kling-v2-6",
+        vgVgMode: "std",
+        vgDuration: "5",
+        vgAspectRatio: "9:16",
+        vgSound: "on",
+        vgImageB64: null,
+        vgImagePreview: null,
+        vgImageName: null,
+        vgImageTailB64: null,
+        vgImageTailPreview: null,
+        vgImageTailName: null,
+        vgTaskId: null,
+        vgTaskType: null,
+        vgStatus: null,
+        vgResultUrl: null,
     };
 }
 
@@ -709,6 +747,365 @@ function MotionControlForm({
     );
 }
 
+// ── Video Generation Form ──────────────────────────────────────────────────────
+
+function VideoGenerationForm({
+    panel,
+    onChange,
+}: {
+    panel: PanelState;
+    onChange: (patch: Partial<PanelState>) => void;
+}) {
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const imageTailInputRef = useRef<HTMLInputElement>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [imageDragging, setImageDragging] = useState(false);
+    const [imageTailDragging, setImageTailDragging] = useState(false);
+
+    const stopPolling = () => {
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    };
+
+    const startPolling = (taskId: string, type: KlingVgType) => {
+        stopPolling();
+        pollRef.current = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/ai/video-generation/${taskId}?type=${type}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                onChange({ vgStatus: data.status, vgResultUrl: data.videoUrl ?? null });
+
+                if (data.status === "succeed" || data.status === "failed") {
+                    stopPolling();
+                    onChange({ loading: false });
+                    if (data.status === "succeed") toast.success("Video fertig!");
+                    else toast.error(`Task fehlgeschlagen.${data.statusMsg ? ` ${data.statusMsg}` : ""}`);
+                }
+            } catch {
+                stopPolling();
+                onChange({ loading: false, vgStatus: "failed" as KlingTaskStatus });
+            }
+        }, 5000);
+    };
+
+    const readImageFile = useCallback((file: File, target: "start" | "tail") => {
+        if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+            toast.error("Nur JPG/PNG erlaubt (max 10 MB).");
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) { toast.error("Bild max. 10 MB."); return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result as string;
+            const base64 = dataUrl.split(",")[1]; // strip data: prefix
+            const preview = URL.createObjectURL(file);
+            if (target === "start") {
+                onChange({ vgImageB64: base64, vgImagePreview: preview, vgImageName: file.name });
+            } else {
+                onChange({ vgImageTailB64: base64, vgImageTailPreview: preview, vgImageTailName: file.name });
+            }
+        };
+        reader.readAsDataURL(file);
+    }, [onChange]);
+
+    const handleSubmit = async () => {
+        if (panel.vgMode === "text" && !panel.vgPrompt.trim()) {
+            toast.error("Bitte einen Prompt eingeben.");
+            return;
+        }
+        if (panel.vgMode === "image" && !panel.vgImageB64 && !panel.vgImageTailB64) {
+            toast.error("Bitte mindestens ein Bild hochladen.");
+            return;
+        }
+
+        onChange({ loading: true, vgTaskId: null, vgStatus: null, vgResultUrl: null });
+
+        try {
+            const body: Record<string, unknown> = {
+                type: panel.vgMode,
+                model_name: panel.vgModel,
+                mode: panel.vgVgMode,
+                duration: panel.vgDuration,
+                sound: panel.vgSound,
+                negative_prompt: panel.vgNegativePrompt.trim() || "",
+            };
+
+            if (panel.vgMode === "text") {
+                body.prompt = panel.vgPrompt.trim();
+                body.aspect_ratio = panel.vgAspectRatio;
+            } else {
+                body.prompt = panel.vgPrompt.trim();
+                if (panel.vgImageB64) body.image = panel.vgImageB64;
+                if (panel.vgImageTailB64) body.image_tail = panel.vgImageTailB64;
+            }
+
+            const res = await fetch("/api/ai/video-generation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            const taskId: string = data.task_id;
+            if (!taskId) throw new Error("Keine Task-ID in der Response.");
+
+            onChange({ vgTaskId: taskId, vgTaskType: panel.vgMode, vgStatus: "submitted" });
+            startPolling(taskId, panel.vgMode);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Fehler beim Erstellen des Tasks.");
+            onChange({ loading: false });
+        }
+    };
+
+    const isRunning = panel.loading && panel.vgTaskId !== null;
+    const isDone = panel.vgStatus === "succeed" || panel.vgStatus === "failed";
+    const disabled = panel.loading;
+
+    const ImageDropzone = ({
+        label,
+        b64,
+        preview,
+        name,
+        dragging,
+        onDragOver,
+        onDragLeave,
+        onDrop,
+        onClick,
+        onClear,
+        optional,
+    }: {
+        label: string;
+        b64: string | null;
+        preview: string | null;
+        name: string | null;
+        dragging: boolean;
+        onDragOver: () => void;
+        onDragLeave: () => void;
+        onDrop: (e: DragEvent<HTMLDivElement>) => void;
+        onClick: () => void;
+        onClear: () => void;
+        optional?: boolean;
+    }) => (
+        <div>
+            <label className="text-xs font-medium text-secondary block mb-1">
+                {label} {optional && <span className="text-secondary/60 font-normal">(optional)</span>}
+            </label>
+            <div
+                onDragOver={(e) => { e.preventDefault(); onDragOver(); }}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                onClick={() => !disabled && onClick()}
+                className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer overflow-hidden
+                    ${dragging ? "border-accent bg-accent/10" : "border-border hover:border-accent/50"}
+                    ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+                    ${preview ? "p-2 flex justify-center" : "p-4 flex flex-col items-center justify-center gap-1.5 min-h-[80px]"}`}
+            >
+                {preview ? (
+                    <div className="relative group">
+                        <img src={preview} alt={name ?? ""} className="max-h-40 w-auto object-contain rounded-lg" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                            <span className="text-white text-xs font-medium">Ersetzen</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onClear(); }}
+                            className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-md p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <X size={12} />
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <ImageIcon size={20} className="text-secondary" />
+                        <span className="text-xs text-secondary text-center">Bild hierher ziehen oder klicken</span>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col gap-4">
+            {/* Mode toggle */}
+            <div className="flex rounded-xl overflow-hidden border border-border">
+                {(["text", "image"] as KlingVgType[]).map((m) => (
+                    <button
+                        key={m}
+                        type="button"
+                        onClick={() => onChange({ vgMode: m })}
+                        disabled={disabled}
+                        className={`flex-1 py-1.5 text-xs font-medium transition-all
+                            ${panel.vgMode === m ? "bg-accent text-background" : "bg-surface text-secondary hover:text-primary"}
+                            ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    >
+                        {m === "text" ? "Text → Video" : "Image → Video"}
+                    </button>
+                ))}
+            </div>
+
+            {/* Prompt */}
+            <div>
+                <label className="text-xs font-medium text-secondary block mb-1">
+                    Prompt {panel.vgMode === "image" && <span className="text-secondary/60 font-normal">(optional)</span>}
+                </label>
+                <textarea
+                    value={panel.vgPrompt}
+                    onChange={(e) => onChange({ vgPrompt: e.target.value })}
+                    placeholder="Describe the video you want to generate…"
+                    rows={3}
+                    className={inputClass + " resize-none"}
+                    disabled={disabled}
+                />
+            </div>
+
+            {/* Negative prompt */}
+            <div>
+                <label className="text-xs font-medium text-secondary block mb-1">
+                    Negative Prompt <span className="text-secondary/60 font-normal">(optional)</span>
+                </label>
+                <input
+                    type="text"
+                    value={panel.vgNegativePrompt}
+                    onChange={(e) => onChange({ vgNegativePrompt: e.target.value })}
+                    placeholder="What to avoid…"
+                    className={inputClass}
+                    disabled={disabled}
+                />
+            </div>
+
+            {/* Image dropzones (image mode only) */}
+            {panel.vgMode === "image" && (
+                <>
+                    <input ref={imageInputRef} type="file" accept="image/jpeg,image/jpg,image/png" className="hidden"
+                        onChange={(e) => e.target.files?.[0] && readImageFile(e.target.files[0], "start")} />
+                    <input ref={imageTailInputRef} type="file" accept="image/jpeg,image/jpg,image/png" className="hidden"
+                        onChange={(e) => e.target.files?.[0] && readImageFile(e.target.files[0], "tail")} />
+
+                    <ImageDropzone
+                        label="Start-Frame"
+                        b64={panel.vgImageB64}
+                        preview={panel.vgImagePreview}
+                        name={panel.vgImageName}
+                        dragging={imageDragging}
+                        onDragOver={() => setImageDragging(true)}
+                        onDragLeave={() => setImageDragging(false)}
+                        onDrop={(e) => { e.preventDefault(); setImageDragging(false); const f = e.dataTransfer.files[0]; if (f) readImageFile(f, "start"); }}
+                        onClick={() => imageInputRef.current?.click()}
+                        onClear={() => { if (panel.vgImagePreview) URL.revokeObjectURL(panel.vgImagePreview); onChange({ vgImageB64: null, vgImagePreview: null, vgImageName: null }); }}
+                    />
+                    <ImageDropzone
+                        label="End-Frame"
+                        b64={panel.vgImageTailB64}
+                        preview={panel.vgImageTailPreview}
+                        name={panel.vgImageTailName}
+                        dragging={imageTailDragging}
+                        onDragOver={() => setImageTailDragging(true)}
+                        onDragLeave={() => setImageTailDragging(false)}
+                        onDrop={(e) => { e.preventDefault(); setImageTailDragging(false); const f = e.dataTransfer.files[0]; if (f) readImageFile(f, "tail"); }}
+                        onClick={() => imageTailInputRef.current?.click()}
+                        onClear={() => { if (panel.vgImageTailPreview) URL.revokeObjectURL(panel.vgImageTailPreview); onChange({ vgImageTailB64: null, vgImageTailPreview: null, vgImageTailName: null }); }}
+                        optional
+                    />
+                </>
+            )}
+
+            {/* Config grid */}
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="text-xs font-medium text-secondary block mb-1">Modell</label>
+                    <select value={panel.vgModel} onChange={(e) => onChange({ vgModel: e.target.value as KlingModelName })} className={selectClass} disabled={disabled}>
+                        <option value="kling-v2-6">kling-v2-6</option>
+                        <option value="kling-v3">kling-v3</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="text-xs font-medium text-secondary block mb-1">Mode</label>
+                    <select value={panel.vgVgMode} onChange={(e) => onChange({ vgVgMode: e.target.value as KlingMode })} className={selectClass} disabled={disabled}>
+                        <option value="std">Standard</option>
+                        <option value="pro">Pro</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="text-xs font-medium text-secondary block mb-1">Dauer</label>
+                    <select value={panel.vgDuration} onChange={(e) => onChange({ vgDuration: e.target.value as KlingVgDuration })} className={selectClass} disabled={disabled}>
+                        <option value="5">5 Sekunden</option>
+                        <option value="10">10 Sekunden</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="text-xs font-medium text-secondary block mb-1">Sound</label>
+                    <select value={panel.vgSound} onChange={(e) => onChange({ vgSound: e.target.value as KlingVgSound })} className={selectClass} disabled={disabled}>
+                        <option value="on">An</option>
+                        <option value="off">Aus</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Aspect ratio (text mode only) */}
+            {panel.vgMode === "text" && (
+                <div>
+                    <label className="text-xs font-medium text-secondary block mb-1">Seitenverhältnis</label>
+                    <select value={panel.vgAspectRatio} onChange={(e) => onChange({ vgAspectRatio: e.target.value as KlingVgAspectRatio })} className={selectClass} disabled={disabled}>
+                        {(["9:16", "16:9", "1:1"] as KlingVgAspectRatio[]).map((r) => (
+                            <option key={r} value={r}>{r}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
+            {/* Submit */}
+            <button
+                onClick={handleSubmit}
+                disabled={disabled || (panel.vgMode === "text" && !panel.vgPrompt.trim()) || (panel.vgMode === "image" && !panel.vgImageB64 && !panel.vgImageTailB64)}
+                className="w-full py-2.5 bg-accent text-background font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+            >
+                {isRunning ? (
+                    <><RefreshCw size={15} className="animate-spin" /> Läuft…</>
+                ) : "Video generieren"}
+            </button>
+
+            {/* Status */}
+            {panel.vgStatus && (
+                <div className={`flex items-center gap-2 text-sm font-medium ${STATUS_COLOR[panel.vgStatus]}`}>
+                    {!isDone && <Loader2 size={14} className="animate-spin" />}
+                    {STATUS_LABEL[panel.vgStatus]}
+                    {panel.vgTaskId && (
+                        <span className="ml-auto text-xs text-secondary font-normal truncate max-w-[120px]">
+                            {panel.vgTaskId}
+                        </span>
+                    )}
+                </div>
+            )}
+
+            {/* Result */}
+            {panel.vgResultUrl && (
+                <div className="flex justify-center">
+                    <div className="relative group rounded-xl overflow-hidden border border-border">
+                        <video src={panel.vgResultUrl} controls className="max-h-72 w-auto" />
+                        <button
+                            onClick={async () => {
+                                const res = await fetch(panel.vgResultUrl!);
+                                const blob = await res.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `kling-vg-${Date.now()}.mp4`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <Download size={14} />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── Panel ──────────────────────────────────────────────────────────────────────
 
 function Panel({
@@ -756,8 +1153,10 @@ function Panel({
                         onChange={onChange}
                         onResult={(dataUrl) => onChange({ result: dataUrl })}
                     />
-                ) : (
+                ) : panel.tool === "motion-control" ? (
                     <MotionControlForm panel={panel} onChange={onChange} />
+                ) : (
+                    <VideoGenerationForm panel={panel} onChange={onChange} />
                 )}
             </div>
         </div>
