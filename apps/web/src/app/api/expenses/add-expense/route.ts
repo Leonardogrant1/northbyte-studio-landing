@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@repo/backend/convex/_generated/api";
+import { Id } from "@repo/backend/convex/_generated/dataModel";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+async function toUsd(amount: number, currency: string): Promise<number> {
+    if (currency === "USD") return amount;
+    const res = await fetch(`https://api.frankfurter.app/latest?from=${currency}&to=USD`);
+    const data = await res.json() as { rates: { USD: number } };
+    return Math.round(amount * data.rates.USD * 100) / 100;
+}
+
+type RequestBody = {
+    description: string;
+    vendor_invoice_id?: string;
+    vendor_receipt_id?: string;
+    vendor_id: Id<"vendors">;
+    category_id: Id<"categories">;
+    original_amount: number;
+    original_currency: string;
+    tax_amount?: number;
+    date: string;
+    urls?: string[];
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json() as RequestBody;
+        const {
+            description,
+            vendor_invoice_id,
+            vendor_receipt_id,
+            vendor_id,
+            category_id,
+            original_amount,
+            original_currency,
+            tax_amount,
+            date,
+            urls,
+        } = body;
+
+        if (
+            !description ||
+            (!vendor_invoice_id && !vendor_receipt_id) ||
+            !vendor_id ||
+            !category_id ||
+            original_amount === undefined ||
+            !original_currency ||
+            !date
+        ) {
+            return NextResponse.json(
+                { error: "Missing required fields" },
+                { status: 400 }
+            );
+        }
+
+        const amount_usd = await toUsd(Number(original_amount), original_currency);
+
+        const expenseId = await convex.mutation(api.expenses.mutations.create, {
+            description,
+            vendor_invoice_id,
+            vendor_receipt_id,
+            vendor_id: vendor_id as Id<"vendors">,
+            category_id: category_id as Id<"categories">,
+            original_amount: Number(original_amount),
+            original_currency,
+            amount_usd,
+            tax_amount: tax_amount !== undefined ? Number(tax_amount) : undefined,
+            date,
+            urls,
+        });
+
+        return NextResponse.json(
+            { success: true, expenseId, message: "Expense added successfully" },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Error adding expense:", error);
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}

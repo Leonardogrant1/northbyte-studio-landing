@@ -1,7 +1,15 @@
-.env
-.env.local
-.env.*
-.next
+# dependencies
 node_modules
+
+# builds
+.next
+.turbo
+*.tsbuildinfo
+
+# env files
+.env
+.env.*
+!.env.local.example
+
 # clerk configuration (can include secrets)
-/.clerk/
+.clerk/

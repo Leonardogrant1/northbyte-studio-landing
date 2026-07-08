@@ -3,49 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.980.0",
-    "@aws-sdk/s3-request-presigner": "^3.980.0",
-    "@clerk/nextjs": "^6.39.3",
-    "@convex-dev/migrations": "^0.3.4",
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
-    "@google/genai": "^2.10.0",
-    "@tailwindcss/typography": "^0.5.19",
-    "@tanstack/react-query": "^5.90.20",
-    "@types/node": "^25.0.7",
-    "@types/react": "^19.2.8",
-    "@types/react-dom": "^19.2.3",
-    "@vercel/blob": "^2.0.1",
-    "airtable": "^0.12.2",
-    "autoprefixer": "^10.4.23",
-    "clsx": "^2.1.1",
-    "convex": "^1.39.1",
-    "eslint": "^9.39.2",
-    "eslint-config-next": "^16.1.1",
-    "framer-motion": "^12.26.1",
-    "lucide-react": "^0.562.0",
-    "next": "^16.1.1",
-    "nodemailer": "^7.0.12",
-    "openai": "^6.45.0",
-    "postcss": "^8.5.6",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "react-markdown": "^10.1.0",
-    "rehype-sanitize": "^6.0.0",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.9.3"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@types/nodemailer": "^7.0.5"
+    "turbo": "^2.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "canvas",
+      "@google/genai",
+      "esbuild",
+      "protobufjs",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316"
 }

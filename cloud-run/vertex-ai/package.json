@@ -1,0 +1,47 @@
+{
+    "name": "vertex-ai",
+    "version": "1.0.7",
+    "description": "Vertex AI Endpoints service for Cloud Run",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsx esbuild.config.ts",
+        "start": "node dist/index.js",
+        "dev": "tsx watch --clear-screen=false src/index.ts",
+        "type-check": "tsc --noEmit",
+        "docker:run": "docker run -p 8080:8080 --env-file .env northbytestudio/vertex-ai:latest",
+        "deploy": "../../deploy-cloud-run.sh vertex-ai"
+    },
+    "dependencies": {
+        "@google-cloud/aiplatform": "^3.30.0",
+        "axios": "^1.7.9",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "google-auth-library": "^10.5.0",
+        "pino": "^10.2.1",
+        "zod": "^3.24.1",
+        "tsconfig": "workspace:*"
+    },
+    "devDependencies": {
+        "@esbuild-plugins/tsconfig-paths": "^0.1.2",
+        "@types/express": "^5.0.0",
+        "@types/node": "^25.0.9",
+        "esbuild": "^0.27.2",
+        "esbuild-node-externals": "^1.20.1",
+        "nodemon": "^3.1.9",
+        "tsconfig": "workspace:*",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3"
+    },
+    "cloudRunConfig": {
+        "image": "docker.io/northbytestudio/vertex-ai:latest",
+        "region": "europe-west3",
+        "memory": "1Gi",
+        "cpu": "1",
+        "timeout": "300",
+        "max-instances": "10",
+        "min-instances": "0",
+        "concurrency": "80",
+        "allow-unauthenticated": false
+    }
+}

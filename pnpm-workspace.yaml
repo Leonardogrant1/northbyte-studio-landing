@@ -1,0 +1,5 @@
+packages:
+  - "cloud-run/*"
+  - "apps/*"
+  - "packages/*"
+  - "services/*"
