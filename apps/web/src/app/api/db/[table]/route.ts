@@ -41,6 +41,7 @@ const ALLOWED_TABLES = [
     "media",
     "ai_avatars",
     "users",
+    "apps"
 ];
 
 export const revalidate = 0;
