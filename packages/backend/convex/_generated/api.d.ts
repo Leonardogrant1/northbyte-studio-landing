@@ -22,6 +22,7 @@ import type * as categories_mutations from "../categories/mutations.js";
 import type * as categories_queries from "../categories/queries.js";
 import type * as creator_application_actions from "../creator_application/actions.js";
 import type * as creator_application_mutations from "../creator_application/mutations.js";
+import type * as creator_application_queries from "../creator_application/queries.js";
 import type * as expenses_mutations from "../expenses/mutations.js";
 import type * as expenses_queries from "../expenses/queries.js";
 import type * as features_actions from "../features/actions.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   "categories/queries": typeof categories_queries;
   "creator_application/actions": typeof creator_application_actions;
   "creator_application/mutations": typeof creator_application_mutations;
+  "creator_application/queries": typeof creator_application_queries;
   "expenses/mutations": typeof expenses_mutations;
   "expenses/queries": typeof expenses_queries;
   "features/actions": typeof features_actions;

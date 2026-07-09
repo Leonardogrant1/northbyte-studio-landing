@@ -39,6 +39,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: `App not found: ${app_slug}` }, { status: 404 });
         }
 
+        const existingApplication = await convex.query(
+            api.creator_application.queries.getByEmailAndApp,
+            { email, app_id: app._id },
+        );
+        if (existingApplication) {
+            return NextResponse.json(
+                { error: "An application with this email address already exists for this app." },
+                { status: 409 },
+            );
+        }
+
         const id = await convex.mutation(api.creator_application.mutations.create, {
             app_id: app._id,
             name,
