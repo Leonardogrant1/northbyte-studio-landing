@@ -7,7 +7,7 @@ import { renderCaptionHandler } from './routes/caption';
 import { storeVideoHandler, uploadMiddleware } from './routes/store';
 import { adjustSubtitleHandler } from './routes/subtitle';
 import { overlayImageHandler } from './routes/overlay';
-import { createSlidePostHandler } from './routes/slidePost';
+import { createSlidePostHandler, getSlidePostJobHandler, runSlidePostJobHandler } from './routes/slidePost';
 import { authMiddleware } from './middleware/auth';
 import cors from 'cors';
 import { createJWT } from "./routes/kling";
@@ -51,6 +51,12 @@ app.post('/kling/create-jwt', createJWT);
 
 // Create, upload and schedule a TikTok slide post
 app.post('/slide-posts/create', createSlidePostHandler);
+
+// Poll the status of a slide post job
+app.get('/slide-posts/jobs/:jobId', getSlidePostJobHandler);
+
+// Internal worker: executes a queued slide post job (called via self-request)
+app.post('/slide-posts/jobs/:jobId/run', runSlidePostJobHandler);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {

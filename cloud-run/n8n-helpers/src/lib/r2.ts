@@ -10,4 +10,12 @@ export const r2Client = new S3Client({
 });
 
 export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || '';
-export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || '';
+
+/** Ensures the public URL always carries a scheme and has no trailing slash. */
+export function normalizePublicUrl(value: string): string {
+    if (!value) return value;
+    const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return withScheme.replace(/\/+$/, '');
+}
+
+export const R2_PUBLIC_URL = normalizePublicUrl(process.env.R2_PUBLIC_URL || '');

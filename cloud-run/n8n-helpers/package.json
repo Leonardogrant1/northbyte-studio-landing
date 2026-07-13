@@ -1,6 +1,6 @@
 {
     "name": "n8n-helpers",
-    "version": "1.0.6",
+    "version": "1.1.1",
     "description": "N8N Helpers service for Cloud Run",
     "main": "dist/index.js",
     "type": "module",
@@ -8,6 +8,7 @@
         "build": "tsx esbuild.config.ts",
         "start": "node dist/index.js",
         "dev": "tsx watch --clear-screen=false src/index.ts",
+        "test": "vitest run",
         "type-check": "tsc --noEmit",
         "docker:run": "docker run -p 8080:8080 --env-file .env northbytestudio/n8n-helpers:latest",
         "deploy": "../../deploy-cloud-run.sh n8n-helpers"
@@ -40,7 +41,8 @@
         "nodemon": "^3.1.9",
         "tsconfig": "workspace:*",
         "tsx": "^4.21.0",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
     },
     "cloudRunConfig": {
         "image": "docker.io/northbytestudio/n8n-helpers:latest",

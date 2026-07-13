@@ -1,12 +1,16 @@
 # Multi-stage build for Cloud Run vertex-ai
 ARG NODE_VERSION=20
+ARG PNPM_VERSION=10.28.1
 ARG PROJECT=vertex-ai
 
 # Stage 1: Base - Setup pnpm and turbo
 FROM node:${NODE_VERSION} AS base
+ARG PNPM_VERSION
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+# Pin pnpm explicitly: without a package.json in this stage, corepack falls back
+# to latest pnpm, and pnpm >= 11 requires Node 22+
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 RUN npm install turbo --global
 RUN pnpm config set store-dir ~/.pnpm-store
 

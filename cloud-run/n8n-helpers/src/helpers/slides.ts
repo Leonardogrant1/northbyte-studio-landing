@@ -150,7 +150,8 @@ function extractImage(response: OpenAI.Responses.Response): Buffer {
 export async function generateSlideImages(
     openai: OpenAI,
     plan: SlidePlan,
-    avatarImageUrl: string
+    avatarImageUrl: string,
+    onSlide?: (slideNumber: number) => Promise<void>
 ): Promise<Buffer[]> {
     const storeEntryDataUrl = `data:image/png;base64,${fs
         .readFileSync(STORE_ENTRY_PATH)
@@ -161,6 +162,7 @@ export async function generateSlideImages(
 
     for (const [index, slide] of plan.slides.entries()) {
         logger.info(`Generating slide ${index + 1}/${SLIDE_COUNT}`);
+        await onSlide?.(index + 1);
         const prompt = buildSlidePrompt(slide, index);
         const isLast = index === SLIDE_COUNT - 1;
 
