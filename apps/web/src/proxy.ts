@@ -8,7 +8,6 @@ const isExpenseRoute = createRouteMatcher(["/api/expenses(.*)"]);
 const isAffiliateWebhookRoute = createRouteMatcher(["/api/affiliate(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-    console.log("OIDJAWD");
     // Let affiliate webhook routes pass through — they handle their own auth
     if (isAffiliateWebhookRoute(req)) {
         return NextResponse.next();
