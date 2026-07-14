@@ -5,7 +5,7 @@ import { api } from "@repo/backend/convex/_generated/api";
 import { Id } from "@repo/backend/convex/_generated/dataModel";
 import { GenericKanbanBoard, KanbanItem } from "./GenericKanbanBoard";
 import { CREATOR_APPLICATION_COLUMNS } from "@/lib/kanban-config";
-import { Trash2, ExternalLink, Phone, Mail, Globe } from "lucide-react";
+import { Trash2, ExternalLink, Phone, Mail, Globe, Calendar } from "lucide-react";
 import { useState } from "react";
 
 interface CreatorApplication {
@@ -77,6 +77,79 @@ function ApplicationCard({ item }: { item: CreatorApplicationKanbanItem }) {
     );
 }
 
+function ApplicationDetail({ item }: { item: CreatorApplicationKanbanItem }) {
+    return (
+        <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+                <a
+                    href={`mailto:${item.email}`}
+                    className="flex items-center gap-2 text-sm text-accent hover:underline w-fit"
+                >
+                    <Mail size={14} />
+                    {item.email}
+                </a>
+                <span className="flex items-center gap-2 text-sm text-secondary">
+                    <Phone size={14} />
+                    {item.phone}
+                </span>
+                <span className="flex items-center gap-2 text-sm text-secondary">
+                    <Globe size={14} />
+                    {item.country}
+                </span>
+                <span className="flex items-center gap-2 text-sm text-secondary">
+                    <Calendar size={14} />
+                    {new Date(item._creationTime).toLocaleDateString("de-DE", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                    })}
+                </span>
+            </div>
+
+            {item.social_accounts && item.social_accounts.length > 0 && (
+                <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary mb-2">
+                        Social Accounts
+                    </h3>
+                    <div className="flex flex-wrap gap-1">
+                        {item.social_accounts.map((account, i) => (
+                            <span
+                                key={i}
+                                className="text-xs bg-accent/10 text-accent border border-accent/20 px-2 py-0.5 rounded-full"
+                            >
+                                {account}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {item.description && (
+                <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary mb-2">
+                        Beschreibung
+                    </h3>
+                    <p className="text-sm text-secondary whitespace-pre-wrap">
+                        {item.description}
+                    </p>
+                </div>
+            )}
+
+            {item.video_link && (
+                <a
+                    href={item.video_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-accent hover:underline w-fit"
+                >
+                    <ExternalLink size={14} />
+                    Video ansehen
+                </a>
+            )}
+        </div>
+    );
+}
+
 export function CreatorApplicationBoard({ appId }: CreatorApplicationBoardProps) {
     const [clearing, setClearing] = useState(false);
 
@@ -130,6 +203,7 @@ export function CreatorApplicationBoard({ appId }: CreatorApplicationBoardProps)
                 columns={CREATOR_APPLICATION_COLUMNS}
                 onStatusChange={handleStatusChange}
                 renderCardContent={(item) => <ApplicationCard item={item} />}
+                renderDetailContent={(item) => <ApplicationDetail item={item} />}
             />
         </div>
     );

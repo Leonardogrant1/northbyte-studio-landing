@@ -18,7 +18,8 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Expand, X } from "lucide-react";
 import { KanbanColumn } from "@/lib/kanban-config";
 
 // Base interface for kanban items
@@ -35,6 +36,7 @@ interface GenericKanbanBoardProps<TItem extends KanbanItem> {
   columns: readonly KanbanColumn[];
   onStatusChange: (itemId: string, newStatus: string) => void;
   renderCardContent?: (item: TItem) => React.ReactNode;
+  renderDetailContent?: (item: TItem) => React.ReactNode;
 }
 
 function DefaultCardContent<TItem extends KanbanItem>({ item }: { item: TItem }) {
@@ -57,10 +59,12 @@ function ItemCard<TItem extends KanbanItem>({
   item,
   isOverlay = false,
   renderCardContent,
+  onExpand,
 }: {
   item: TItem;
   isOverlay?: boolean;
   renderCardContent?: (item: TItem) => React.ReactNode;
+  onExpand?: (item: TItem) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item._id });
@@ -92,9 +96,90 @@ function ItemCard<TItem extends KanbanItem>({
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-surface2/50 backdrop-blur-xl border border-border rounded-xl p-4 mb-3 cursor-grab active:cursor-grabbing hover:border-accent/50 transition-all"
+      className="group relative bg-surface2/50 backdrop-blur-xl border border-border rounded-xl p-4 mb-3 cursor-grab active:cursor-grabbing hover:border-accent/50 transition-all"
     >
+      {onExpand && (
+        <button
+          // stopPropagation on pointerdown keeps the click from activating the dnd-kit drag sensor
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onExpand(item)}
+          aria-label="Details öffnen"
+          className="absolute top-2 right-2 p-1.5 rounded-lg text-secondary bg-surface/80 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-primary hover:bg-surface2 transition-all"
+        >
+          <Expand size={14} />
+        </button>
+      )}
       {content}
+    </div>
+  );
+}
+
+function KanbanDetailDialog<TItem extends KanbanItem>({
+  item,
+  columns,
+  onClose,
+  renderDetailContent,
+}: {
+  item: TItem;
+  columns: readonly KanbanColumn[];
+  onClose: () => void;
+  renderDetailContent?: (item: TItem) => React.ReactNode;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  const column = columns.find((col) => col.id === item.status);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Dialog */}
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface rounded-2xl border border-border shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-border sticky top-0 bg-surface z-10">
+          <h2 className="text-lg font-bold text-primary">{item.title}</h2>
+          <button
+            onClick={onClose}
+            aria-label="Schließen"
+            className="p-1.5 rounded-lg text-secondary hover:text-primary hover:bg-surface2 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="px-6 py-6 space-y-4">
+          {column && (
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full border text-xs font-semibold ${column.color}`}
+            >
+              {column.title}
+            </span>
+          )}
+
+          {renderDetailContent ? (
+            renderDetailContent(item)
+          ) : (
+            <>
+              <p className="text-sm text-secondary whitespace-pre-wrap">
+                {item.description || "Keine Beschreibung vorhanden."}
+              </p>
+              <span className="block text-xs text-secondary">
+                {item.upvotes} {item.upvotes === 1 ? "Upvote" : "Upvotes"}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -103,10 +188,12 @@ function Column<TItem extends KanbanItem>({
   column,
   items,
   renderCardContent,
+  onExpand,
 }: {
   column: KanbanColumn;
   items: TItem[];
   renderCardContent?: (item: TItem) => React.ReactNode;
+  onExpand?: (item: TItem) => void;
 }) {
   const itemsInColumn = useMemo(
     () => items.filter((item) => item.status === column.id),
@@ -145,6 +232,7 @@ function Column<TItem extends KanbanItem>({
               key={item._id}
               item={item}
               renderCardContent={renderCardContent}
+              onExpand={onExpand}
             />
           ))}
         </SortableContext>
@@ -173,8 +261,15 @@ export function GenericKanbanBoard<TItem extends KanbanItem>({
   columns,
   onStatusChange,
   renderCardContent,
+  renderDetailContent,
 }: GenericKanbanBoardProps<TItem>) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [detailItemId, setDetailItemId] = useState<string | null>(null);
+
+  // Resolve from items so the dialog reflects live updates and closes if the item is deleted
+  const detailItem = detailItemId
+    ? items.find((item) => item._id === detailItemId) ?? null
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -231,6 +326,7 @@ export function GenericKanbanBoard<TItem extends KanbanItem>({
             column={column}
             items={items}
             renderCardContent={renderCardContent}
+            onExpand={(item) => setDetailItemId(item._id)}
           />
         ))}
       </div>
@@ -240,6 +336,15 @@ export function GenericKanbanBoard<TItem extends KanbanItem>({
           <ItemCard item={activeItem} isOverlay renderCardContent={renderCardContent} />
         ) : null}
       </DragOverlay>
+
+      {detailItem && (
+        <KanbanDetailDialog
+          item={detailItem}
+          columns={columns}
+          onClose={() => setDetailItemId(null)}
+          renderDetailContent={renderDetailContent}
+        />
+      )}
     </DndContext>
   );
 }
