@@ -54,6 +54,16 @@ const defaultInstagramSettings: InstagramSettings = {
     collaborators: [],
 };
 
+interface XSettings {
+    who_can_reply_post: "everyone" | "following" | "mentionedUsers" | "verified" | "subscribers";
+    includeMedia: boolean;
+}
+
+const defaultXSettings: XSettings = {
+    who_can_reply_post: "everyone",
+    includeMedia: true,
+};
+
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
     return (
         <button
@@ -125,6 +135,7 @@ export default function PostContentPage() {
     const [uploadStatus, setUploadStatus] = useState("");
     const [tiktokSettings, setTiktokSettings] = useState<TikTokSettings>(defaultTikTokSettings);
     const [instagramSettings, setInstagramSettings] = useState<InstagramSettings>(defaultInstagramSettings);
+    const [xSettings, setXSettings] = useState<XSettings>(defaultXSettings);
     const [igCollabInput, setIgCollabInput] = useState("");
     const [postNow, setPostNow] = useState(false);
 
@@ -135,6 +146,7 @@ export default function PostContentPage() {
     const selectedAccounts = accounts?.filter((a) => selectedAccountIds.has(a._id)) ?? [];
     const hasTikTok = selectedAccounts.some((a) => a.platform === "tiktok");
     const hasInstagram = selectedAccounts.some((a) => a.platform === "instagram");
+    const hasX = selectedAccounts.some((a) => a.platform === "x");
 
     const mediaHasVideo = mediaFiles.some((f) => f.type.startsWith("video/"));
     const mediaHasImage = mediaFiles.some((f) => f.type.startsWith("image/"));
@@ -182,7 +194,10 @@ export default function PostContentPage() {
 
     const handleSchedule = async () => {
         console.log("postNow", postNow);
-        if (mediaFiles.length === 0) {
+        const mediaRequired = selectedAccounts.some(
+            (a) => a.platform !== "x" || xSettings.includeMedia
+        );
+        if (mediaRequired && mediaFiles.length === 0) {
             toast.error("Bitte mindestens eine Datei auswählen.");
             return;
         }
@@ -275,16 +290,26 @@ export default function PostContentPage() {
                             collaborators: instagramSettings.collaborators.map((label) => ({ label })),
                         }),
                     };
+                } else if (account.platform === "x") {
+                    settings = {
+                        __type: "x",
+                        who_can_reply_post: xSettings.who_can_reply_post,
+                        community: "",
+                    };
                 } else {
                     settings = { __type: account.platform };
                 }
+
+                const excludeMedia = account.platform === "x" && !xSettings.includeMedia;
+                const accountPostizMedia = excludeMedia ? [] : postizMedia;
+                const accountMediaUrls = excludeMedia ? [] : r2Urls;
 
                 const postRes = await fetch("/api/postiz/posts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         integrationId: account.postizId,
-                        postizMedia,
+                        postizMedia: accountPostizMedia,
                         content,
                         settings,
                         scheduledAt,
@@ -298,7 +323,7 @@ export default function PostContentPage() {
                     title: title.trim(),
                     description: description.trim() || undefined,
                     hashtags: hashtags.length > 0 ? hashtags : undefined,
-                    mediaUrls: r2Urls,
+                    mediaUrls: accountMediaUrls,
                     accountId: account._id,
                     postizPostId,
                     scheduledAt: scheduledAt ? new Date(scheduledAt).getTime() : undefined,
@@ -317,6 +342,7 @@ export default function PostContentPage() {
             setSelectedAccountIds(new Set());
             setTiktokSettings(defaultTikTokSettings);
             setInstagramSettings(defaultInstagramSettings);
+            setXSettings(defaultXSettings);
             setIgCollabInput("");
             previews.forEach((url) => URL.revokeObjectURL(url));
             setMediaFiles([]);
@@ -691,6 +717,46 @@ export default function PostContentPage() {
                                         className="flex-1 bg-transparent min-w-[80px] outline-none px-1 py-0.5 text-xs"
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* X Settings */}
+                {hasX && (
+                    <div className="w-72 flex-shrink-0 sticky top-6 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xs font-semibold uppercase tracking-wide text-secondary">
+                                X
+                            </h2>
+                            <span className="text-xs text-secondary/60">Alle X-Accounts</span>
+                        </div>
+                        <div className="rounded-xl border border-border bg-surface2 p-3 space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs text-primary">Medien anhängen</span>
+                                <Toggle
+                                    checked={xSettings.includeMedia}
+                                    onChange={(v) => setXSettings((s) => ({ ...s, includeMedia: v }))}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-secondary">Wer kann antworten</label>
+                                <select
+                                    value={xSettings.who_can_reply_post}
+                                    onChange={(e) =>
+                                        setXSettings((s) => ({
+                                            ...s,
+                                            who_can_reply_post: e.target.value as XSettings["who_can_reply_post"],
+                                        }))
+                                    }
+                                    className={inputClass}
+                                    disabled={isScheduling}
+                                >
+                                    <option value="everyone">Alle</option>
+                                    <option value="following">Follower</option>
+                                    <option value="mentionedUsers">Erwähnte Nutzer</option>
+                                    <option value="verified">Verifizierte</option>
+                                    <option value="subscribers">Abonnenten</option>
+                                </select>
                             </div>
                         </div>
                     </div>

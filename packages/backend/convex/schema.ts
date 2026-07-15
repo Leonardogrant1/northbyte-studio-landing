@@ -204,7 +204,7 @@ export default defineSchema({
     }),
 
     social_accounts: defineTable({
-        platform: v.union(v.literal("tiktok"), v.literal("instagram")),
+        platform: v.union(v.literal("tiktok"), v.literal("instagram"), v.literal("x")),
         isAI: v.boolean(),
         username: v.string(),
         platformId: v.optional(v.string()),

@@ -13,7 +13,7 @@ const WEBHOOK_URL = "https://n8n.srv1094620.hstgr.cloud/webhook/cd0e02eb-eefc-4b
 
 type SocialAccount = {
     _id: Id<"social_accounts">;
-    platform: "instagram" | "tiktok";
+    platform: "instagram" | "tiktok" | "x";
     isAI: boolean;
     username: string;
     platformId?: string;
@@ -74,7 +74,7 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
     const avatars = useQuery(api.ai_avatars.queries.getAll);
     const createAccount = useMutation(api.social_accounts.mutations.create);
 
-    const [platform, setPlatform] = useState<"instagram" | "tiktok">("tiktok");
+    const [platform, setPlatform] = useState<"instagram" | "tiktok" | "x">("tiktok");
     const [username, setUsername] = useState("");
     const [isAI, setIsAI] = useState(false);
     const [avatarId, setAvatarId] = useState<Id<"ai_avatars"> | "">("");
@@ -136,9 +136,10 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
                 <form onSubmit={handleLookup} className="space-y-3">
                     <div>
                         <label className="text-xs font-medium text-secondary block mb-1">Platform</label>
-                        <select value={platform} onChange={(e) => { setPlatform(e.target.value as "instagram" | "tiktok"); setPreview(null); }} className={inputClass} disabled={loading}>
+                        <select value={platform} onChange={(e) => { setPlatform(e.target.value as "instagram" | "tiktok" | "x"); setPreview(null); }} className={inputClass} disabled={loading}>
                             <option value="tiktok">TikTok</option>
                             <option value="instagram">Instagram</option>
+                            <option value="x">X</option>
                         </select>
                     </div>
                     <div>
@@ -260,9 +261,10 @@ function EditModal({ account, onClose }: { account: SocialAccount; onClose: () =
             <form onSubmit={handleSave} className="p-5 space-y-3">
                 <div>
                     <label className="text-xs font-medium text-secondary block mb-1">Platform</label>
-                    <select value={platform} onChange={(e) => setPlatform(e.target.value as "instagram" | "tiktok")} className={inputClass} disabled={saving}>
+                    <select value={platform} onChange={(e) => setPlatform(e.target.value as "instagram" | "tiktok" | "x")} className={inputClass} disabled={saving}>
                         <option value="tiktok">TikTok</option>
                         <option value="instagram">Instagram</option>
+                        <option value="x">X</option>
                     </select>
                 </div>
                 <div>
@@ -449,17 +451,22 @@ const formatStat = (num?: number) => {
 function AccountCard({ account, creatorEmail, onEdit, onDelete }: { account: SocialAccount; creatorEmail?: string; onEdit: () => void; onDelete: () => void }) {
     const isInstagram = account.platform === "instagram";
     const isTikTok = account.platform === "tiktok";
+    const isX = account.platform === "x";
 
     // Platform-specific gradient styles for the avatar border
     const borderGradientClass = isInstagram
         ? "bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]"
         : isTikTok
         ? "bg-gradient-to-tr from-[#00f2fe] via-[#fe2c55] to-[#f63a79]"
+        : isX
+        ? "bg-gradient-to-tr from-neutral-100 via-neutral-500 to-neutral-900"
         : "bg-gradient-to-tr from-accent-blue to-accent";
 
     const platformBadgeClass = isInstagram
         ? "text-pink-400 bg-pink-500/10 border border-pink-500/20"
-        : "text-cyan-400 bg-cyan-500/10 border border-cyan-500/20";
+        : isTikTok
+        ? "text-cyan-400 bg-cyan-500/10 border border-cyan-500/20"
+        : "text-neutral-200 bg-neutral-500/10 border border-neutral-400/20";
 
     return (
         <div className="group relative overflow-hidden bg-surface2/40 hover:bg-surface2/70 border border-border hover:border-accent/30 rounded-2xl p-5 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:shadow-accent/5 flex flex-col justify-between h-full min-h-[260px]">
@@ -497,6 +504,11 @@ function AccountCard({ account, creatorEmail, onEdit, onDelete }: { account: Soc
                                     {isTikTok && (
                                         <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
                                             <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.89-.74-3.94-1.78-.22-.22-.41-.47-.58-.73v7.02c0 3.76-2.13 7.07-5.69 8.28-3.93 1.34-8.4-.73-9.74-4.66-1.34-3.93.73-8.4 4.66-9.74 1.45-.49 3.02-.45 4.45.1v4.28c-1.28-.6-2.86-.4-3.94.52-.97.82-1.36 2.19-.97 3.39.39 1.2 1.62 1.95 2.87 1.8 1.42-.17 2.45-1.47 2.37-2.9v-11.75c-.01-1.32.02-2.64-.02-3.96z" />
+                                        </svg>
+                                    )}
+                                    {isX && (
+                                        <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z" />
                                         </svg>
                                     )}
                                     {account.platform}

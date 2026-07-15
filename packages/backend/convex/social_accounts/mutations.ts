@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 export const create = mutation({
     args: {
-        platform: v.union(v.literal("tiktok"), v.literal("instagram")),
+        platform: v.union(v.literal("tiktok"), v.literal("instagram"), v.literal("x")),
         isAI: v.boolean(),
         username: v.string(),
         platformId: v.optional(v.string()),
@@ -34,7 +34,7 @@ export const create = mutation({
 export const update = mutation({
     args: {
         id: v.id("social_accounts"),
-        platform: v.union(v.literal("tiktok"), v.literal("instagram")),
+        platform: v.union(v.literal("tiktok"), v.literal("instagram"), v.literal("x")),
         isAI: v.boolean(),
         username: v.string(),
         platformId: v.optional(v.string()),
