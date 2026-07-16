@@ -156,7 +156,15 @@ export default function PostContentPage() {
         mediaFiles.length > 0 &&
         ((mediaHasVideo && mediaHasImage) || mediaVideoCount > 1);
 
-    const canSubmit = selectedAccountIds.size > 0 && !tiktokMediaInvalid;
+    const content =
+        description.trim() +
+        (hashtags.length > 0
+            ? (description.trim() ? "\n" : "") + hashtags.map((t) => `#${t}`).join(" ")
+            : "");
+    const X_CHAR_LIMIT = 280;
+    const xOverLimit = hasX && content.length > X_CHAR_LIMIT;
+
+    const canSubmit = selectedAccountIds.size > 0 && !tiktokMediaInvalid && !xOverLimit;
 
     const setTt = <K extends keyof TikTokSettings>(key: K, value: TikTokSettings[K]) =>
         setTiktokSettings((prev) => ({ ...prev, [key]: value }));
@@ -246,12 +254,6 @@ export default function PostContentPage() {
                 const { id, path } = await uploadRes.json();
                 postizMedia.push({ id, path });
             }
-
-            const content =
-                description.trim() +
-                (hashtags.length > 0
-                    ? (description.trim() ? "\n" : "") + hashtags.map((t) => `#${t}`).join(" ")
-                    : "");
 
             for (const account of accountArray) {
                 setUploadStatus(`Post für @${account.username} erstellen…`);
@@ -730,7 +732,18 @@ export default function PostContentPage() {
                             </h2>
                             <span className="text-xs text-secondary/60">Alle X-Accounts</span>
                         </div>
+                        {xOverLimit && (
+                            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                                Caption + Hashtags überschreiten das X-Limit von <strong>280 Zeichen</strong>.
+                            </div>
+                        )}
                         <div className="rounded-xl border border-border bg-surface2 p-3 space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs text-primary">Zeichen</span>
+                                <span className={`text-xs ${xOverLimit ? "text-red-400 font-semibold" : "text-secondary"}`}>
+                                    {content.length}/{X_CHAR_LIMIT}
+                                </span>
+                            </div>
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-xs text-primary">Medien anhängen</span>
                                 <Toggle

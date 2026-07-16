@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { generatePresignedUploadUrl, getPublicUrl } from "@/lib/r2";
 import { getAuthenticatedUserId } from "@/lib/auth";
 import { R2_BUCKETS } from "@/lib/r2-constants";
+import { isCurrentUserAdmin } from "@/lib/is-admin";
 
 
 
@@ -14,18 +15,24 @@ const ALLOWED_TYPES = [
   "video/mp4",
   "video/quicktime",
   "video/webm",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
 ];
 
 const VALID_BUCKETS = new Set<string>(Object.values(R2_BUCKETS));
 
 export async function POST(request: NextRequest) {
   const clerkUserId = await getAuthenticatedUserId();
+  let viaApiKey = false;
   if (!clerkUserId) {
     const apiKey = request.headers.get("Authorization")?.replace("Bearer ", "");
 
     if (!apiKey || apiKey !== process.env.NORTHBYTE_API_KEY) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    viaApiKey = true;
   }
 
   try {
@@ -42,6 +49,14 @@ export async function POST(request: NextRequest) {
         { error: `bucket must be one of: ${[...VALID_BUCKETS].join(", ")}` },
         { status: 400 }
       );
+    }
+
+    // northbyte-media hosts user attachments (contracts) — writes are admin-only.
+    // A valid NORTHBYTE_API_KEY (trusted server automation) is also sufficient.
+    if (bucket === R2_BUCKETS.northbyte && !viaApiKey) {
+      if (!(await isCurrentUserAdmin())) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     if (!fileName || typeof fileName !== "string") {

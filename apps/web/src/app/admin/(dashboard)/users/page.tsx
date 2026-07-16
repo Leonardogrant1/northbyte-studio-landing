@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { usePaginatedQuery, useQuery, useMutation, useAction } from "convex/react";
-import { Trash2, UserPlus, Loader2, Pencil, X } from "lucide-react";
+import { Trash2, UserPlus, Loader2, Pencil, X, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@repo/backend/convex/_generated/api";
 import { Id } from "@repo/backend/convex/_generated/dataModel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { UserAttachmentsModal } from "@/components/admin/UserAttachmentsModal";
 
 type CommissionType = "percentage" | "fixed";
 
@@ -324,6 +325,7 @@ export default function UsersPage() {
     const removeInvite = useMutation(api.user_invites.mutations.remove);
 
     const allApps = useQuery(api.apps.queries.getAll, isAdmin ? {} : "skip");
+    const attachmentCounts = useQuery(api.user_attachments.queries.getCountsByUser, isAdmin ? {} : "skip");
 
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState<"admin" | "creator" | "affiliate" | "support">("creator");
@@ -335,6 +337,7 @@ export default function UsersPage() {
 
     const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
     const [managingAppsForUserId, setManagingAppsForUserId] = useState<Id<"users"> | null>(null);
+    const [attachmentsFor, setAttachmentsFor] = useState<{ id: Id<"users">; email: string } | null>(null);
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -631,6 +634,18 @@ export default function UsersPage() {
                                             </td>
                                             <td className="px-4 py-3 text-secondary">{formatDate(u.createdAt)}</td>
                                             <td className="px-4 py-3 text-right">
+                                                <button
+                                                    onClick={() => setAttachmentsFor({ id: u._id, email: u.email ?? "—" })}
+                                                    className="relative text-secondary hover:text-accent transition-colors p-1"
+                                                    title="Anhänge"
+                                                >
+                                                    <Paperclip size={16} />
+                                                    {(attachmentCounts?.[u._id] ?? 0) > 0 && (
+                                                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-accent text-background text-[10px] font-bold flex items-center justify-center">
+                                                            {attachmentCounts?.[u._id]}
+                                                        </span>
+                                                    )}
+                                                </button>
                                                 {u.type === "affiliate" && (
                                                     <button
                                                         onClick={() => setEditingUserId(u._id)}
@@ -706,6 +721,13 @@ export default function UsersPage() {
                 <SupportAppsModal
                     userId={managingAppsForUserId}
                     onClose={() => setManagingAppsForUserId(null)}
+                />
+            )}
+            {attachmentsFor && (
+                <UserAttachmentsModal
+                    userId={attachmentsFor.id}
+                    userEmail={attachmentsFor.email}
+                    onClose={() => setAttachmentsFor(null)}
                 />
             )}
         </div>

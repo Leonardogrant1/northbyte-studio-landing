@@ -102,6 +102,16 @@ export default defineSchema({
         .index("by_user", ["userId"])
         .index("by_app", ["appId"]),
 
+    user_attachments: defineTable({
+        userId: v.id("users"),
+        fileName: v.string(),      // Original-Dateiname, z.B. "affiliate-vertrag-signiert.pdf"
+        fileKey: v.string(),       // R2-Objekt-Key: user-attachments/{userId}/{timestamp}-{safeName}
+        fileUrl: v.string(),       // Public-Download-URL (media.northbyte.studio)
+        fileType: v.string(),      // MIME-Type
+        fileSize: v.number(),      // Bytes
+        uploadedAt: v.number(),
+    }).index("by_user", ["userId"]),
+
     media: defineTable({
         title: v.string(),
         type: v.union(v.literal("video"), v.literal("image")),

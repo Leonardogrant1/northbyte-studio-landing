@@ -50,6 +50,8 @@ import type * as tickets_mutations from "../tickets/mutations.js";
 import type * as tickets_queries from "../tickets/queries.js";
 import type * as user_app_assignments_mutations from "../user_app_assignments/mutations.js";
 import type * as user_app_assignments_queries from "../user_app_assignments/queries.js";
+import type * as user_attachments_mutations from "../user_attachments/mutations.js";
+import type * as user_attachments_queries from "../user_attachments/queries.js";
 import type * as user_invites_actions from "../user_invites/actions.js";
 import type * as user_invites_mutations from "../user_invites/mutations.js";
 import type * as user_invites_queries from "../user_invites/queries.js";
@@ -108,6 +110,8 @@ declare const fullApi: ApiFromModules<{
   "tickets/queries": typeof tickets_queries;
   "user_app_assignments/mutations": typeof user_app_assignments_mutations;
   "user_app_assignments/queries": typeof user_app_assignments_queries;
+  "user_attachments/mutations": typeof user_attachments_mutations;
+  "user_attachments/queries": typeof user_attachments_queries;
   "user_invites/actions": typeof user_invites_actions;
   "user_invites/mutations": typeof user_invites_mutations;
   "user_invites/queries": typeof user_invites_queries;

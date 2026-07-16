@@ -15,6 +15,7 @@ export const r2Client = new S3Client({
 export const R2_PUBLIC_URLS = {
     [R2_BUCKETS.n8n]: process.env.R2_N8N_PUBLIC_URL!,
     [R2_BUCKETS.support]: process.env.R2_SUPPORT_PUBLIC_URL!,
+    [R2_BUCKETS.northbyte]: process.env.R2_NORTHBYTE_PUBLIC_URL!,
 };
 
 /**
@@ -84,7 +85,10 @@ export async function deleteR2Object(
  * @returns Public download URL
  */
 export function getPublicUrl(bucket: R2_BUCKETS, key: string): string {
-    const baseUrl = R2_PUBLIC_URLS[bucket]?.replace(/\/$/, "") || "https://n8n-media.northbyte.studio";
+    const baseUrl = R2_PUBLIC_URLS[bucket]?.replace(/\/$/, "");
+    if (!baseUrl) {
+        throw new Error(`No public URL configured for bucket "${bucket}" — set the corresponding env var (e.g. R2_NORTHBYTE_PUBLIC_URL).`);
+    }
     const cleanKey = key.replace(/^\//, "");
     return `${baseUrl}/${cleanKey}`;
 }
