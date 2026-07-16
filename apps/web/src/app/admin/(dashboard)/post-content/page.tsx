@@ -639,6 +639,26 @@ export default function PostContentPage() {
                             Instagram
                         </h2>
                         <div className="rounded-xl border border-border bg-surface2 p-3 space-y-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-secondary">
+                                    Verbindungstyp
+                                </label>
+                                <select
+                                    value={instagramSettings.type}
+                                    onChange={(e) =>
+                                        setInstagramSettings((s) => ({
+                                            ...s,
+                                            type: e.target.value as InstagramSettings["type"],
+                                        }))
+                                    }
+                                    className={inputClass}
+                                    disabled={isScheduling}
+                                >
+                                    <option value="instagram-standalone">Instagram (Standalone)</option>
+                                    <option value="instagram">Instagram (Facebook Business)</option>
+                                </select>
+                            </div>
+
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-xs text-primary">Trial Reel</span>
                                 <Toggle
