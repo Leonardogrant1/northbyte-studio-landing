@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useConvexAuth, useConvex } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
 import { Id } from "@repo/backend/convex/_generated/dataModel";
-import { Calendar, Loader2, X, Zap } from "lucide-react";
+import { Calendar, Loader2, Sparkles, X, Zap } from "lucide-react";
 import { normalizeVideoFile } from "@/lib/video";
 import { toast } from "sonner";
 import { R2_BUCKETS } from "@/lib/r2-constants";
@@ -131,6 +131,8 @@ export default function PostContentPage() {
     const [description, setDescription] = useState("");
     const [hashtags, setHashtags] = useState<string[]>([]);
     const [hashtagInput, setHashtagInput] = useState("");
+    const [aiTopic, setAiTopic] = useState("");
+    const [isGenerating, setIsGenerating] = useState(false);
     const [isScheduling, setIsScheduling] = useState(false);
     const [uploadStatus, setUploadStatus] = useState("");
     const [tiktokSettings, setTiktokSettings] = useState<TikTokSettings>(defaultTikTokSettings);
@@ -187,6 +189,31 @@ export default function PostContentPage() {
         URL.revokeObjectURL(previews[index]);
         setMediaFiles((prev) => prev.filter((_, i) => i !== index));
         setPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleGenerate = async () => {
+        if (!aiTopic.trim()) return;
+        setIsGenerating(true);
+        try {
+            const res = await fetch("/api/ai/generate-post-content", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic: aiTopic.trim() }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                throw new Error(data?.error ?? "Generierung fehlgeschlagen.");
+            }
+            const data: { title: string; description: string; hashtags: string[] } =
+                await res.json();
+            setTitle(data.title);
+            setDescription(data.description);
+            setHashtags(data.hashtags);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Generierung fehlgeschlagen.");
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     const handleHashtagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -419,6 +446,35 @@ export default function PostContentPage() {
                             }}
                             disabled={isScheduling}
                         />
+                    </section>
+
+                    {/* AI Prefill */}
+                    <section className="space-y-2">
+                        <h2 className="text-xs font-semibold uppercase tracking-wide text-secondary">
+                            Mit AI ausfüllen
+                        </h2>
+                        <textarea
+                            value={aiTopic}
+                            onChange={(e) => setAiTopic(e.target.value)}
+                            placeholder="Worum geht's in dem Post? z.B. Behind-the-Scenes vom neuen Shooting, locker & authentisch"
+                            rows={2}
+                            className={inputClass + " resize-none"}
+                            disabled={isGenerating || isScheduling}
+                        />
+                        <button
+                            onClick={handleGenerate}
+                            disabled={isGenerating || isScheduling || !aiTopic.trim()}
+                            className="flex items-center gap-2 bg-surface2 border border-border hover:border-accent text-primary px-4 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isGenerating ? (
+                                <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                                <Sparkles size={13} />
+                            )}
+                            {isGenerating
+                                ? "Generiere…"
+                                : "Titel, Caption & Hashtags generieren"}
+                        </button>
                     </section>
 
                     {/* Details */}
