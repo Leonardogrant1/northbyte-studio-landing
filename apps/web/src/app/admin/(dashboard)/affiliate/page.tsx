@@ -51,9 +51,9 @@ function StatCard({
 
 export default function AffiliateDashboardPage() {
     const { isAuthenticated } = useConvexAuth();
-    console.log("isAuthenticated", isAuthenticated);
     const user = useCurrentUser();
     const profile = useQuery(api.affiliate_profiles.queries.getMyProfile, isAuthenticated ? {} : "skip");
+    const isFlat = profile?.commissionType === "flat";
     const [copied, setCopied] = useState(false);
 
     const today = todayIso();
@@ -69,7 +69,7 @@ export default function AffiliateDashboardPage() {
     const fromMs = useMemo(() => isoToStartOfDayMs(from), [from]);
     const toMs = useMemo(() => isoToEndOfDayMs(to), [to]);
 
-    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, isAuthenticated ? { fromMs, toMs, environment } : "skip");
+    const stats = useQuery(api.affiliate_profiles.queries.getMyStats, isAuthenticated && !isFlat ? { fromMs, toMs, environment } : "skip");
 
     const affiliateCode = profile?.affiliateCode ?? null;
 
@@ -97,19 +97,21 @@ export default function AffiliateDashboardPage() {
                     <h1 className="text-3xl font-bold mb-1">{greeting} 👋</h1>
                     <p className="text-secondary">Dein Affiliate-Dashboard</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setEnvironment(e => e === "PRODUCTION" ? "SANDBOX" : "PRODUCTION")}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${environment === "SANDBOX"
-                            ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
-                            : "border-border text-secondary hover:border-accent/50"
-                            }`}
-                    >
-                        <span className={`w-1.5 h-1.5 rounded-full ${environment === "SANDBOX" ? "bg-yellow-400" : "bg-green-400"}`} />
-                        {environment === "SANDBOX" ? "Sandbox" : "Production"}
-                    </button>
-                    <DateRangePicker from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />
-                </div>
+                {!isFlat && (
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setEnvironment(e => e === "PRODUCTION" ? "SANDBOX" : "PRODUCTION")}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${environment === "SANDBOX"
+                                ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                                : "border-border text-secondary hover:border-accent/50"
+                                }`}
+                        >
+                            <span className={`w-1.5 h-1.5 rounded-full ${environment === "SANDBOX" ? "bg-yellow-400" : "bg-green-400"}`} />
+                            {environment === "SANDBOX" ? "Sandbox" : "Production"}
+                        </button>
+                        <DateRangePicker from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />
+                    </div>
+                )}
             </div>
 
             {/* Promo Code + Commission */}
@@ -136,64 +138,72 @@ export default function AffiliateDashboardPage() {
 
                 {profile && (
                     <div className="sm:border-l sm:border-border sm:pl-6">
-                        <p className="text-sm text-secondary font-medium mb-3">Deine Provision</p>
+                        <p className="text-sm text-secondary font-medium mb-3">
+                            {profile.commissionType === "flat" ? "Dein Deal" : "Deine Provision"}
+                        </p>
                         <p className="text-2xl font-bold text-primary">
                             {profile.commissionType === "percentage"
                                 ? `${profile.commissionAmount}%`
                                 : `$${profile.commissionAmount}`}
                         </p>
                         <p className="text-xs text-secondary/70 mt-1">
-                            {profile.commissionType === "percentage" ? "Pro Conversion" : "Fester Betrag"}
+                            {profile.commissionType === "percentage"
+                                ? "Pro Conversion"
+                                : profile.commissionType === "fixed"
+                                ? "Fester Betrag"
+                                : "Pauschale"}
                         </p>
                     </div>
                 )}
             </section>
 
             {/* Stats Grid */}
-            <section className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <StatCard
-                    label="Verdient"
-                    value={stats ? `$${stats.earned.toLocaleString("de-DE", { minimumFractionDigits: 2 })}` : "—"}
-                    icon={DollarSign}
-                    color="bg-green-500/10 text-green-400"
-                    sub="Gesamte Provisionen"
-                />
-                <StatCard
-                    label="Gebrachte User"
-                    value={stats ? stats.referredUsers.toString() : "—"}
-                    icon={Users}
-                    color="bg-blue-500/10 text-blue-400"
-                    sub="Über deinen Code"
-                />
-                <StatCard
-                    label="Konvertierte User"
-                    value={stats ? stats.convertedUsers.toString() : "—"}
-                    icon={TrendingUp}
-                    color="bg-purple-500/10 text-purple-400"
-                    sub="Zahlende Kunden"
-                />
-                <StatCard
-                    label="Conversion Rate"
-                    value={stats ? `${stats.conversionRate.toFixed(1)}%` : "—"}
-                    icon={TrendingUp}
-                    color="bg-accent/10 text-accent"
-                    sub="Referred → Paid"
-                />
-                <StatCard
-                    label="Cancel Rate"
-                    value={stats ? `${stats.cancelRate.toFixed(1)}%` : "—"}
-                    icon={XCircle}
-                    color="bg-orange-500/10 text-orange-400"
-                    sub="Gekündigte Abos"
-                />
-                <StatCard
-                    label="Refund Rate"
-                    value={stats ? `${stats.refundRate.toFixed(1)}%` : "—"}
-                    icon={RefreshCw}
-                    color="bg-red-500/10 text-red-400"
-                    sub="Zurückerstattungen"
-                />
-            </section>
+            {!isFlat && (
+                <section className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <StatCard
+                        label="Verdient"
+                        value={stats && stats.earned !== null ? `$${stats.earned.toLocaleString("de-DE", { minimumFractionDigits: 2 })}` : "—"}
+                        icon={DollarSign}
+                        color="bg-green-500/10 text-green-400"
+                        sub="Gesamte Provisionen"
+                    />
+                    <StatCard
+                        label="Gebrachte User"
+                        value={stats ? stats.referredUsers.toString() : "—"}
+                        icon={Users}
+                        color="bg-blue-500/10 text-blue-400"
+                        sub="Über deinen Code"
+                    />
+                    <StatCard
+                        label="Konvertierte User"
+                        value={stats ? stats.convertedUsers.toString() : "—"}
+                        icon={TrendingUp}
+                        color="bg-purple-500/10 text-purple-400"
+                        sub="Zahlende Kunden"
+                    />
+                    <StatCard
+                        label="Conversion Rate"
+                        value={stats ? `${stats.conversionRate.toFixed(1)}%` : "—"}
+                        icon={TrendingUp}
+                        color="bg-accent/10 text-accent"
+                        sub="Referred → Paid"
+                    />
+                    <StatCard
+                        label="Cancel Rate"
+                        value={stats ? `${stats.cancelRate.toFixed(1)}%` : "—"}
+                        icon={XCircle}
+                        color="bg-orange-500/10 text-orange-400"
+                        sub="Gekündigte Abos"
+                    />
+                    <StatCard
+                        label="Refund Rate"
+                        value={stats ? `${stats.refundRate.toFixed(1)}%` : "—"}
+                        icon={RefreshCw}
+                        color="bg-red-500/10 text-red-400"
+                        sub="Zurückerstattungen"
+                    />
+                </section>
+            )}
         </div>
     );
 }

@@ -9,7 +9,8 @@ import { Id } from "@repo/backend/convex/_generated/dataModel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { UserAttachmentsModal } from "@/components/admin/UserAttachmentsModal";
 
-type CommissionType = "percentage" | "fixed";
+type CommissionType = "percentage" | "fixed" | "flat";
+type InviteCommissionType = "percentage" | "fixed";
 
 interface AffiliateEditModalProps {
     userId: Id<"users">;
@@ -93,7 +94,8 @@ function AffiliateEditModal({ userId, onClose }: AffiliateEditModalProps) {
                                     className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
                                 >
                                     <option value="percentage">Prozent (%)</option>
-                                    <option value="fixed">Fest ($)</option>
+                                    <option value="fixed">Fix pro Conversion ($)</option>
+                                    <option value="flat">Pauschale ($)</option>
                                 </select>
                             </div>
                             <div className="space-y-1.5">
@@ -330,7 +332,7 @@ export default function UsersPage() {
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState<"admin" | "creator" | "affiliate" | "support">("creator");
     const [inviteAffiliateCode, setInviteAffiliateCode] = useState("");
-    const [inviteCommissionType, setInviteCommissionType] = useState<CommissionType>("percentage");
+    const [inviteCommissionType, setInviteCommissionType] = useState<InviteCommissionType>("percentage");
     const [inviteCommissionAmount, setInviteCommissionAmount] = useState("10");
     const [inviteAppIds, setInviteAppIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
@@ -486,7 +488,7 @@ export default function UsersPage() {
                             />
                             <select
                                 value={inviteCommissionType}
-                                onChange={(e) => setInviteCommissionType(e.target.value as CommissionType)}
+                                onChange={(e) => setInviteCommissionType(e.target.value as InviteCommissionType)}
                                 disabled={loading}
                                 className="bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
                             >
@@ -533,7 +535,7 @@ export default function UsersPage() {
                                         email: string;
                                         role: "admin" | "creator" | "affiliate" | "support";
                                         affiliateCode?: string;
-                                        commissionType?: CommissionType;
+                                        commissionType?: InviteCommissionType;
                                         commissionAmount?: number;
                                         appIds?: Id<"apps">[];
                                         createdAt: number;

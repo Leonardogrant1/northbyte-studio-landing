@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp, LayoutDashboard, Headphones, UserCheck } from "lucide-react";
+import { BarChart2, Bug, Lightbulb, AppWindow, Image, FlaskConical, FileEdit, Users, AtSign, Bot, LayoutList, TrendingUp, LayoutDashboard, Headphones, UserCheck, Percent } from "lucide-react";
 import { Suspense } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -127,6 +127,15 @@ function AdminSidebarInner() {
             icon: Users,
             href: "/admin/users",
             isActive: pathname === "/admin/users",
+            adminOnly: true,
+            affiliateOnly: false,
+            creatorOnly: false,
+        },
+        {
+            label: "Affiliates",
+            icon: Percent,
+            href: "/admin/affiliates",
+            isActive: pathname === "/admin/affiliates",
             adminOnly: true,
             affiliateOnly: false,
             creatorOnly: false,

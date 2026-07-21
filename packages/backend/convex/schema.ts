@@ -16,10 +16,11 @@ export default defineSchema({
     }).index("by_clerk", ["clerkId"]),
 
     affiliate_profiles: defineTable({
-        userId: v.id("users"),
+        userId: v.optional(v.id("users")),   // undefined = Standalone-Profil (Pauschal-Deal ohne Login)
+        name: v.optional(v.string()),        // Anzeigename für Standalone-Profile; sonst kommt der Name aus users
         affiliateCode: v.string(),
-        commissionType: v.union(v.literal("percentage"), v.literal("fixed")),
-        commissionAmount: v.number(),
+        commissionType: v.union(v.literal("percentage"), v.literal("fixed"), v.literal("flat")),
+        commissionAmount: v.number(),        // bei "flat": gezahlter Deal-Betrag (nur Info, keine Provisionsberechnung)
         isActive: v.boolean(),
     }).index("by_user", ["userId"]),
 
