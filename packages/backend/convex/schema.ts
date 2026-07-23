@@ -81,6 +81,26 @@ export default defineSchema({
         .index("by_affiliate", ["affiliateId"])
         .index("by_rc_user", ["revenueCatUserId"]),
 
+    // Link-Funnel: ein Lead pro (Web-Session, Affiliate, App).
+    // viewed        → Landing-Page-Hit über /c/[code]
+    // store_clicked → dieselbe Session ging danach Richtung App/Play Store
+    // Keine IPs. Keine Verknüpfung zu affiliate_referral — Attribution über
+    // den App-Store-Bruch hinweg nur aggregiert (pro Code).
+    affiliate_lead: defineTable({
+        affiliateId: v.id("affiliate_profiles"),
+        appId: v.id("apps"),
+        sessionId: v.string(),
+        status: v.union(v.literal("viewed"), v.literal("store_clicked")),
+        platform: v.optional(v.string()),   // "ios" | "android" | "desktop"
+        referer: v.optional(v.string()),
+        country: v.optional(v.string()),
+        viewCount: v.number(),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+        .index("by_affiliate", ["affiliateId"])
+        .index("by_session", ["sessionId"]),
+
     user_invites: defineTable({
         email: v.string(),
         role: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support")),

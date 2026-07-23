@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as affiliate_lead_mutations from "../affiliate_lead/mutations.js";
 import type * as affiliate_profiles_mutations from "../affiliate_profiles/mutations.js";
 import type * as affiliate_profiles_queries from "../affiliate_profiles/queries.js";
 import type * as affiliate_profiles_stats from "../affiliate_profiles/stats.js";
@@ -69,6 +70,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "affiliate_lead/mutations": typeof affiliate_lead_mutations;
   "affiliate_profiles/mutations": typeof affiliate_profiles_mutations;
   "affiliate_profiles/queries": typeof affiliate_profiles_queries;
   "affiliate_profiles/stats": typeof affiliate_profiles_stats;

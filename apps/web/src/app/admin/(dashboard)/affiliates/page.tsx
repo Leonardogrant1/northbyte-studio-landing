@@ -24,6 +24,9 @@ interface AffiliateRow {
         revenue: number;
         proceeds: number;
         net: number;
+        linkViews: number;
+        storeClicks: number;
+        clickThroughRate: number;
         referredUsers: number;
         convertedUsers: number;
         conversionRate: number;
@@ -369,6 +372,9 @@ export default function AffiliatesAdminPage() {
                                 <th className="text-left px-4 py-3 text-secondary font-medium">Typ</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Betrag</th>
                                 <th className="text-left px-4 py-3 text-secondary font-medium">Status</th>
+                                <th className="text-right px-4 py-3 text-secondary font-medium">Views</th>
+                                <th className="text-right px-4 py-3 text-secondary font-medium">Store-Klicks</th>
+                                <th className="text-right px-4 py-3 text-secondary font-medium">CTR</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Referred</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Converted</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Conv-Rate</th>
@@ -403,6 +409,9 @@ export default function AffiliatesAdminPage() {
                                             {row.isActive ? "Aktiv" : "Inaktiv"}
                                         </span>
                                     </td>
+                                    <td className="px-4 py-3 text-right text-primary">{row.stats.linkViews}</td>
+                                    <td className="px-4 py-3 text-right text-primary">{row.stats.storeClicks}</td>
+                                    <td className="px-4 py-3 text-right text-primary">{row.stats.clickThroughRate.toFixed(1)}%</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.referredUsers}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.convertedUsers}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.conversionRate.toFixed(1)}%</td>

@@ -31,9 +31,14 @@ export const getMyStats = query({
       .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
       .collect();
 
+    const allLeads = await ctx.db
+      .query("affiliate_lead")
+      .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
+      .collect();
+
     // Business-Zahlen (Umsatz/Proceeds/Netto) sind nur für Admins — hier bewusst nicht ausliefern.
     const { revenue: _revenue, proceeds: _proceeds, net: _net, ...affiliateVisible } =
-      computeStats(profile, allReferrals, args);
+      computeStats(profile, allReferrals, allLeads, args);
     return affiliateVisible;
   },
 });
@@ -106,6 +111,11 @@ export const getAllWithStats = query({
           .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
           .collect();
 
+        const leads = await ctx.db
+          .query("affiliate_lead")
+          .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
+          .collect();
+
         const displayName = user
           ? [user.name, user.lastName].filter(Boolean).join(" ") || user.email || "—"
           : profile.name ?? "—";
@@ -119,7 +129,7 @@ export const getAllWithStats = query({
           commissionAmount: profile.commissionAmount,
           isActive: profile.isActive,
           isStandalone: profile.userId === undefined,
-          stats: computeStats(profile, referrals, args),
+          stats: computeStats(profile, referrals, leads, args),
         };
       }),
     );

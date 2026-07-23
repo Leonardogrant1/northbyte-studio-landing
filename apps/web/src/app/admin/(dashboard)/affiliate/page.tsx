@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Copy, Check, DollarSign, Users, TrendingUp, RefreshCw, XCircle } from "lucide-react";
+import { Copy, Check, DollarSign, Users, TrendingUp, RefreshCw, XCircle, Eye, MousePointerClick } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -166,6 +166,27 @@ export default function AffiliateDashboardPage() {
                         icon={DollarSign}
                         color="bg-green-500/10 text-green-400"
                         sub="Gesamte Provisionen"
+                    />
+                    <StatCard
+                        label="Link-Views"
+                        value={stats ? stats.linkViews.toString() : "—"}
+                        icon={Eye}
+                        color="bg-sky-500/10 text-sky-400"
+                        sub="Aufrufe deines Links"
+                    />
+                    <StatCard
+                        label="Store-Klicks"
+                        value={stats ? stats.storeClicks.toString() : "—"}
+                        icon={MousePointerClick}
+                        color="bg-teal-500/10 text-teal-400"
+                        sub="Weiter zum App Store"
+                    />
+                    <StatCard
+                        label="Click-Through-Rate"
+                        value={stats ? `${stats.clickThroughRate.toFixed(1)}%` : "—"}
+                        icon={TrendingUp}
+                        color="bg-cyan-500/10 text-cyan-400"
+                        sub="Views → Store-Klicks"
                     />
                     <StatCard
                         label="Gebrachte User"

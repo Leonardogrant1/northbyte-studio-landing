@@ -11,6 +11,9 @@ export interface AffiliateStats {
   revenue: number;       // voller Umsatz (Summe price) über konvertierte Referrals — nur Admin-Sicht
   proceeds: number;      // Umsatz nach Store-Abzug (price * takehomePercentage) — nur Admin-Sicht
   net: number;           // Proceeds minus Affiliate-Cut (bei "flat": minus Deal-Betrag, kann negativ sein) — nur Admin-Sicht
+  linkViews: number;     // Landing-Page-Views über /c/[code] (Summe viewCount aller Leads)
+  storeClicks: number;   // Sessions, die danach Richtung App/Play Store gegangen sind
+  clickThroughRate: number; // Views → Store-Klicks in %
   referredUsers: number;
   convertedUsers: number;
   conversionRate: number;
@@ -23,12 +26,20 @@ export interface AffiliateStats {
 export function computeStats(
   profile: Doc<"affiliate_profiles">,
   allReferrals: Doc<"affiliate_referral">[],
+  allLeads: Doc<"affiliate_lead">[],
   filter: StatsFilter,
 ): AffiliateStats {
   const referrals = allReferrals.filter((r) => {
     if (filter.fromMs !== undefined && r.createdAt < filter.fromMs) return false;
     if (filter.toMs !== undefined && r.createdAt > filter.toMs) return false;
     if (filter.environment !== undefined && (r.environment ?? "PRODUCTION") !== filter.environment) return false;
+    return true;
+  });
+
+  // Leads haben kein Environment — nur der Datumsfilter greift.
+  const leads = allLeads.filter((l) => {
+    if (filter.fromMs !== undefined && l.createdAt < filter.fromMs) return false;
+    if (filter.toMs !== undefined && l.createdAt > filter.toMs) return false;
     return true;
   });
 
@@ -66,11 +77,17 @@ export function computeStats(
   const referredCount = referrals.length;
   const convertedCount = converted.length;
 
+  const linkViews = leads.reduce((sum, l) => sum + l.viewCount, 0);
+  const storeClicks = leads.filter((l) => l.status === "store_clicked").length;
+
   return {
     earned,
     revenue,
     proceeds,
     net,
+    linkViews,
+    storeClicks,
+    clickThroughRate: linkViews > 0 ? (storeClicks / linkViews) * 100 : 0,
     referredUsers: referredCount,
     convertedUsers: convertedCount,
     conversionRate: referredCount > 0 ? (convertedCount / referredCount) * 100 : 0,
