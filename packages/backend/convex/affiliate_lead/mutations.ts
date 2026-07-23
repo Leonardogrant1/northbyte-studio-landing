@@ -19,10 +19,11 @@ export const logView = mutation({
       .first();
     if (!app) return { error: "not_found", message: `App with slug "${args.appSlug}" not found.` } as const;
 
-    const profile = await ctx.db
-      .query("affiliate_profiles")
-      .filter((q) => q.eq(q.field("affiliateCode"), args.affiliateCode))
-      .first();
+    // Case-insensitive: Links kommen lowercase an, die Codes stehen uppercase in der DB.
+    const profiles = await ctx.db.query("affiliate_profiles").collect();
+    const profile = profiles.find(
+      (p) => p.affiliateCode.toUpperCase() === args.affiliateCode.toUpperCase(),
+    );
     if (!profile) return { error: "not_found", message: `Affiliate code "${args.affiliateCode}" not found.` } as const;
     if (!profile.isActive) return { error: "inactive", message: `Affiliate code "${args.affiliateCode}" is inactive.` } as const;
 
