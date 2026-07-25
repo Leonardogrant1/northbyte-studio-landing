@@ -75,7 +75,13 @@ export async function GET(
     }
 
     const { startDate, endDate } = getRangeDates(range, fromParam, toParam);
-    const rcKey = decrypt(rcKeyEnc!);
+    let rcKey: string;
+    try {
+        rcKey = decrypt(rcKeyEnc!);
+    } catch (e) {
+        console.error(`[Analytics] decrypt failed for app ${appId} (${app.name}) — ANALYTICS_ENCRYPTION_KEY passt nicht zum gespeicherten Key?`, e);
+        return NextResponse.json({ error: "decrypt_failed" }, { status: 500 });
+    }
     const proceedsSelector = revenueType === "proceeds"
         ? `&selectors=${encodeURIComponent(JSON.stringify({ revenue_type: "proceeds" }))}`
         : "";

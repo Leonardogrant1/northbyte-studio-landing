@@ -42,9 +42,18 @@ export async function GET(request: NextRequest) {
 
     const results = await Promise.all(
         apps.map(async (app) => {
-            if (!app.revenueCatProjectId || !app.revenueCatApiKeyEncrypted) return null;
+            if (!app.revenueCatProjectId || !app.revenueCatApiKeyEncrypted) {
+                console.warn(`[Analytics] overview: app "${app.name}" hat keine RC-Konfiguration, übersprungen`);
+                return null;
+            }
 
-            const rcKey = decrypt(app.revenueCatApiKeyEncrypted);
+            let rcKey: string;
+            try {
+                rcKey = decrypt(app.revenueCatApiKeyEncrypted);
+            } catch (e) {
+                console.error(`[Analytics] overview: decrypt failed for app "${app.name}"`, e);
+                return null;
+            }
             const baseParams = `?start_date=${startDate}&end_date=${endDate}&period=day&currency=USD&realtime=false`;
 
             const [metricsData, proceedsData] = await Promise.all([
@@ -52,7 +61,10 @@ export async function GET(request: NextRequest) {
                 rcFetch(`/projects/${app.revenueCatProjectId}/charts/revenue${baseParams}${proceedsSelector}`, rcKey).catch(() => null),
             ]);
 
-            if (!metricsData) return null;
+            if (!metricsData) {
+                console.error(`[Analytics] overview: RC revenue call failed for app "${app.name}" (project ${app.revenueCatProjectId}) — siehe [RevenueCat]-Log darüber`);
+                return null;
+            }
 
             return {
                 gross: metricsData?.summary?.total?.Revenue ?? 0,

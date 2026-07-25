@@ -13,7 +13,11 @@ export async function rcFetch(path: string, apiKey: string, revalidate = 300) {
         headers: { Authorization: `Bearer ${apiKey}` },
     });
 
-    if (!res.ok) throw new Error(`RC ${path} → ${res.status}`);
+    if (!res.ok) {
+        const body = await res.text().catch(() => "<unreadable body>");
+        console.error(`[RevenueCat] ${res.status} ${res.statusText} for ${path}\n${body.slice(0, 2000)}`);
+        throw new Error(`RC ${path} → ${res.status}`);
+    }
     const data = await res.json();
     rcCache.set(path, { data, expires: now + revalidate * 1000 });
     return data;
