@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
             email,
             phone,
             country,
-            social_accounts,
-            video_link,
-            description,
+            social_accounts: social_accounts ?? undefined,
+            video_link: video_link ?? undefined,
+            description: description ?? undefined,
         });
 
         return NextResponse.json({ success: true, id }, { status: 201 });

@@ -8,9 +8,9 @@ export const create = mutation({
         email: v.string(),
         phone: v.string(),
         country: v.string(),
-        social_accounts: v.optional(v.array(v.string())),
-        video_link: v.optional(v.string()),
-        description: v.optional(v.string()),
+        social_accounts: v.optional(v.union(v.array(v.string()), v.null())),
+        video_link: v.optional(v.union(v.string(), v.null())),
+        description: v.optional(v.union(v.string(), v.null())),
     },
     handler: async (ctx, args) => {
         return await ctx.db.insert("creator_application", {
@@ -19,9 +19,9 @@ export const create = mutation({
             email: args.email,
             phone: args.phone,
             country: args.country,
-            social_accounts: args.social_accounts,
-            video_link: args.video_link,
-            description: args.description,
+            social_accounts: args.social_accounts ?? undefined,
+            video_link: args.video_link ?? undefined,
+            description: args.description ?? undefined,
             status: "pending",
         });
     },
