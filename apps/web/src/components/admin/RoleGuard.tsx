@@ -24,6 +24,14 @@ function isSupportAllowedRoute(pathname: string): boolean {
     return pathname === "/admin/support" || pathname.startsWith("/admin/support/");
 }
 
+// Creators never see support; AI-Lab only when the admin enabled it for them
+function isCreatorBlockedRoute(pathname: string, aiLabVisible: boolean | undefined): boolean {
+    if (isAdminOnlyRoute(pathname)) return true;
+    if (pathname === "/admin/support" || pathname.startsWith("/admin/support/")) return true;
+    if ((pathname === "/admin/ai-lab" || pathname.startsWith("/admin/ai-lab/")) && aiLabVisible !== true) return true;
+    return false;
+}
+
 interface RoleGuardProps {
     children: React.ReactNode;
 }
@@ -40,7 +48,7 @@ export function RoleGuard({ children }: RoleGuardProps) {
         // If no user in DB yet (rare race condition), do nothing — layout already checked Clerk auth
         if (user === null) return;
 
-        if (user.type === "creator" && isAdminOnlyRoute(pathname)) {
+        if (user.type === "creator" && isCreatorBlockedRoute(pathname, user.aiLabVisible)) {
             router.replace("/admin/creator-dashboard");
         }
 
@@ -54,7 +62,7 @@ export function RoleGuard({ children }: RoleGuardProps) {
     }, [user, pathname, router]);
 
     // Show nothing while redirecting to avoid flash
-    if (user?.type === "creator" && isAdminOnlyRoute(pathname)) return null;
+    if (user?.type === "creator" && isCreatorBlockedRoute(pathname, user.aiLabVisible)) return null;
     if (user?.type === "affiliate" && !isAffiliateAllowedRoute(pathname)) return null;
     if (user?.type === "support" && !isSupportAllowedRoute(pathname)) return null;
 

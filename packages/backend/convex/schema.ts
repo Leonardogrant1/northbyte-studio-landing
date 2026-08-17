@@ -11,6 +11,7 @@ export default defineSchema({
         name: v.optional(v.string()),
         lastName: v.optional(v.string()),
         type: v.union(v.literal("admin"), v.literal("creator"), v.literal("affiliate"), v.literal("support")),
+        aiLabVisible: v.optional(v.boolean()), // Creator only: undefined/false = AI-Lab ausgeblendet
         createdAt: v.number(),
         updatedAt: v.number(),
     }).index("by_clerk", ["clerkId"]),
@@ -112,6 +113,7 @@ export default defineSchema({
         commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
         commissionAmount: v.optional(v.number()),
         appIds: v.optional(v.array(v.id("apps"))),
+        aiLabVisible: v.optional(v.boolean()),
     })
         .index("by_email", ["email"])
         .index("by_token", ["token"]),

@@ -41,7 +41,7 @@ export default function MediaPage() {
     const currentUser = useCurrentUser();
     const isAdmin = currentUser?.type === "admin";
 
-    const apps = useQuery(api.apps.queries.getAll);
+    const apps = useQuery(api.apps.queries.getAccessibleApps);
     const users = useQuery(api.users.queries.getAllUsers, isAdmin ? {} : "skip");
     const avatars = useQuery(api.ai_avatars.queries.getAll);
 

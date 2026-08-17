@@ -48,6 +48,18 @@ export const getAll = query({
             );
         }
 
+        // Creators only see media of their assigned apps (app-less items stay visible).
+        if (user.type === "creator") {
+            const assignments = await ctx.db
+                .query("user_app_assignments")
+                .withIndex("by_user", (q) => q.eq("userId", user._id))
+                .collect();
+            const assignedAppIds = new Set(assignments.map((a) => a.appId));
+            items = items.filter(
+                (i) => i.appId === undefined || assignedAppIds.has(i.appId)
+            );
+        }
+
         return items.sort((a, b) => b.createdAt - a.createdAt);
     },
 });

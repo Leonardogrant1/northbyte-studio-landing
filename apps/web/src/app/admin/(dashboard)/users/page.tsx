@@ -196,17 +196,72 @@ function SupportUserRow({ userId, email, onManage }: SupportUserRowProps) {
     );
 }
 
-interface SupportAppsModalProps {
+interface CreatorUserRowProps {
     userId: Id<"users">;
+    email: string;
+    aiLabVisible: boolean;
+    onManage: () => void;
+}
+
+function CreatorUserRow({ userId, email, aiLabVisible, onManage }: CreatorUserRowProps) {
+    const assignedApps = useQuery(api.user_app_assignments.queries.getAppsForUser, { userId });
+
+    return (
+        <tr className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
+            <td className="px-4 py-3 text-primary">{email}</td>
+            <td className="px-4 py-3">
+                {assignedApps === undefined ? (
+                    <Loader2 size={12} className="animate-spin text-secondary" />
+                ) : assignedApps.length === 0 ? (
+                    <span className="text-secondary text-xs">Keine Apps</span>
+                ) : (
+                    <div className="flex flex-wrap gap-1">
+                        {assignedApps.map((app: any) => app && (
+                            <span
+                                key={app._id}
+                                className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400"
+                            >
+                                {app.name}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </td>
+            <td className="px-4 py-3">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    aiLabVisible ? "bg-accent/20 text-accent" : "bg-border/50 text-secondary"
+                }`}>
+                    {aiLabVisible ? "Sichtbar" : "Ausgeblendet"}
+                </span>
+            </td>
+            <td className="px-4 py-3 text-right">
+                <button
+                    onClick={onManage}
+                    className="text-secondary hover:text-accent transition-colors p-1"
+                    title="Creator verwalten"
+                >
+                    <Pencil size={16} />
+                </button>
+            </td>
+        </tr>
+    );
+}
+
+interface UserAppsModalProps {
+    userId: Id<"users">;
+    showAiLab?: boolean;
+    initialAiLabVisible?: boolean;
     onClose: () => void;
 }
 
-function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
+function UserAppsModal({ userId, showAiLab = false, initialAiLabVisible = false, onClose }: UserAppsModalProps) {
     const allApps = useQuery(api.apps.queries.getAll);
     const assignedApps = useQuery(api.user_app_assignments.queries.getAppsForUser, { userId });
     const assignMutation = useMutation(api.user_app_assignments.mutations.assign);
     const unassignMutation = useMutation(api.user_app_assignments.mutations.unassign);
+    const setAiLabVisibleMutation = useMutation(api.users.mutations.setAiLabVisible);
 
+    const [aiLabChecked, setAiLabChecked] = useState(initialAiLabVisible);
     const [saving, setSaving] = useState(false);
     // Local selection state: null means "not yet initialised from server"
     const [selected, setSelected] = useState<Set<string> | null>(null);
@@ -238,8 +293,9 @@ function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
             await Promise.all([
                 ...toAssign.map((appId) => assignMutation({ userId, appId: appId as Id<"apps"> })),
                 ...toUnassign.map((appId) => unassignMutation({ userId, appId: appId as Id<"apps"> })),
+                ...(showAiLab ? [setAiLabVisibleMutation({ userId, visible: aiLabChecked })] : []),
             ]);
-            toast.success("App-Zuweisungen gespeichert.");
+            toast.success("Einstellungen gespeichert.");
             onClose();
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "Fehler beim Speichern.");
@@ -254,7 +310,7 @@ function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="bg-surface2 border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold">Apps verwalten</h2>
+                    <h2 className="text-lg font-semibold">{showAiLab ? "Creator verwalten" : "Apps verwalten"}</h2>
                     <button onClick={onClose} className="text-secondary hover:text-primary transition-colors">
                         <X size={18} />
                     </button>
@@ -289,6 +345,19 @@ function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
                             </div>
                         )}
 
+                        {showAiLab && (
+                            <label className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface2/80 cursor-pointer transition-colors border-t border-border">
+                                <input
+                                    type="checkbox"
+                                    checked={aiLabChecked}
+                                    onChange={() => setAiLabChecked((v) => !v)}
+                                    disabled={saving}
+                                    className="accent-accent w-4 h-4"
+                                />
+                                <span className="text-sm text-primary">AI-Lab sichtbar</span>
+                            </label>
+                        )}
+
                         <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
@@ -300,7 +369,7 @@ function SupportAppsModal({ userId, onClose }: SupportAppsModalProps) {
                             </button>
                             <button
                                 type="submit"
-                                disabled={saving || allApps.length === 0}
+                                disabled={saving || (allApps.length === 0 && !showAiLab)}
                                 className="flex-1 py-3 bg-accent text-background font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {saving ? "Wird gespeichert…" : "Speichern"}
@@ -335,10 +404,11 @@ export default function UsersPage() {
     const [inviteCommissionType, setInviteCommissionType] = useState<InviteCommissionType>("percentage");
     const [inviteCommissionAmount, setInviteCommissionAmount] = useState("10");
     const [inviteAppIds, setInviteAppIds] = useState<Set<string>>(new Set());
+    const [inviteAiLabVisible, setInviteAiLabVisible] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
-    const [managingAppsForUserId, setManagingAppsForUserId] = useState<Id<"users"> | null>(null);
+    const [managingApps, setManagingApps] = useState<{ userId: Id<"users">; showAiLab: boolean; aiLabVisible?: boolean } | null>(null);
     const [attachmentsFor, setAttachmentsFor] = useState<{ id: Id<"users">; email: string } | null>(null);
 
     const handleInvite = async (e: React.FormEvent) => {
@@ -351,15 +421,17 @@ export default function UsersPage() {
                 affiliateCode: inviteRole === "affiliate" ? inviteAffiliateCode : undefined,
                 commissionType: inviteRole === "affiliate" ? inviteCommissionType : undefined,
                 commissionAmount: inviteRole === "affiliate" ? parseFloat(inviteCommissionAmount) : undefined,
-                appIds: inviteRole === "support" && inviteAppIds.size > 0
+                appIds: (inviteRole === "support" || inviteRole === "creator") && inviteAppIds.size > 0
                     ? ([...inviteAppIds] as Id<"apps">[])
                     : undefined,
+                aiLabVisible: inviteRole === "creator" ? inviteAiLabVisible : undefined,
             });
             setInviteEmail("");
             setInviteAffiliateCode("");
             setInviteCommissionAmount("10");
             setInviteCommissionType("percentage");
             setInviteAppIds(new Set());
+            setInviteAiLabVisible(false);
             if (result.emailSent) {
                 toast.success(`Einladung an ${inviteEmail} gesendet.`);
             } else {
@@ -416,6 +488,7 @@ export default function UsersPage() {
                                 setInviteCommissionAmount("10");
                                 setInviteCommissionType("percentage");
                                 setInviteAppIds(new Set());
+                                setInviteAiLabVisible(false);
                             }}
                             disabled={loading}
                             className="bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent transition-all disabled:opacity-50"
@@ -434,9 +507,11 @@ export default function UsersPage() {
                         </button>
                     </div>
 
-                    {inviteRole === "support" && (
+                    {(inviteRole === "support" || inviteRole === "creator") && (
                         <div className="space-y-2">
-                            <p className="text-sm font-medium text-secondary">App-Zugriff</p>
+                            <p className="text-sm font-medium text-secondary">
+                                {inviteRole === "creator" ? "Vermarktete Apps" : "App-Zugriff"}
+                            </p>
                             {!allApps ? (
                                 <div className="flex items-center gap-2 text-secondary text-xs">
                                     <Loader2 size={12} className="animate-spin" /> Wird geladen…
@@ -471,6 +546,18 @@ export default function UsersPage() {
                                         );
                                     })}
                                 </div>
+                            )}
+                            {inviteRole === "creator" && (
+                                <label className="flex items-center gap-2 pt-1 cursor-pointer w-fit">
+                                    <input
+                                        type="checkbox"
+                                        checked={inviteAiLabVisible}
+                                        onChange={() => setInviteAiLabVisible((v) => !v)}
+                                        disabled={loading}
+                                        className="accent-accent w-4 h-4"
+                                    />
+                                    <span className="text-sm text-secondary">AI-Lab sichtbar</span>
+                                </label>
                             )}
                         </div>
                     )}
@@ -538,6 +625,7 @@ export default function UsersPage() {
                                         commissionType?: InviteCommissionType;
                                         commissionAmount?: number;
                                         appIds?: Id<"apps">[];
+                                        aiLabVisible?: boolean;
                                         createdAt: number;
                                     }) => (
                                         <tr key={invite._id} className="border-b border-border last:border-0 hover:bg-surface2/20 transition-colors">
@@ -564,7 +652,7 @@ export default function UsersPage() {
                                                             : `$${invite.commissionAmount}`}
                                                     </span>
                                                 )}
-                                                {invite.role === "support" && invite.appIds && invite.appIds.length > 0 && (
+                                                {(invite.role === "support" || invite.role === "creator") && invite.appIds && invite.appIds.length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                         {invite.appIds.map((appId) => {
                                                             const app = allApps?.find((a) => a._id === appId);
@@ -575,6 +663,9 @@ export default function UsersPage() {
                                                             ) : null;
                                                         })}
                                                     </div>
+                                                )}
+                                                {invite.role === "creator" && invite.aiLabVisible === true && (
+                                                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400">AI-Lab</span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 text-secondary">{formatDate(invite.createdAt)}</td>
@@ -703,7 +794,42 @@ export default function UsersPage() {
                                             key={u._id}
                                             userId={u._id}
                                             email={u.email ?? "—"}
-                                            onManage={() => setManagingAppsForUserId(u._id)}
+                                            onManage={() => setManagingApps({ userId: u._id, showAiLab: false })}
+                                        />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
+            </section>
+
+            {/* Creators */}
+            <section>
+                <h2 className="text-xl font-semibold mb-4">Creators</h2>
+                {(() => {
+                    const creatorUsers = users.filter((u) => u.type === "creator");
+                    return creatorUsers.length === 0 ? (
+                        <p className="text-secondary text-sm">Keine Creator vorhanden.</p>
+                    ) : (
+                        <div className="border border-border rounded-2xl overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-surface2/30">
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">E-Mail</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">Vermarktete Apps</th>
+                                        <th className="text-left px-4 py-3 text-secondary font-medium">AI-Lab</th>
+                                        <th className="px-4 py-3" />
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {creatorUsers.map((u) => (
+                                        <CreatorUserRow
+                                            key={u._id}
+                                            userId={u._id}
+                                            email={u.email ?? "—"}
+                                            aiLabVisible={u.aiLabVisible === true}
+                                            onManage={() => setManagingApps({ userId: u._id, showAiLab: true, aiLabVisible: u.aiLabVisible })}
                                         />
                                     ))}
                                 </tbody>
@@ -719,10 +845,12 @@ export default function UsersPage() {
                     onClose={() => setEditingUserId(null)}
                 />
             )}
-            {managingAppsForUserId && (
-                <SupportAppsModal
-                    userId={managingAppsForUserId}
-                    onClose={() => setManagingAppsForUserId(null)}
+            {managingApps && (
+                <UserAppsModal
+                    userId={managingApps.userId}
+                    showAiLab={managingApps.showAiLab}
+                    initialAiLabVisible={managingApps.aiLabVisible === true}
+                    onClose={() => setManagingApps(null)}
                 />
             )}
             {attachmentsFor && (

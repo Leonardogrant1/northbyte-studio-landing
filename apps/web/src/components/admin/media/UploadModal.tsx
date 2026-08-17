@@ -74,7 +74,7 @@ interface UploadModalProps {
 }
 
 export function UploadModal({ onClose, onUploaded }: UploadModalProps) {
-    const apps = useQuery(api.apps.queries.getAll);
+    const apps = useQuery(api.apps.queries.getAccessibleApps);
     const avatars = useQuery(api.ai_avatars.queries.getAll);
     const createMedia = useMutation(api.media.mutations.createMedia);
 

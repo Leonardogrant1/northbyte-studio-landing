@@ -172,7 +172,11 @@ function AdminSidebarInner() {
     const tabs = allTabs.filter((tab) => {
         if (user === undefined || user === null) return false;
         if (isAffiliate) return tab.affiliateOnly === true;
-        if (isCreator) return !tab.adminOnly && !tab.affiliateOnly;
+        if (isCreator) {
+            if (tab.href === "/admin/support") return false;
+            if (tab.href === "/admin/ai-lab" && user?.aiLabVisible !== true) return false;
+            return !tab.adminOnly && !tab.affiliateOnly;
+        }
         if (isSupport) return tab.href === "/admin/support";
         if (isAdmin) return !tab.affiliateOnly && !tab.creatorOnly;
         return false;

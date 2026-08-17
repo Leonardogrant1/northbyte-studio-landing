@@ -11,6 +11,7 @@ export const create = mutation({
     commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
     commissionAmount: v.optional(v.number()),
     appIds: v.optional(v.array(v.id("apps"))),
+    aiLabVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -59,6 +60,7 @@ export const create = mutation({
       commissionType: args.commissionType,
       commissionAmount: args.commissionAmount,
       appIds: args.appIds,
+      aiLabVisible: args.aiLabVisible,
     });
   },
 });

@@ -68,6 +68,7 @@ export const createUserFromInvite = mutation({
         type: invite.role,
         name: args.name,
         lastName: args.lastName,
+        aiLabVisible: invite.aiLabVisible,
         updatedAt: now,
       });
       userId = existing._id;
@@ -78,6 +79,7 @@ export const createUserFromInvite = mutation({
         name: args.name,
         lastName: args.lastName,
         type: invite.role,
+        aiLabVisible: invite.aiLabVisible,
         createdAt: now,
         updatedAt: now,
       });
@@ -96,8 +98,8 @@ export const createUserFromInvite = mutation({
       });
     }
 
-    // If support, create app assignments from the invite
-    if (invite.role === "support" && invite.appIds && invite.appIds.length > 0) {
+    // If support or creator, create app assignments from the invite
+    if ((invite.role === "support" || invite.role === "creator") && invite.appIds && invite.appIds.length > 0) {
       await Promise.all(
         invite.appIds.map((appId) =>
           ctx.db.insert("user_app_assignments", { userId, appId })
@@ -106,5 +108,31 @@ export const createUserFromInvite = mutation({
     }
 
     return userId;
+  },
+});
+
+// Admin-only — toggle AI-Lab visibility for a user (relevant for creators).
+export const setAiLabVisible = mutation({
+  args: {
+    userId: v.id("users"),
+    visible: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
+
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    await ctx.db.patch(args.userId, {
+      aiLabVisible: args.visible,
+      updatedAt: Date.now(),
+    });
   },
 });

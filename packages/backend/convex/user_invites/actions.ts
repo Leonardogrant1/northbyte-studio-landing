@@ -15,6 +15,7 @@ export const createAndSend = action({
     commissionType: v.optional(v.union(v.literal("percentage"), v.literal("fixed"))),
     commissionAmount: v.optional(v.number()),
     appIds: v.optional(v.array(v.id("apps"))),
+    aiLabVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{ inviteId: Id<"user_invites">; emailSent: boolean }> => {
     const token = randomUUID();
@@ -28,6 +29,7 @@ export const createAndSend = action({
       commissionType: args.commissionType,
       commissionAmount: args.commissionAmount,
       appIds: args.appIds,
+      aiLabVisible: args.aiLabVisible,
     })) as Id<"user_invites">;
 
     const emailUser = process.env.EMAIL_USER;
