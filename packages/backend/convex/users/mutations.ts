@@ -111,6 +111,72 @@ export const createUserFromInvite = mutation({
   },
 });
 
+// Admin-only — löscht einen User samt persönlicher Daten (App-Zuweisungen,
+// Attachment-Datensätze). Inhalte bleiben erhalten: Medien, Posts und
+// Ticket-Nachrichten behalten ihre (dann ins Leere zeigende) Referenz, das
+// Affiliate-Profil wird nur entkoppelt, damit die Referral-/Umsatzhistorie
+// nicht verloren geht. Clerk-Account und R2-Dateien löscht die Next.js-Route
+// /api/users/delete, die diese Mutation aufruft.
+export const deleteUser = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    if (!caller || caller.type !== "admin") throw new Error("Unauthorized");
+
+    const target = await ctx.db.get(args.userId);
+    if (!target) throw new Error("User not found");
+    if (target._id === caller._id) throw new Error("Eigener Account kann nicht gelöscht werden");
+    if (target.type === "admin") throw new Error("Admins können nicht gelöscht werden");
+
+    // Affiliate-Profil entkoppeln statt löschen; den Anzeigenamen aus dem
+    // User-Datensatz übernehmen, damit das Standalone-Profil identifizierbar bleibt.
+    const profiles = await ctx.db
+      .query("affiliate_profiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    const displayName =
+      [target.name, target.lastName].filter(Boolean).join(" ") || target.email;
+    for (const profile of profiles) {
+      await ctx.db.patch(profile._id, {
+        userId: undefined,
+        name: profile.name ?? displayName,
+      });
+    }
+
+    const assignments = await ctx.db
+      .query("user_app_assignments")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const assignment of assignments) {
+      await ctx.db.delete(assignment._id);
+    }
+
+    const attachments = await ctx.db
+      .query("user_attachments")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const attachment of attachments) {
+      await ctx.db.delete(attachment._id);
+    }
+
+    const socialAccounts = await ctx.db
+      .query("social_accounts")
+      .withIndex("by_assigned", (q) => q.eq("assignedTo", args.userId))
+      .collect();
+    for (const account of socialAccounts) {
+      await ctx.db.patch(account._id, { assignedTo: undefined });
+    }
+
+    await ctx.db.delete(args.userId);
+  },
+});
+
 // Admin-only — toggle AI-Lab visibility for a user (relevant for creators).
 export const setAiLabVisible = mutation({
   args: {

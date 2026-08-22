@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Copy, Check, DollarSign, Users, TrendingUp, RefreshCw, XCircle, Eye, MousePointerClick } from "lucide-react";
+import { Copy, Check, DollarSign, Users, TrendingUp, Eye, MousePointerClick } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -201,27 +201,6 @@ export default function AffiliateDashboardPage() {
                         icon={TrendingUp}
                         color="bg-purple-500/10 text-purple-400"
                         sub="Zahlende Kunden"
-                    />
-                    <StatCard
-                        label="Conversion Rate"
-                        value={stats ? `${stats.conversionRate.toFixed(1)}%` : "—"}
-                        icon={TrendingUp}
-                        color="bg-accent/10 text-accent"
-                        sub="Referred → Paid"
-                    />
-                    <StatCard
-                        label="Cancel Rate"
-                        value={stats ? `${stats.cancelRate.toFixed(1)}%` : "—"}
-                        icon={XCircle}
-                        color="bg-orange-500/10 text-orange-400"
-                        sub="Gekündigte Abos"
-                    />
-                    <StatCard
-                        label="Refund Rate"
-                        value={stats ? `${stats.refundRate.toFixed(1)}%` : "—"}
-                        icon={RefreshCw}
-                        color="bg-red-500/10 text-red-400"
-                        sub="Zurückerstattungen"
                     />
                 </section>
             )}

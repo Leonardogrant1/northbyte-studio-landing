@@ -36,9 +36,15 @@ export const getMyStats = query({
       .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
       .collect();
 
-    // Business-Zahlen (Umsatz/Proceeds/Netto) sind nur für Admins — hier bewusst nicht ausliefern.
-    const { revenue: _revenue, proceeds: _proceeds, net: _net, ...affiliateVisible } =
-      computeStats(profile, allReferrals, allLeads, args);
+    // Business-Zahlen (Umsatz/Proceeds/Netto) und Cancel-/Refund-Rate sind nur für Admins — hier bewusst nicht ausliefern.
+    const {
+      revenue: _revenue,
+      proceeds: _proceeds,
+      net: _net,
+      cancelRate: _cancelRate,
+      refundRate: _refundRate,
+      ...affiliateVisible
+    } = computeStats(profile, allReferrals, allLeads, args);
     return affiliateVisible;
   },
 });

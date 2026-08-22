@@ -382,6 +382,69 @@ function UserAppsModal({ userId, showAiLab = false, initialAiLabVisible = false,
     );
 }
 
+function DeleteUserModal({ user, onClose }: { user: { id: Id<"users">; email: string }; onClose: () => void }) {
+    const [input, setInput] = useState("");
+    const [deleting, setDeleting] = useState(false);
+
+    const handleConfirm = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (input !== user.email) return;
+        setDeleting(true);
+        try {
+            const res = await fetch("/api/users/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id }),
+            });
+            if (!res.ok) {
+                const data = (await res.json().catch(() => null)) as { error?: string } | null;
+                throw new Error(data?.error ?? "Fehler beim Löschen.");
+            }
+            toast.success(`${user.email} wurde gelöscht.`);
+            onClose();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Fehler beim Löschen.");
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-surface2 border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">User löschen</h2>
+                    <button onClick={onClose} className="text-secondary hover:text-primary transition-colors" disabled={deleting}>
+                        <X size={18} />
+                    </button>
+                </div>
+                <form onSubmit={handleConfirm} className="space-y-4">
+                    <p className="text-sm text-secondary">
+                        Der Account (inkl. Login und Anhängen) wird unwiderruflich gelöscht. Erstellte Inhalte
+                        und Affiliate-Historie bleiben erhalten. Gib{" "}
+                        <span className="font-semibold text-primary">{user.email}</span> ein, um zu bestätigen.
+                    </p>
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={user.email}
+                        autoFocus
+                        disabled={deleting}
+                        className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
+                    />
+                    <button
+                        type="submit"
+                        disabled={input !== user.email || deleting}
+                        className="w-full py-3 bg-red-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {deleting ? <><Loader2 size={15} className="animate-spin" /> Wird gelöscht…</> : "User löschen"}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 export default function UsersPage() {
     const currentUser = useCurrentUser();
     const isAdmin = currentUser?.type === "admin";
@@ -410,6 +473,7 @@ export default function UsersPage() {
     const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
     const [managingApps, setManagingApps] = useState<{ userId: Id<"users">; showAiLab: boolean; aiLabVisible?: boolean } | null>(null);
     const [attachmentsFor, setAttachmentsFor] = useState<{ id: Id<"users">; email: string } | null>(null);
+    const [deletingUser, setDeletingUser] = useState<{ id: Id<"users">; email: string } | null>(null);
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -748,6 +812,15 @@ export default function UsersPage() {
                                                         <Pencil size={16} />
                                                     </button>
                                                 )}
+                                                {u.type !== "admin" && (
+                                                    <button
+                                                        onClick={() => setDeletingUser({ id: u._id, email: u.email ?? "—" })}
+                                                        className="text-secondary hover:text-red-400 transition-colors p-1"
+                                                        title="User löschen"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -858,6 +931,12 @@ export default function UsersPage() {
                     userId={attachmentsFor.id}
                     userEmail={attachmentsFor.email}
                     onClose={() => setAttachmentsFor(null)}
+                />
+            )}
+            {deletingUser && (
+                <DeleteUserModal
+                    user={deletingUser}
+                    onClose={() => setDeletingUser(null)}
                 />
             )}
         </div>
