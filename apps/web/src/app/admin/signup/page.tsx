@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
+import { Id } from "@repo/backend/convex/_generated/dataModel";
 
 function AdminSignUpPage() {
     const { signUp, setActive, isLoaded } = useSignUp();
@@ -22,6 +23,12 @@ function AdminSignUpPage() {
     const [loading, setLoading] = useState(false);
     const [verificationCode, setVerificationCode] = useState("");
     const [pendingVerification, setPendingVerification] = useState(false);
+    const [pendingInvite, setPendingInvite] = useState<{
+        inviteId: Id<"user_invites">;
+        name?: string;
+        lastName?: string;
+    } | null>(null);
+    const { isAuthenticated } = useConvexAuth();
 
     // Token path: used when arriving via magic link
     const inviteByToken = useQuery(
@@ -108,13 +115,18 @@ function AdminSignUpPage() {
 
             if (result.status === "complete") {
                 await setActive!({ session: result.createdSessionId });
-                await createUserFromInvite({
+                // Der Convex-Client bekommt das Clerk-Token erst asynchron nach setActive.
+                // createUserFromInvite hier direkt aufzurufen ist eine Race Condition
+                // (Mutation kam teils unauthentifiziert an) — stattdessen im Effekt unten
+                // feuern, sobald Convex die Session kennt. Loading bleibt bis dahin aktiv.
+                setPendingInvite({
                     inviteId: invite!._id,
                     name: firstName || undefined,
                     lastName: lastName || undefined,
                 });
-                router.push("/admin");
+                return;
             }
+            setLoading(false);
         } catch (err: unknown) {
             if (err && typeof err === "object" && "errors" in err) {
                 const clerkError = err as { errors: Array<{ message: string }> };
@@ -122,10 +134,24 @@ function AdminSignUpPage() {
             } else {
                 setError("Verifizierung fehlgeschlagen.");
             }
-        } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!pendingInvite || !isAuthenticated) return;
+        const inviteArgs = pendingInvite;
+        setPendingInvite(null);
+        (async () => {
+            try {
+                await createUserFromInvite(inviteArgs);
+                router.push("/admin");
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Registrierung konnte nicht abgeschlossen werden.");
+                setLoading(false);
+            }
+        })();
+    }, [pendingInvite, isAuthenticated, createUserFromInvite, router]);
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
