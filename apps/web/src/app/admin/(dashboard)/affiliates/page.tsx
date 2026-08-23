@@ -28,6 +28,7 @@ interface AffiliateRow {
         storeClicks: number;
         clickThroughRate: number;
         referredUsers: number;
+        activeTrials: number;
         convertedUsers: number;
         conversionRate: number;
         cancelRate: number;
@@ -376,6 +377,7 @@ export default function AffiliatesAdminPage() {
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Store-Klicks</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">CTR</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Referred</th>
+                                <th className="text-right px-4 py-3 text-secondary font-medium">Trials</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Converted</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Conv-Rate</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Cancel</th>
@@ -413,6 +415,7 @@ export default function AffiliatesAdminPage() {
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.storeClicks}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.clickThroughRate.toFixed(1)}%</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.referredUsers}</td>
+                                    <td className="px-4 py-3 text-right text-primary">{row.stats.activeTrials ?? 0}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.convertedUsers}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.conversionRate.toFixed(1)}%</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.cancelRate.toFixed(1)}%</td>
