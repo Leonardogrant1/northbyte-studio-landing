@@ -31,6 +31,7 @@ interface AffiliateRow {
         activeTrials: number;
         convertedUsers: number;
         conversionRate: number;
+        trialConversionRate: number;
         cancelRate: number;
         refundRate: number;
     };
@@ -380,6 +381,7 @@ export default function AffiliatesAdminPage() {
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Trials</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Converted</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Conv-Rate</th>
+                                <th className="text-right px-4 py-3 text-secondary font-medium">Trial-Conv</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Cancel</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Refund</th>
                                 <th className="text-right px-4 py-3 text-secondary font-medium">Earned</th>
@@ -418,6 +420,7 @@ export default function AffiliatesAdminPage() {
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.activeTrials ?? 0}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.convertedUsers}</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.conversionRate.toFixed(1)}%</td>
+                                    <td className="px-4 py-3 text-right text-primary">{(row.stats.trialConversionRate ?? 0).toFixed(1)}%</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.cancelRate.toFixed(1)}%</td>
                                     <td className="px-4 py-3 text-right text-primary">{row.stats.refundRate.toFixed(1)}%</td>
                                     <td className="px-4 py-3 text-right text-primary">

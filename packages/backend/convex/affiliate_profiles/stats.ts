@@ -18,7 +18,8 @@ export interface AffiliateStats {
   activeTrials: number;  // Referrals aktuell in der Testphase (status "on_trial")
   convertedUsers: number;
   conversionRate: number;
-  cancelRate: number;
+  trialConversionRate: number; // konvertierte Trials ÷ gestartete Trials — wie viele Tester werden Zahler
+  cancelRate: number;    // Kündigungen von Zahlern ÷ Zahler — Trial-Abbrüche zählen nicht
   refundRate: number;
 }
 
@@ -45,8 +46,12 @@ export function computeStats(
   });
 
   const converted = referrals.filter((r) => r.convertedAt !== undefined);
-  const cancelled = referrals.filter((r) => r.cancelledAt !== undefined);
+  // Nur Kündigungen von Zahlern — Trial-Abbrecher haben cancelledAt, aber nie
+  // convertedAt, und würden die Rate sonst über 100 % treiben.
+  const cancelled = referrals.filter((r) => r.cancelledAt !== undefined && r.convertedAt !== undefined);
   const refunded = referrals.filter((r) => r.refundedAt !== undefined);
+  const trialsStarted = referrals.filter((r) => r.trialStartedAt !== undefined);
+  const trialsConverted = trialsStarted.filter((r) => r.convertedAt !== undefined);
   // hasConverted=true: first payment received and not refunded — affiliate is owed commission
   const earnedReferrals = referrals.filter((r) => r.hasConverted === true);
 
@@ -93,6 +98,7 @@ export function computeStats(
     activeTrials: referrals.filter((r) => r.status === "on_trial").length,
     convertedUsers: convertedCount,
     conversionRate: referredCount > 0 ? (convertedCount / referredCount) * 100 : 0,
+    trialConversionRate: trialsStarted.length > 0 ? (trialsConverted.length / trialsStarted.length) * 100 : 0,
     cancelRate: convertedCount > 0 ? (cancelled.length / convertedCount) * 100 : 0,
     refundRate: convertedCount > 0 ? (refunded.length / convertedCount) * 100 : 0,
   };
