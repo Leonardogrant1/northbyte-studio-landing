@@ -8,6 +8,7 @@ const eventType = v.union(
   v.literal("CANCELLATION"),
   v.literal("UNCANCELLATION"),
   v.literal("REFUND"),
+  v.literal("EXPIRATION"),
 );
 
 // Public — called from external app backends via POST /api/affiliate/track.
@@ -181,9 +182,21 @@ export const handleRevenueCatEvent = mutation({
 
     const now = Date.now();
 
-    if (args.event === "INITIAL_PURCHASE" || args.event === "RESUBSCRIBE") {
-      // Trial starts have price=0 — skip, wait for RENEWAL with isTrialConversion=true
-      if (args.event === "INITIAL_PURCHASE" && args.periodType === "TRIAL") return null;
+    if (args.event === "INITIAL_PURCHASE" && args.periodType === "TRIAL") {
+      // Trial-Start: price=0, keine Provision — die entsteht erst bei RENEWAL mit
+      // isTrialConversion=true. Hier nur Status + Metadaten festhalten.
+      if (referral.trialStartedAt !== undefined || referral.convertedAt !== undefined) return null; // idempotent
+      await ctx.db.patch(referral._id, {
+        status: "on_trial",
+        trialStartedAt: now,
+        productId: args.productId,
+        subscriptionId: args.transactionId, // RC transaction_id stored as subscriptionId per schema field name
+        countryCode: args.countryCode,
+        store: args.store,
+        takehomePercentage: args.takehomePercentage,
+        environment: args.environment,
+      });
+    } else if (args.event === "INITIAL_PURCHASE" || args.event === "RESUBSCRIBE") {
       if (referral.convertedAt !== undefined) return null; // idempotent
       await ctx.db.patch(referral._id, {
         status: "converted",
@@ -223,7 +236,13 @@ export const handleRevenueCatEvent = mutation({
     } else if (args.event === "UNCANCELLATION") {
       if (referral.uncancelledAt !== undefined) return null; // idempotent
       await ctx.db.patch(referral._id, {
-        status: "converted",
+        // Ein Trial-User, der seine Kündigung widerruft, hat noch nie gezahlt —
+        // zurück auf on_trial statt fälschlich auf converted.
+        status: referral.convertedAt !== undefined
+          ? "converted"
+          : referral.trialStartedAt !== undefined
+          ? "on_trial"
+          : "pending",
         uncancelledAt: now,
         cancelledAt: undefined, // clear so a future CANCELLATION is not a no-op
       });
@@ -234,6 +253,11 @@ export const handleRevenueCatEvent = mutation({
         hasConverted: false, // payment reversed — affiliate not owed commission
         refundedAt: now,
       });
+    } else if (args.event === "EXPIRATION") {
+      // Trial lief ohne Zahlung aus (z.B. Billing-Fehler ohne aktive Kündigung) —
+      // sonst bliebe der Referral ewig on_trial. Konvertierte Referrals bleiben unberührt.
+      if (referral.convertedAt !== undefined || referral.cancelledAt !== undefined) return null;
+      await ctx.db.patch(referral._id, { status: "cancelled", cancelledAt: now });
     }
 
     return referral._id;

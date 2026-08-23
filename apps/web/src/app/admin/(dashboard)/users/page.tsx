@@ -419,8 +419,8 @@ function DeleteUserModal({ user, onClose }: { user: { id: Id<"users">; email: st
                 </div>
                 <form onSubmit={handleConfirm} className="space-y-4">
                     <p className="text-sm text-secondary">
-                        Der Account (inkl. Login und Anhängen) wird unwiderruflich gelöscht. Erstellte Inhalte
-                        und Affiliate-Historie bleiben erhalten. Gib{" "}
+                        Der Account wird unwiderruflich gelöscht — inkl. Login, Anhängen und bei Affiliates
+                        auch Profil samt Referral-Historie. Erstellte Inhalte bleiben erhalten. Gib{" "}
                         <span className="font-semibold text-primary">{user.email}</span> ein, um zu bestätigen.
                     </p>
                     <input

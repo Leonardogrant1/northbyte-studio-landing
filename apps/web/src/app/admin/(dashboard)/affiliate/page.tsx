@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Copy, Check, DollarSign, Users, TrendingUp, Eye, MousePointerClick } from "lucide-react";
+import { Copy, Check, DollarSign, Users, TrendingUp, Eye, MousePointerClick, Timer } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -194,6 +194,13 @@ export default function AffiliateDashboardPage() {
                         icon={Users}
                         color="bg-blue-500/10 text-blue-400"
                         sub="Über deinen Code"
+                    />
+                    <StatCard
+                        label="Aktive Trials"
+                        value={stats ? stats.activeTrials.toString() : "—"}
+                        icon={Timer}
+                        color="bg-amber-500/10 text-amber-400"
+                        sub="Testphase läuft"
                     />
                     <StatCard
                         label="Konvertierte User"

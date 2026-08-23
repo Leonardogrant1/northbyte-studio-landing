@@ -15,6 +15,7 @@ export interface AffiliateStats {
   storeClicks: number;   // Sessions, die danach Richtung App/Play Store gegangen sind
   clickThroughRate: number; // Views → Store-Klicks in %
   referredUsers: number;
+  activeTrials: number;  // Referrals aktuell in der Testphase (status "on_trial")
   convertedUsers: number;
   conversionRate: number;
   cancelRate: number;
@@ -89,6 +90,7 @@ export function computeStats(
     storeClicks,
     clickThroughRate: linkViews > 0 ? (storeClicks / linkViews) * 100 : 0,
     referredUsers: referredCount,
+    activeTrials: referrals.filter((r) => r.status === "on_trial").length,
     convertedUsers: convertedCount,
     conversionRate: referredCount > 0 ? (convertedCount / referredCount) * 100 : 0,
     cancelRate: convertedCount > 0 ? (cancelled.length / convertedCount) * 100 : 0,

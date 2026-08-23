@@ -12,6 +12,7 @@ const HANDLED_EVENTS = [
   "CANCELLATION",
   "UNCANCELLATION",
   "REFUND",
+  "EXPIRATION",
 ] as const;
 type HandledEvent = (typeof HANDLED_EVENTS)[number];
 

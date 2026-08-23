@@ -48,6 +48,7 @@ export default defineSchema({
         revenueCatUserId: v.optional(v.string()),
         status: v.union(
             v.literal("pending"),
+            v.literal("on_trial"),
             v.literal("converted"),
             v.literal("cancelled"),
             v.literal("refunded"),
@@ -73,6 +74,7 @@ export default defineSchema({
             v.literal("PRODUCTION"),
             v.literal("SANDBOX"),
         )),
+        trialStartedAt: v.optional(v.number()),
         convertedAt: v.optional(v.number()),
         cancelledAt: v.optional(v.number()),
         uncancelledAt: v.optional(v.number()),

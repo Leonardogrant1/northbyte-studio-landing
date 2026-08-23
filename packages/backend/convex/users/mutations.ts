@@ -111,12 +111,12 @@ export const createUserFromInvite = mutation({
   },
 });
 
-// Admin-only — löscht einen User samt persönlicher Daten (App-Zuweisungen,
-// Attachment-Datensätze). Inhalte bleiben erhalten: Medien, Posts und
-// Ticket-Nachrichten behalten ihre (dann ins Leere zeigende) Referenz, das
-// Affiliate-Profil wird nur entkoppelt, damit die Referral-/Umsatzhistorie
-// nicht verloren geht. Clerk-Account und R2-Dateien löscht die Next.js-Route
-// /api/users/delete, die diese Mutation aufruft.
+// Admin-only — löscht einen User samt persönlicher Daten: App-Zuweisungen,
+// Attachment-Datensätze sowie sein Affiliate-Profil inklusive Referrals und
+// Leads (die Referral-/Umsatzhistorie geht damit bewusst verloren). Inhalte
+// bleiben erhalten: Medien, Posts und Ticket-Nachrichten behalten ihre (dann
+// ins Leere zeigende) Referenz. Clerk-Account und R2-Dateien löscht die
+// Next.js-Route /api/users/delete, die diese Mutation aufruft.
 export const deleteUser = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -134,19 +134,30 @@ export const deleteUser = mutation({
     if (target._id === caller._id) throw new Error("Eigener Account kann nicht gelöscht werden");
     if (target.type === "admin") throw new Error("Admins können nicht gelöscht werden");
 
-    // Affiliate-Profil entkoppeln statt löschen; den Anzeigenamen aus dem
-    // User-Datensatz übernehmen, damit das Standalone-Profil identifizierbar bleibt.
+    // Affiliate-Profil mitsamt Referrals und Leads löschen — verwaiste Referrals
+    // wären unsichtbar, weil die Admin-Übersicht über Profile iteriert.
     const profiles = await ctx.db
       .query("affiliate_profiles")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
-    const displayName =
-      [target.name, target.lastName].filter(Boolean).join(" ") || target.email;
     for (const profile of profiles) {
-      await ctx.db.patch(profile._id, {
-        userId: undefined,
-        name: profile.name ?? displayName,
-      });
+      const referrals = await ctx.db
+        .query("affiliate_referral")
+        .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
+        .collect();
+      for (const referral of referrals) {
+        await ctx.db.delete(referral._id);
+      }
+
+      const leads = await ctx.db
+        .query("affiliate_lead")
+        .withIndex("by_affiliate", (q) => q.eq("affiliateId", profile._id))
+        .collect();
+      for (const lead of leads) {
+        await ctx.db.delete(lead._id);
+      }
+
+      await ctx.db.delete(profile._id);
     }
 
     const assignments = await ctx.db
