@@ -29,6 +29,7 @@ export interface KanbanItem {
   description: string;
   upvotes: number;
   status: string;
+  _creationTime?: number;
 }
 
 interface GenericKanbanBoardProps<TItem extends KanbanItem> {
@@ -40,16 +41,25 @@ interface GenericKanbanBoardProps<TItem extends KanbanItem> {
 }
 
 function DefaultCardContent<TItem extends KanbanItem>({ item }: { item: TItem }) {
+  const dateStr = item._creationTime
+    ? new Date(item._creationTime).toLocaleDateString(undefined, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <>
       <h3 className="font-semibold text-primary mb-2">{item.title}</h3>
       <p className="text-sm text-secondary line-clamp-2 mb-3">
         {item.description}
       </p>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-secondary">
+      <div className="flex items-center justify-between text-xs text-secondary">
+        <span>
           {item.upvotes} {item.upvotes === 1 ? "Upvote" : "Upvotes"}
         </span>
+        {dateStr && <span>{dateStr}</span>}
       </div>
     </>
   );
@@ -173,9 +183,23 @@ function KanbanDetailDialog<TItem extends KanbanItem>({
               <p className="text-sm text-secondary whitespace-pre-wrap">
                 {item.description || "Keine Beschreibung vorhanden."}
               </p>
-              <span className="block text-xs text-secondary">
-                {item.upvotes} {item.upvotes === 1 ? "Upvote" : "Upvotes"}
-              </span>
+              <div className="flex justify-between items-center pt-4 text-xs text-secondary border-t border-border/50">
+                <span>
+                  {item.upvotes} {item.upvotes === 1 ? "Upvote" : "Upvotes"}
+                </span>
+                {item._creationTime && (
+                  <span>
+                    Erstellt am:{" "}
+                    {new Date(item._creationTime).toLocaleString(undefined, {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </div>
             </>
           )}
         </div>
